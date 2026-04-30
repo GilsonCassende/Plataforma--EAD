@@ -1,0 +1,152 @@
+@page {
+    size: A4 landscape;
+    margin: 40px;
+}
+
+body.pdf-certificate {
+    margin: 0;
+    padding: 0;
+    color: #12213a;
+    background: #ffffff;
+    font-family: Arial, "DejaVu Sans", sans-serif;
+}
+
+.pdf-certificate__page {
+    width: 100%;
+    text-align: center;
+}
+
+.pdf-certificate__card {
+    padding: 28px;
+    border: 2px solid #2f46c8;
+    outline: 1px solid #d7b655;
+    outline-offset: -12px;
+    background: #ffffff;
+}
+
+.pdf-certificate__brand,
+.pdf-certificate__hero,
+.pdf-certificate__meta,
+.pdf-certificate__signatures,
+.pdf-certificate__verification {
+    display: block;
+    text-align: center;
+}
+
+.pdf-certificate__brand {
+    margin-bottom: 34px;
+}
+
+.pdf-certificate__title {
+    margin: 0 0 14px;
+    font-size: 34px;
+    font-weight: 700;
+}
+
+.pdf-certificate__lead {
+    margin: 0 0 14px;
+    font-size: 14px;
+    text-transform: uppercase;
+    letter-spacing: 0.2em;
+    color: #61728d;
+}
+
+.pdf-certificate__student {
+    margin: 0 0 18px;
+    font-size: 46px;
+    font-weight: 700;
+}
+
+.pdf-certificate__copy {
+    max-width: 640px;
+    margin: 0 auto 26px;
+    font-size: 16px;
+    line-height: 1.8;
+}
+
+.pdf-certificate__meta {
+    margin: 0 auto 28px;
+}
+
+.pdf-certificate__meta-item {
+    display: inline-block;
+    width: 22%;
+    min-width: 130px;
+    margin: 0 8px 10px;
+    padding: 14px 12px;
+    border: 1px solid #d8e3ef;
+    text-align: left;
+    vertical-align: top;
+}
+
+.pdf-certificate__meta-label {
+    display: block;
+    margin-bottom: 8px;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #61728d;
+}
+
+.pdf-certificate__meta-value {
+    font-size: 18px;
+    font-weight: 700;
+}
+
+.pdf-certificate__signatures {
+    margin: 24px 0 20px;
+}
+
+.pdf-certificate__signature {
+    display: inline-block;
+    width: 38%;
+    margin: 0 4%;
+    vertical-align: top;
+    text-align: center;
+}
+
+.pdf-certificate__signature-line {
+    height: 1px;
+    margin-bottom: 10px;
+    background: #b8c6da;
+}
+
+.pdf-certificate__signature-name {
+    display: block;
+    font-size: 16px;
+    font-weight: 700;
+}
+
+.pdf-certificate__signature-role {
+    display: block;
+    margin-top: 4px;
+    font-size: 12px;
+    color: #61728d;
+}
+
+.pdf-certificate__verification {
+    margin-top: 20px;
+    padding-top: 14px;
+    border-top: 1px solid #d8e3ef;
+}
+
+.pdf-certificate__verification-label {
+    display: block;
+    margin-bottom: 6px;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #61728d;
+}
+
+.pdf-certificate__verification-code {
+    display: block;
+    margin-bottom: 6px;
+    font-size: 18px;
+    font-weight: 700;
+}
+
+.pdf-certificate__verification-text {
+    font-size: 12px;
+    color: #2f46c8;
+}

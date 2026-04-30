@@ -1,0 +1,15 @@
+.page-criar-aula .editor-card,
+.page-criar-aula .modal .create-lesson {
+    width: min(100%, 820px);
+    margin-inline: auto;
+}
+
+.page-criar-aula .editor-card__body {
+    gap: 1rem;
+}
+
+.page-criar-aula .editor-card__body small {
+    display: block;
+    margin-top: 0.45rem;
+    color: var(--color-text-muted);
+}

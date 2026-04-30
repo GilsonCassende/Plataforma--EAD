@@ -1,0 +1,66 @@
+{
+    "meta": {
+        "tipo": "professor",
+        "scope": "students",
+        "user_id": 7,
+        "course_id": 9,
+        "gerado_em": "2026-04-26T18:45:55+02:00",
+        "sistema": "Plataforma EAD",
+        "versao_schema": 1
+    },
+    "professor": {
+        "id": 7,
+        "nome": "Gilson Cassende",
+        "email": "gilson@ead.com",
+        "role": "professor",
+        "fotografia": null,
+        "email_verified": 1,
+        "created_at": "2025-11-26 20:38:43"
+    },
+    "cursos": [
+        {
+            "id": 9,
+            "titulo": "HTML5 & CSS3 Gustavo Guanabara",
+            "descricao": "Faça agora mesmo o Curso de HTML5 e CSS3 do Professor Gustavo Guanabara, com aulas atualizadas e com material de apoio em PDF.\r\n",
+            "categoria": "programação",
+            "status": "ativo",
+            "course_structure": "multi_module",
+            "thumbnail": "69cd78536f849_20260401215603.jpg",
+            "created_at": "2026-04-01 20:56:03",
+            "total_alunos": 1,
+            "total_aulas": 2
+        }
+    ],
+    "modulos": [],
+    "aulas": [],
+    "quiz": [],
+    "alunos": [
+        {
+            "user_id": 13,
+            "course_id": 9,
+            "progress": 50,
+            "data_inscricao": "2026-04-01 23:04:00",
+            "data_conclusao": null,
+            "aluno_nome": "gilson gil",
+            "aluno_email": "gil@gmail.com",
+            "fotografia": "69c30ea3b8e37_20260324232227.jpeg",
+            "course_title": "HTML5 & CSS3 Gustavo Guanabara"
+        }
+    ],
+    "desempenho": [
+        {
+            "course_id": 9,
+            "course_title": "HTML5 & CSS3 Gustavo Guanabara",
+            "student_id": 13,
+            "student_name": "gilson gil",
+            "student_email": "gil@gmail.com",
+            "progresso_matricula": 50,
+            "aulas_concluidas": 1,
+            "aulas_totais": 2,
+            "media_quiz_percentual": null,
+            "media_quiz_nota": null,
+            "quizzes_aprovados": 0,
+            "quizzes_avaliados": 0
+        }
+    ]
+}

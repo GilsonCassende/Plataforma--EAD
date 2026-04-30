@@ -1,0 +1,287 @@
+.page-perfil .perfil-section {
+    padding: 0;
+}
+
+.page-perfil .container {
+    max-width: 1100px;
+}
+
+.page-perfil .perfil-header {
+    margin-bottom: 1.25rem;
+    padding: 1.15rem 1.25rem;
+    border: 1px solid rgba(220, 228, 239, 0.9);
+    border-radius: 18px;
+    background: rgba(255, 255, 255, 0.9);
+    box-shadow: var(--shadow-sm);
+}
+
+.page-perfil .perfil-header h1 {
+    margin-bottom: 0.35rem;
+    font-size: clamp(1.9rem, 3vw, 2.45rem);
+}
+
+.page-perfil .perfil-header p {
+    margin: 0;
+    color: var(--color-text-muted);
+}
+
+.page-perfil .perfil-container {
+    display: grid;
+    grid-template-columns: minmax(0, 320px) minmax(0, 1fr);
+    gap: 1.5rem;
+    align-items: start;
+}
+
+.page-perfil .perfil-forms {
+    display: grid;
+    gap: 1.25rem;
+    min-width: 0;
+}
+
+.page-perfil .perfil-card,
+.page-perfil .perfil-form {
+    padding: 1.35rem;
+    background: #fff;
+    border: 1px solid rgba(220, 228, 239, 0.9);
+    border-radius: 16px;
+    box-shadow: var(--shadow-sm);
+}
+
+.page-perfil .perfil-card {
+    position: sticky;
+    top: 5.2rem;
+    min-width: 0;
+}
+
+.page-perfil .perfil-info {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.page-perfil .avatar {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 88px;
+    height: 88px;
+    border-radius: 999px;
+    color: #fff;
+    background: var(--gradient-brand);
+    font-size: 2.35rem;
+    font-weight: 800;
+    overflow: hidden;
+}
+
+.page-perfil .avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.page-perfil .info-details h2 {
+    margin-bottom: 0.35rem;
+}
+
+.page-perfil .email {
+    margin: 0;
+    color: var(--color-text-muted);
+}
+
+.page-perfil .role {
+    margin-top: 0.55rem;
+}
+
+.page-perfil .perfil-summary {
+    display: grid;
+    gap: 0.85rem;
+    padding-top: 1rem;
+    border-top: 1px solid #eef2f7;
+}
+
+.page-perfil .perfil-highlights {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.page-perfil .perfil-pill {
+    display: inline-flex;
+    align-items: center;
+    min-height: 30px;
+    padding: 0.35rem 0.7rem;
+    border-radius: 999px;
+    background: #eef4ff;
+    color: #3157a5;
+    font-size: 0.78rem;
+    font-weight: 700;
+}
+
+.page-perfil .perfil-note {
+    margin: 0;
+    color: var(--color-text-muted);
+    line-height: 1.55;
+}
+
+.page-perfil .perfil-export {
+    display: grid;
+    gap: 0.7rem;
+    padding-top: 1rem;
+    border-top: 1px solid #eef2f7;
+    min-width: 0;
+}
+
+.page-perfil .perfil-export strong {
+    color: #0f172a;
+}
+
+.page-perfil .perfil-export p {
+    margin: 0;
+    color: var(--color-text-muted);
+    line-height: 1.5;
+}
+
+.page-perfil .perfil-export__form {
+    display: grid;
+    gap: 0.75rem;
+    min-width: 0;
+}
+
+.page-perfil .perfil-export__form > * {
+    min-width: 0;
+    max-width: 100%;
+}
+
+.page-perfil .perfil-export__form input[type="password"],
+.page-perfil .perfil-export__form input[type="file"],
+.page-perfil .perfil-export__form select {
+    width: 100%;
+}
+
+.page-perfil .perfil-export__field {
+    display: grid;
+    gap: 0.35rem;
+    color: var(--color-text-muted);
+}
+
+.page-perfil .perfil-export__check {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    color: var(--color-text-muted);
+    line-height: 1.4;
+}
+
+.page-perfil .perfil-export__check input[type="checkbox"] {
+    width: 16px;
+    height: 16px;
+    margin: 0;
+    flex: 0 0 16px;
+    order: 2;
+}
+
+.page-perfil .perfil-export__check span {
+    flex: 1;
+    order: 1;
+}
+
+.page-perfil .perfil-export__field select,
+.page-perfil .perfil-export__field input,
+.page-perfil .perfil-export__field textarea {
+    width: 100%;
+}
+
+.page-perfil .perfil-export__form button:not(.toggle-password) {
+    width: 100%;
+    justify-content: center;
+}
+
+.page-perfil .perfil-form {
+    scroll-margin-top: 100px;
+}
+
+.page-perfil .perfil-form form {
+    display: grid;
+    gap: 1rem;
+}
+
+.page-perfil .perfil-form h3 {
+    margin-bottom: 1rem;
+}
+
+.page-perfil .perfil-form .form-group {
+    display: grid;
+    gap: 0.45rem;
+}
+
+.page-perfil .perfil-form .btn {
+    margin-top: 0.35rem;
+    justify-self: start;
+}
+
+.page-perfil .perfil-upload {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+}
+
+.page-perfil .perfil-upload-preview {
+    width: 88px;
+    height: 88px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 88px;
+    border-radius: 999px;
+    overflow: hidden;
+    color: #fff;
+    background: var(--gradient-brand);
+    font-size: 2rem;
+    font-weight: 800;
+}
+
+.page-perfil .perfil-upload-preview img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.page-perfil .perfil-upload-fields {
+    display: grid;
+    gap: 0.45rem;
+}
+
+.page-perfil .perfil-upload-fields small {
+    line-height: 1.45;
+}
+
+@media (max-width: 768px) {
+    .page-perfil .perfil-container {
+        grid-template-columns: 1fr;
+    }
+
+    .page-perfil .perfil-card {
+        position: static;
+    }
+
+    .page-perfil .perfil-info {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+    }
+
+    .page-perfil .perfil-highlights {
+        justify-content: center;
+    }
+
+    .page-perfil .perfil-summary {
+        text-align: center;
+    }
+
+    .page-perfil .perfil-upload {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+}

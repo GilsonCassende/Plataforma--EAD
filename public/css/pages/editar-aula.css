@@ -1,0 +1,15 @@
+.page-editar-aula .editor-card,
+.page-editar-aula .modal .edit-lesson {
+    width: min(100%, 820px);
+    margin-inline: auto;
+}
+
+.page-editar-aula .editor-card__body {
+    gap: 1rem;
+}
+
+.page-editar-aula .editor-card__body small {
+    display: block;
+    margin-top: 0.45rem;
+    color: var(--color-text-muted);
+}

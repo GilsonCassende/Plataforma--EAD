@@ -1,0 +1,13 @@
+{
+    "version": "1.0",
+    "platform": "Plataforma EAD",
+    "platform_version": "1.0.0",
+    "type": "full",
+    "user_id": 7,
+    "generated_at": "2026-04-26T19:13:07+02:00",
+    "total_files": 18,
+    "total_records": 39,
+    "checksum": "f4353ff9d47fd7642e92ee9ee5f49a4bcc82cba0cf30def395f774b8aa826e76",
+    "scope": "all",
+    "course_id": null
+}

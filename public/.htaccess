@@ -1,0 +1,32 @@
+# Configuração de reescrita de URL
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteBase /Plataforma-EAD/public/
+    
+    # Não reescrever se for arquivo real
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    
+    # Redirecionar para index.php
+    RewriteRule ^(.*)$ index.php?url=$1 [QSA,L]
+</IfModule>
+
+# Segurança
+<FilesMatch "\.php$">
+    Order Deny,Allow
+</FilesMatch>
+
+# Cache de assets
+<IfModule mod_expires.c>
+    ExpiresActive On
+    ExpiresByType image/jpeg "access plus 1 year"
+    ExpiresByType image/gif "access plus 1 year"
+    ExpiresByType image/png "access plus 1 year"
+    ExpiresByType text/css "access plus 1 month"
+    ExpiresByType application/javascript "access plus 1 month"
+</IfModule>
+
+# Compressão
+<IfModule mod_deflate.c>
+    AddOutputFilterByType DEFLATE text/html text/plain text/xml text/css text/javascript application/javascript
+</IfModule>

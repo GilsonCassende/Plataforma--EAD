@@ -1,0 +1,356 @@
+<?php
+
+/**
+ * View: Página de Aula
+ */
+?>
+
+<section class="aula-view">
+    <div class="container">
+        <?php if (isset($aula) && $aula && isset($curso) && $curso): ?>
+            <?php
+            $usuario = usuario_atual();
+            $isOwner = is_course_owner($curso);
+            $totalAulasCurso = count($aulas_curso ?? []);
+            $progressValue = (int)($progresso_curso ?? 0);
+            $currentLessonIndex = 1;
+            $modulosCurso = is_array($modulos_curso ?? null) ? $modulos_curso : [];
+            $currentModule = $current_module ?? null;
+            $allModulesCompleted = !empty($modulosCurso);
+            foreach ($modulosCurso as $moduleItemState) {
+                if (empty($moduleItemState['completed'])) {
+                    $allModulesCompleted = false;
+                    break;
+                }
+            }
+
+            foreach (($aulas_curso ?? []) as $lessonCurso) {
+                if ((int)($lessonCurso['id'] ?? 0) === (int)$aula['id']) {
+                    $currentLessonIndex = (int)($lessonCurso['position'] ?? $currentLessonIndex);
+                    break;
+                }
+            }
+            ?>
+            <div class="lesson-shell">
+                <main class="lesson-main">
+                    <header class="aula-header">
+                        <div class="aula-header-top">
+                            <span class="lesson-type-badge"><?php echo htmlspecialchars(strtoupper($aula['tipo'] ?? 'AULA'), ENT_QUOTES, 'UTF-8'); ?></span>
+                        </div>
+
+                        <div class="aula-header-copy">
+                            <p class="curso-nome">Curso: <?php echo htmlspecialchars($curso['titulo']); ?></p>
+                            <h1><?php echo htmlspecialchars($aula['titulo']); ?></h1>
+                            <p class="lesson-intro"><?php echo htmlspecialchars($aula['descricao'] ?? 'Explore esta aula com foco total no conteúdo e avance com clareza pela trilha do curso.'); ?></p>
+                        </div>
+
+                        <div class="lesson-overview">
+                            <div class="lesson-overview-item lesson-overview-item--trail">
+                                <span class="lesson-overview-label">Trilha</span>
+                                <strong><?php echo htmlspecialchars((string)($currentModule['titulo'] ?? 'Módulo principal'), ENT_QUOTES, 'UTF-8'); ?> · Aula <?php echo htmlspecialchars($currentLessonIndex, ENT_QUOTES, 'UTF-8'); ?> de <?php echo htmlspecialchars($totalAulasCurso, ENT_QUOTES, 'UTF-8'); ?></strong>
+                            </div>
+                            <div class="lesson-overview-item lesson-overview-item--status">
+                                <span class="lesson-overview-label">Status atual</span>
+                                <strong class="lesson-current-status"><?php echo !empty($concluida) ? 'Assistida' : 'Em andamento'; ?></strong>
+                            </div>
+                        </div>
+
+                        <?php if ($isOwner): ?>
+                            <div class="aula-header-actions">
+                                <a href="?page=editar-aula&lesson_id=<?php echo $aula['id']; ?>&course_id=<?php echo $curso['id']; ?>" class="btn btn-outline btn-sm">Editar Aula</a>
+                                <form method="POST" class="inline-form" data-confirm="Deletar esta aula?">
+                                    <?php echo csrf_input(); ?>
+                                    <input type="hidden" name="acao" value="deletar_aula">
+                                    <input type="hidden" name="lesson_id" value="<?php echo $aula['id']; ?>">
+                                    <button type="submit" class="btn btn-danger btn-sm">Deletar Aula</button>
+                                </form>
+                                <a href="?page=criar-quiz&lesson_id=<?php echo (int)($aula['id'] ?? 0); ?>&course_id=<?php echo (int)($curso['id'] ?? 0); ?>" class="btn btn-outline btn-sm" data-fragment="?page=criar-quiz&partial=1&lesson_id=<?php echo (int)($aula['id'] ?? 0); ?>&course_id=<?php echo (int)($curso['id'] ?? 0); ?>" data-fragment-title="Criar Quiz da Aula">Quiz da Aula</a>
+                                <?php if (($curso['course_structure'] ?? 'single_module') === 'multi_module' && !empty($currentModule['id'])): ?>
+                                    <a href="?page=criar-quiz&module_id=<?php echo (int)($currentModule['id'] ?? 0); ?>&course_id=<?php echo (int)($curso['id'] ?? 0); ?>" class="btn btn-outline btn-sm" data-fragment="?page=criar-quiz&partial=1&module_id=<?php echo (int)$currentModule['id']; ?>&course_id=<?php echo $curso['id']; ?>" data-fragment-title="Criar Quiz de Módulo">Quiz do Módulo</a>
+                                <?php endif; ?>
+                                <a href="?page=criar-quiz&course_id=<?php echo (int)($curso['id'] ?? 0); ?>" class="btn btn-outline btn-sm" data-fragment="?page=criar-quiz&partial=1&course_id=<?php echo $curso['id']; ?>" data-fragment-title="Criar Quiz Final">Quiz Final</a>
+                            </div>
+                        <?php endif; ?>
+                    </header>
+
+                    <section class="lesson-stage">
+                        <article class="lesson-player-card">
+                            <div class="aula-player">
+                                <?php if ($aula['tipo'] === 'video'): ?>
+                                    <div class="video-player">
+                                        <?php if (!empty($aula['video_id'])):
+                                            $yid = htmlspecialchars($aula['video_id']);
+                                            $thumb = "https://i.ytimg.com/vi/{$yid}/hqdefault.jpg";
+                                            $embed = "https://www.youtube-nocookie.com/embed/{$yid}?autoplay=1&rel=0&modestbranding=1&playsinline=1&iv_load_policy=3&fs=1&enablejsapi=1";
+                                        ?>
+                                            <div class="video-wrapper" data-embed="<?php echo $embed; ?>">
+                                                <button type="button" class="placeholder" aria-label="Reproduzir vídeo">
+                                                    <img src="<?php echo $thumb; ?>" alt="Thumbnail da aula">
+                                                    <span class="play-btn" aria-hidden="true">►</span>
+                                                </button>
+                                            </div>
+                                        <?php elseif (!empty($aula['url_arquivo'])): ?>
+                                            <?php if (strpos($aula['url_arquivo'], 'youtube') !== false): ?>
+                                                <?php
+                                                $videoUrl = (string)$aula['url_arquivo'];
+                                                $youtubeId = '';
+                                                if (preg_match('~(?:v=|youtu\.be/|embed/)([A-Za-z0-9_-]{6,})~', $videoUrl, $matches)) {
+                                                    $youtubeId = $matches[1];
+                                                }
+                                                ?>
+                                                <?php if ($youtubeId !== ''): ?>
+                                                    <div class="video-wrapper" data-embed="https://www.youtube-nocookie.com/embed/<?php echo htmlspecialchars($youtubeId, ENT_QUOTES, 'UTF-8'); ?>?autoplay=1&rel=0&modestbranding=1&playsinline=1&iv_load_policy=3&fs=1&enablejsapi=1">
+                                                        <button type="button" class="placeholder" aria-label="Reproduzir vídeo">
+                                                            <img src="https://i.ytimg.com/vi/<?php echo htmlspecialchars($youtubeId, ENT_QUOTES, 'UTF-8'); ?>/hqdefault.jpg" alt="Thumbnail da aula">
+                                                            <span class="play-btn" aria-hidden="true">►</span>
+                                                        </button>
+                                                    </div>
+                                                <?php else: ?>
+                                                    <iframe class="media-frame" src="<?php echo htmlspecialchars($aula['url_arquivo']); ?>" title="<?php echo htmlspecialchars($aula['titulo']); ?>" frameborder="0" allowfullscreen></iframe>
+                                                <?php endif; ?>
+                                            <?php else: ?>
+                                                <video controls class="media-video">
+                                                    <source src="<?php echo htmlspecialchars($aula['url_arquivo']); ?>" type="video/mp4">
+                                                    Seu navegador não suporta vídeo HTML5.
+                                                </video>
+                                            <?php endif; ?>
+                                        <?php else: ?>
+                                            <div class="media-unavailable">Vídeo não disponível.</div>
+                                        <?php endif; ?>
+                                    </div>
+                                <?php elseif ($aula['tipo'] === 'pdf'): ?>
+                                    <div class="pdf-viewer">
+                                        <iframe class="pdf-frame" src="<?php echo htmlspecialchars($aula['url_arquivo']); ?>" title="<?php echo htmlspecialchars($aula['titulo']); ?>"></iframe>
+                                    </div>
+                                <?php else: ?>
+                                    <div class="aula-texto">
+                                        <?php echo sanitize_html($aula['conteudo'] ?? ''); ?>
+                                    </div>
+                                <?php endif; ?>
+                            </div>
+
+                            <?php if (!$isOwner): ?>
+                                <div
+                                    class="aula-actions"
+                                    data-lesson-id="<?php echo (int)$aula['id']; ?>"
+                                    data-course-id="<?php echo (int)$curso['id']; ?>">
+                                    <div class="aula-actions-copy">
+                                        <h2>Progresso da aula</h2>
+                                        <p>Finalize esta etapa para atualizar o progresso do curso e avançar automaticamente na trilha.</p>
+                                    </div>
+                                    <div class="aula-actions-control">
+                                        <?php if (!empty($concluida)): ?>
+                                            <button id="btn-marcar-concluida" class="btn btn-success btn-lg completed" data-completed="1">✓ Concluída</button>
+                                        <?php else: ?>
+                                            <form id="form-marcar-concluida" method="POST" class="inline-form">
+                                                <input type="hidden" name="acao" value="marcar_concluida">
+                                                <?php echo csrf_input(); ?>
+                                                <input type="hidden" name="lesson_id" value="<?php echo $aula['id']; ?>">
+                                                <button type="submit" class="btn btn-secondary btn-lg" id="btn-marcar-concluida">✓ Marcar como Concluída</button>
+                                            </form>
+                                        <?php endif; ?>
+                                    </div>
+                                </div>
+                            <?php endif; ?>
+                        </article>
+
+                        <article class="lesson-reading-card">
+                            <div class="lesson-section-heading">
+                                <span class="lesson-section-eyebrow">Conteúdo da aula</span>
+                                <h2>Resumo e material de apoio</h2>
+                            </div>
+                            <div class="aula-descricao">
+                                <p><?php echo htmlspecialchars($aula['descricao'] ?? ''); ?></p>
+                            </div>
+                            <?php if ($aula['tipo'] !== 'texto' && !empty($aula['conteudo'])): ?>
+                                <div class="aula-texto lesson-rich-text">
+                                    <?php echo sanitize_html($aula['conteudo']); ?>
+                                </div>
+                            <?php endif; ?>
+                        </article>
+
+                        <?php if (isset($quizzes) && count($quizzes) > 0): ?>
+                            <section class="quizzes-section">
+                                <div class="lesson-section-heading">
+                                    <span class="lesson-section-eyebrow">Avaliação</span>
+                                    <h2>Quizzes disponíveis</h2>
+                                </div>
+
+                                <?php if (!empty($avaliacao['nota'])): ?>
+                                    <div class="quiz-course-overview">
+                                        <div class="quiz-course-overview__item">
+                                            <span>Nota final do curso</span>
+                                            <strong><?php echo htmlspecialchars(number_format((float)($avaliacao['nota']['nota_final'] ?? 0), 1, ',', '.'), ENT_QUOTES, 'UTF-8'); ?>/20</strong>
+                                        </div>
+                                        <div class="quiz-course-overview__item">
+                                            <span>Progresso de avaliação</span>
+                                            <strong><?php echo htmlspecialchars($avaliacao['progresso_avaliacao'] ?? 0, ENT_QUOTES, 'UTF-8'); ?>%</strong>
+                                        </div>
+                                        <div class="quiz-course-overview__item">
+                                            <span>Status</span>
+                                            <strong><?php echo !empty($avaliacao['nota']['aprovado']) ? 'Aprovado' : 'Pendente'; ?></strong>
+                                        </div>
+                                    </div>
+
+                                    <?php if (!empty($avaliacao['nota']['grupos']) && is_array($avaliacao['nota']['grupos'])): ?>
+                                        <div class="quiz-course-groups">
+                                            <?php foreach ($avaliacao['nota']['grupos'] as $grupo): ?>
+                                                <?php if (($grupo['count'] ?? 0) <= 0) { continue; } ?>
+                                                <article class="quiz-course-groups__item">
+                                                    <span><?php echo htmlspecialchars($grupo['label'] ?? 'Grupo', ENT_QUOTES, 'UTF-8'); ?></span>
+                                                    <strong><?php echo htmlspecialchars(number_format((float)($grupo['media'] ?? 0), 1, ',', '.'), ENT_QUOTES, 'UTF-8'); ?>/20</strong>
+                                                    <small><?php echo htmlspecialchars((string)($grupo['count'] ?? 0), ENT_QUOTES, 'UTF-8'); ?> quiz(es) · peso <?php echo htmlspecialchars(number_format((float)($grupo['peso_normalizado'] ?? 0), 1, ',', '.'), ENT_QUOTES, 'UTF-8'); ?>%</small>
+                                                </article>
+                                            <?php endforeach; ?>
+                                        </div>
+                                    <?php endif; ?>
+                                <?php endif; ?>
+
+                                <div class="quizzes-list">
+                                    <?php foreach ($quizzes as $quiz): ?>
+                                        <div class="quiz-card">
+                                            <div class="quiz-header">
+                                                <h3><?php echo htmlspecialchars($quiz['titulo']); ?></h3>
+                                                <span class="quiz-pontos"><?php echo htmlspecialchars(number_format((float)($quiz['pontos_totais'] ?? 20), 1, ',', '.'), ENT_QUOTES, 'UTF-8'); ?>/20</span>
+                                            </div>
+                                            <p><?php echo htmlspecialchars($quiz['descricao'] ?? ''); ?></p>
+                                            <p class="tentativas">Tentativas: <?php echo htmlspecialchars($quiz['tentativas_usadas'] ?? 0, ENT_QUOTES, 'UTF-8'); ?>/<?php echo htmlspecialchars($quiz['tentativas_maximas'], ENT_QUOTES, 'UTF-8'); ?></p>
+                                            <p class="tentativas">Tipo: <?php echo htmlspecialchars(strtoupper($quiz['tipo'] ?? 'final'), ENT_QUOTES, 'UTF-8'); ?> · <?php echo htmlspecialchars($quiz['dificuldade_label'] ?? 'Normal', ENT_QUOTES, 'UTF-8'); ?> · Peso <?php echo htmlspecialchars((string)($quiz['peso_percentual'] ?? $quiz['peso'] ?? 20), ENT_QUOTES, 'UTF-8'); ?>%</p>
+                                            <?php if (!empty($quiz['melhor_resultado'])): ?>
+                                                <p class="tentativas">Melhor nota: <?php echo htmlspecialchars(number_format((float)($quiz['melhor_resultado']['pontuacao'] ?? 0), 1, ',', '.'), ENT_QUOTES, 'UTF-8'); ?>/20</p>
+                                            <?php endif; ?>
+                                            <?php if ($isOwner): ?>
+                                                <a href="?page=quiz&quiz_id=<?php echo $quiz['id']; ?>&course_id=<?php echo $curso['id']; ?>" class="btn btn-outline">Gerenciar Quiz</a>
+                                            <?php else: ?>
+                                                <a href="?page=quiz&quiz_id=<?php echo $quiz['id']; ?>&course_id=<?php echo $curso['id']; ?>" class="btn btn-primary">Fazer Quiz</a>
+                                            <?php endif; ?>
+                                        </div>
+                                    <?php endforeach; ?>
+                                </div>
+                            </section>
+                        <?php endif; ?>
+                    </section>
+                </main>
+
+                <aside class="aula-sidebar">
+                    <div class="aulas-related">
+                        <div class="lesson-sidebar-head">
+                            <span class="lesson-section-eyebrow">Trilha do curso</span>
+                            <h2>Módulos e etapas</h2>
+                            <p><?php echo htmlspecialchars($aulas_concluidas_total ?? 0, ENT_QUOTES, 'UTF-8'); ?> de <?php echo htmlspecialchars($totalAulasCurso, ENT_QUOTES, 'UTF-8'); ?> concluídas</p>
+                        </div>
+
+                        <div class="lesson-progress-summary">
+                            <div class="progresso-bar" role="progressbar" aria-label="Progresso do curso" aria-valuemin="0" aria-valuemax="100" aria-valuenow="<?php echo htmlspecialchars($progressValue, ENT_QUOTES, 'UTF-8'); ?>">
+                                <div class="progresso-fill" data-course-id="<?php echo htmlspecialchars((int)$curso['id'], ENT_QUOTES, 'UTF-8'); ?>" data-progress="<?php echo htmlspecialchars($progressValue, ENT_QUOTES, 'UTF-8'); ?>"></div>
+                            </div>
+                            <p class="progresso-text" data-course-id="<?php echo htmlspecialchars((int)$curso['id'], ENT_QUOTES, 'UTF-8'); ?>"><?php echo htmlspecialchars($progressValue, ENT_QUOTES, 'UTF-8'); ?>% completo</p>
+                        </div>
+
+                        <div class="aulas-grid-sidebar">
+                            <?php foreach ($modulosCurso as $module): ?>
+                                <section class="lesson-module-sidebar <?php echo !empty($module['unlocked']) ? '' : 'is-locked'; ?>">
+                                    <header class="lesson-module-sidebar__head">
+                                        <div>
+                                            <span class="lesson-section-eyebrow"><?php echo !empty($module['unlocked']) ? 'Disponível' : 'Bloqueado'; ?></span>
+                                            <h3><?php echo htmlspecialchars((string)($module['titulo'] ?? 'Módulo'), ENT_QUOTES, 'UTF-8'); ?></h3>
+                                        </div>
+                                        <strong><?php echo htmlspecialchars((string)($module['progress_percent'] ?? 0), ENT_QUOTES, 'UTF-8'); ?>%</strong>
+                                    </header>
+
+                                    <?php foreach (($module['lessons'] ?? []) as $a): ?>
+                                        <?php
+                                        $isCurrent = (int)($a['id'] ?? 0) === (int)($aula['id'] ?? 0);
+                                        $isCompleted = !empty($a['is_completed']);
+                                        ?>
+                                        <?php if (!empty($module['unlocked']) || $isOwner): ?>
+                                            <a href="?page=aula&lesson_id=<?php echo $a['id']; ?>&course_id=<?php echo $curso['id']; ?>" class="aula-card-sidebar <?php echo $isCurrent ? 'active' : ''; ?>">
+                                                <div class="aula-card-index"><?php echo htmlspecialchars($a['position'] ?? 1, ENT_QUOTES, 'UTF-8'); ?></div>
+                                                <div class="aula-card-copy">
+                                                    <div class="aula-card-status-row">
+                                                        <span class="aula-card-status <?php echo $isCurrent ? 'is-current' : ($isCompleted ? 'is-completed' : 'is-pending'); ?>">
+                                                            <?php echo $isCurrent ? 'Atual' : ($isCompleted ? 'Assistida' : 'Pendente'); ?>
+                                                        </span>
+                                                        <span class="aula-card-type"><?php echo htmlspecialchars(strtoupper($a['tipo'] ?? 'AULA'), ENT_QUOTES, 'UTF-8'); ?></span>
+                                                    </div>
+                                                    <div class="aula-card-title"><?php echo htmlspecialchars($a['titulo']); ?></div>
+                                                </div>
+                                            </a>
+                                        <?php else: ?>
+                                            <div class="aula-card-sidebar is-disabled">
+                                                <div class="aula-card-index"><?php echo htmlspecialchars($a['position'] ?? 1, ENT_QUOTES, 'UTF-8'); ?></div>
+                                                <div class="aula-card-copy">
+                                                    <div class="aula-card-status-row">
+                                                        <span class="aula-card-status is-pending">Bloqueada</span>
+                                                        <span class="aula-card-type"><?php echo htmlspecialchars(strtoupper($a['tipo'] ?? 'AULA'), ENT_QUOTES, 'UTF-8'); ?></span>
+                                                    </div>
+                                                    <div class="aula-card-title"><?php echo htmlspecialchars($a['titulo']); ?></div>
+                                                </div>
+                                            </div>
+                                        <?php endif; ?>
+                                    <?php endforeach; ?>
+
+                                    <?php foreach (($module['module_quizzes'] ?? []) as $moduleQuiz): ?>
+                                        <?php if (!empty($module['quiz_unlocked']) || $isOwner): ?>
+                                            <a href="?page=quiz&quiz_id=<?php echo htmlspecialchars((string)($moduleQuiz['id'] ?? 0), ENT_QUOTES, 'UTF-8'); ?>" class="aula-card-sidebar aula-card-sidebar--quiz <?php echo (int)($moduleQuiz['module_id'] ?? 0) === (int)($currentModule['id'] ?? 0) ? 'active' : ''; ?>">
+                                                <div class="aula-card-index">Q</div>
+                                                <div class="aula-card-copy">
+                                                    <div class="aula-card-status-row">
+                                                        <span class="aula-card-status <?php echo !empty($module['quiz_unlocked']) ? 'is-current' : 'is-pending'; ?>">
+                                                            Quiz do módulo
+                                                        </span>
+                                                        <span class="aula-card-type"><?php echo htmlspecialchars(strtoupper((string)($moduleQuiz['dificuldade_label'] ?? 'Normal')), ENT_QUOTES, 'UTF-8'); ?></span>
+                                                    </div>
+                                                    <div class="aula-card-title"><?php echo htmlspecialchars((string)($moduleQuiz['titulo'] ?? 'Quiz'), ENT_QUOTES, 'UTF-8'); ?></div>
+                                                </div>
+                                            </a>
+                                        <?php else: ?>
+                                            <div class="aula-card-sidebar aula-card-sidebar--quiz is-disabled">
+                                                <div class="aula-card-index">Q</div>
+                                                <div class="aula-card-copy">
+                                                    <div class="aula-card-status-row">
+                                                        <span class="aula-card-status is-pending">Conclua as aulas</span>
+                                                        <span class="aula-card-type"><?php echo htmlspecialchars(strtoupper((string)($moduleQuiz['dificuldade_label'] ?? 'Normal')), ENT_QUOTES, 'UTF-8'); ?></span>
+                                                    </div>
+                                                    <div class="aula-card-title"><?php echo htmlspecialchars((string)($moduleQuiz['titulo'] ?? 'Quiz'), ENT_QUOTES, 'UTF-8'); ?></div>
+                                                </div>
+                                            </div>
+                                        <?php endif; ?>
+                                    <?php endforeach; ?>
+                                </section>
+                            <?php endforeach; ?>
+
+                            <?php foreach (($curso['quizzes_finais'] ?? []) as $finalQuiz): ?>
+                                <?php if ($allModulesCompleted || $isOwner): ?>
+                                    <a href="?page=quiz&quiz_id=<?php echo htmlspecialchars((string)($finalQuiz['id'] ?? 0), ENT_QUOTES, 'UTF-8'); ?>" class="aula-card-sidebar aula-card-sidebar--quiz">
+                                        <div class="aula-card-index">F</div>
+                                        <div class="aula-card-copy">
+                                            <div class="aula-card-status-row">
+                                                <span class="aula-card-status is-current">Final</span>
+                                                <span class="aula-card-type">CURSO</span>
+                                            </div>
+                                            <div class="aula-card-title"><?php echo htmlspecialchars((string)($finalQuiz['titulo'] ?? 'Quiz final'), ENT_QUOTES, 'UTF-8'); ?></div>
+                                        </div>
+                                    </a>
+                                <?php else: ?>
+                                    <div class="aula-card-sidebar aula-card-sidebar--quiz is-disabled">
+                                        <div class="aula-card-index">F</div>
+                                        <div class="aula-card-copy">
+                                            <div class="aula-card-status-row">
+                                                <span class="aula-card-status is-pending">Bloqueado</span>
+                                                <span class="aula-card-type">CURSO</span>
+                                            </div>
+                                            <div class="aula-card-title"><?php echo htmlspecialchars((string)($finalQuiz['titulo'] ?? 'Quiz final'), ENT_QUOTES, 'UTF-8'); ?></div>
+                                        </div>
+                                    </div>
+                                <?php endif; ?>
+                            <?php endforeach; ?>
+                        </div>
+                    </div>
+                </aside>
+            </div>
+        <?php else: ?>
+            <div class="alert alert-error">Aula não encontrada.</div>
+        <?php endif; ?>
+    </div>
+</section>

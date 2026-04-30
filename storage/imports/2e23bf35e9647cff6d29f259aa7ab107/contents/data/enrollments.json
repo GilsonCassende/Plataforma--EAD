@@ -1,0 +1,62 @@
+[
+    {
+        "source_id": 4,
+        "user_id": 8,
+        "course_id": 5,
+        "progress": 66,
+        "data_inscricao": "2025-12-20 01:08:22",
+        "data_conclusao": null,
+        "student_email": "aluno1@ead.com",
+        "student_name": "Aluno1"
+    },
+    {
+        "source_id": 12,
+        "user_id": 13,
+        "course_id": 5,
+        "progress": 85,
+        "data_inscricao": "2026-03-24 15:19:18",
+        "data_conclusao": null,
+        "student_email": "gil@gmail.com",
+        "student_name": "gilson gil"
+    },
+    {
+        "source_id": 2,
+        "user_id": 8,
+        "course_id": 6,
+        "progress": 0,
+        "data_inscricao": "2025-12-15 22:58:11",
+        "data_conclusao": null,
+        "student_email": "aluno1@ead.com",
+        "student_name": "Aluno1"
+    },
+    {
+        "source_id": 13,
+        "user_id": 1,
+        "course_id": 7,
+        "progress": 0,
+        "data_inscricao": "2026-03-25 01:26:56",
+        "data_conclusao": null,
+        "student_email": "admin@ead.com",
+        "student_name": "Admin Sistema"
+    },
+    {
+        "source_id": 3,
+        "user_id": 7,
+        "course_id": 7,
+        "progress": 0,
+        "data_inscricao": "2025-12-19 00:59:11",
+        "data_conclusao": null,
+        "student_email": "gilson@ead.com",
+        "student_name": "Gilson Cassende"
+    },
+    {
+        "source_id": 14,
+        "user_id": 13,
+        "course_id": 9,
+        "progress": 50,
+        "data_inscricao": "2026-04-01 23:04:00",
+        "data_conclusao": null,
+        "student_email": "gil@gmail.com",
+        "student_name": "gilson gil"
+    }
+]

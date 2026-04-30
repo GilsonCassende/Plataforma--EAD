@@ -1,0 +1,206 @@
+[2025-11-26 20:32:01] login_failed: Falha de login para adm@gmail.com
+[2025-11-27 22:49:52] debug: processarAcao start action=login isAjax=0 headers={"HTTP_HOST":"localhost","HTTP_CONNECTION":"keep-alive","HTTP_CACHE_CONTROL":"max-age=0","HTTP_SEC_CH_UA":"\"Chromium\";v=\"140\", \"Not=A?Brand\";v=\"24\", \"Google Chrome\";v=\"140\"","HTTP_SEC_CH_UA_MOBILE":"?0","HTTP_SEC_CH_UA_PLATFORM":"\"Windows\"","HTTP_ORIGIN":"http:\/\/localhost","HTTP_UPGRADE_INSECURE_REQUESTS":"1","HTTP_USER_AGENT":"Mozilla\/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit\/537.36 (KHTML, like Gecko) Chrome\/140.0.0.0 Safari\/537.36","HTTP_ACCEPT":"text\/html,application\/xhtml+xml,application\/xml;q=0.9,image\/avif,image\/webp,image\/apng,*\/*;q=0.8,application\/signed-exchange;v=b3;q=0.7","HTTP_SEC_FETCH_SITE":"same-origin","HTTP_SEC_FETCH_MODE":"navigate","HTTP_SEC_FETCH_USER":"?1","HTTP_SEC_FETCH_DEST":"document","HTTP_REFERER":"http:\/\/localhost\/Plataforma-EAD\/public\/index.php?page=login","HTTP_ACCEPT_ENCODING":"gzip, deflate, br, zstd","HTTP_ACCEPT_LANGUAGE":"pt-PT,pt;q=0.9,en-US;q=0.8,en;q=0.7","HTTP_COOKIE":"PHPSESSID=j6hqv3h93hpihcde3do7suumad"} post_keys=["action","csrf_token","email","senha"] files=[] raw_prefix=action=login&csrf_token=334c08fcf3be63197f9d57efff7633cf42fabb982cc1a3726b2d6bae1b2c83cf&email=gilson%40ead.com&senha=senha123
+[2025-11-27 22:49:56] debug: processarAcao start action=login isAjax=0 headers={"HTTP_HOST":"localhost","HTTP_CONNECTION":"keep-alive","HTTP_CACHE_CONTROL":"max-age=0","HTTP_SEC_CH_UA":"\"Chromium\";v=\"140\", \"Not=A?Brand\";v=\"24\", \"Google Chrome\";v=\"140\"","HTTP_SEC_CH_UA_MOBILE":"?0","HTTP_SEC_CH_UA_PLATFORM":"\"Windows\"","HTTP_ORIGIN":"http:\/\/localhost","HTTP_UPGRADE_INSECURE_REQUESTS":"1","HTTP_USER_AGENT":"Mozilla\/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit\/537.36 (KHTML, like Gecko) Chrome\/140.0.0.0 Safari\/537.36","HTTP_ACCEPT":"text\/html,application\/xhtml+xml,application\/xml;q=0.9,image\/avif,image\/webp,image\/apng,*\/*;q=0.8,application\/signed-exchange;v=b3;q=0.7","HTTP_SEC_FETCH_SITE":"same-origin","HTTP_SEC_FETCH_MODE":"navigate","HTTP_SEC_FETCH_USER":"?1","HTTP_SEC_FETCH_DEST":"document","HTTP_REFERER":"http:\/\/localhost\/Plataforma-EAD\/public\/index.php?page=login","HTTP_ACCEPT_ENCODING":"gzip, deflate, br, zstd","HTTP_ACCEPT_LANGUAGE":"pt-PT,pt;q=0.9,en-US;q=0.8,en;q=0.7","HTTP_COOKIE":"PHPSESSID=j6hqv3h93hpihcde3do7suumad"} post_keys=["action","csrf_token","email","senha"] files=[] raw_prefix=action=login&csrf_token=334c08fcf3be63197f9d57efff7633cf42fabb982cc1a3726b2d6bae1b2c83cf&email=gilson%40ead.com&senha=senha123
+[2025-11-27 22:53:07] debug: processarAcao start action=criar_curso isAjax=1 headers={"HTTP_HOST":"localhost","HTTP_CONNECTION":"keep-alive","HTTP_SEC_CH_UA_PLATFORM":"\"Android\"","HTTP_X_CSRF_TOKEN":"334c08fcf3be63197f9d57efff7633cf42fabb982cc1a3726b2d6bae1b2c83cf","HTTP_SEC_CH_UA":"\"Chromium\";v=\"140\", \"Not=A?Brand\";v=\"24\", \"Google Chrome\";v=\"140\"","HTTP_SEC_CH_UA_MOBILE":"?1","HTTP_X_REQUESTED_WITH":"XMLHttpRequest","HTTP_USER_AGENT":"Mozilla\/5.0 (Linux; Android 6.0; Nexus 5 Build\/MRA58N) AppleWebKit\/537.36 (KHTML, like Gecko) Chrome\/140.0.0.0 Mobile Safari\/537.36","HTTP_ACCEPT":"application\/json","HTTP_ORIGIN":"http:\/\/localhost","HTTP_SEC_FETCH_SITE":"same-origin","HTTP_SEC_FETCH_MODE":"cors","HTTP_SEC_FETCH_DEST":"empty","HTTP_REFERER":"http:\/\/localhost\/Plataforma-EAD\/public\/index.php?page=dashboard","HTTP_ACCEPT_ENCODING":"gzip, deflate, br, zstd","HTTP_ACCEPT_LANGUAGE":"pt-PT,pt;q=0.9,en-US;q=0.8,en;q=0.7","HTTP_COOKIE":"PHPSESSID=j6hqv3h93hpihcde3do7suumad"} post_keys=["csrf_token","action","titulo","descricao","categoria"] files={"thumbnail":{"name":"Captura de Tela (21).png","error":0,"size":1049717}} raw_prefix=
+[2025-11-27 22:53:29] debug: criar_curso result: {"sucesso":true,"id":"3"}
+[2025-11-27 22:53:29] debug: processarAcao start action=criar_curso isAjax=1 headers={"HTTP_HOST":"localhost","HTTP_CONNECTION":"keep-alive","HTTP_SEC_CH_UA_PLATFORM":"\"Android\"","HTTP_X_CSRF_TOKEN":"334c08fcf3be63197f9d57efff7633cf42fabb982cc1a3726b2d6bae1b2c83cf","HTTP_SEC_CH_UA":"\"Chromium\";v=\"140\", \"Not=A?Brand\";v=\"24\", \"Google Chrome\";v=\"140\"","HTTP_SEC_CH_UA_MOBILE":"?1","HTTP_X_REQUESTED_WITH":"XMLHttpRequest","HTTP_USER_AGENT":"Mozilla\/5.0 (Linux; Android 6.0; Nexus 5 Build\/MRA58N) AppleWebKit\/537.36 (KHTML, like Gecko) Chrome\/140.0.0.0 Mobile Safari\/537.36","HTTP_ACCEPT":"application\/json","HTTP_ORIGIN":"http:\/\/localhost","HTTP_SEC_FETCH_SITE":"same-origin","HTTP_SEC_FETCH_MODE":"cors","HTTP_SEC_FETCH_DEST":"empty","HTTP_REFERER":"http:\/\/localhost\/Plataforma-EAD\/public\/index.php?page=dashboard","HTTP_ACCEPT_ENCODING":"gzip, deflate, br, zstd","HTTP_ACCEPT_LANGUAGE":"pt-PT,pt;q=0.9,en-US;q=0.8,en;q=0.7","HTTP_COOKIE":"PHPSESSID=j6hqv3h93hpihcde3do7suumad"} post_keys=["csrf_token","action","titulo","descricao","categoria"] files={"thumbnail":{"name":"Captura de Tela (21).png","error":0,"size":1049717}} raw_prefix=
+[2025-11-27 22:53:31] debug: criar_curso result: {"sucesso":true,"id":"4"}
+[2025-11-27 23:16:30] debug: processarAcao start action=criar_curso isAjax=1 headers={"HTTP_HOST":"localhost","HTTP_CONNECTION":"keep-alive","HTTP_SEC_CH_UA_PLATFORM":"\"Windows\"","HTTP_X_CSRF_TOKEN":"334c08fcf3be63197f9d57efff7633cf42fabb982cc1a3726b2d6bae1b2c83cf","HTTP_SEC_CH_UA":"\"Chromium\";v=\"140\", \"Not=A?Brand\";v=\"24\", \"Google Chrome\";v=\"140\"","HTTP_SEC_CH_UA_MOBILE":"?0","HTTP_X_REQUESTED_WITH":"XMLHttpRequest","HTTP_USER_AGENT":"Mozilla\/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit\/537.36 (KHTML, like Gecko) Chrome\/140.0.0.0 Safari\/537.36","HTTP_ACCEPT":"application\/json","HTTP_ORIGIN":"http:\/\/localhost","HTTP_SEC_FETCH_SITE":"same-origin","HTTP_SEC_FETCH_MODE":"cors","HTTP_SEC_FETCH_DEST":"empty","HTTP_REFERER":"http:\/\/localhost\/Plataforma-EAD\/public\/index.php?page=dashboard","HTTP_ACCEPT_ENCODING":"gzip, deflate, br, zstd","HTTP_ACCEPT_LANGUAGE":"pt-PT,pt;q=0.9,en-US;q=0.8,en;q=0.7","HTTP_COOKIE":"PHPSESSID=j6hqv3h93hpihcde3do7suumad"} post_keys=["csrf_token","action","titulo","descricao","categoria"] files={"thumbnail":{"name":"Captura de Tela (14).png","error":0,"size":733020}} raw_prefix=
+[2025-11-27 23:16:43] debug: criar_curso result: {"sucesso":true,"id":"5"}
+[2025-11-28 01:58:02] exception: Aula não especificada
+[2025-11-28 01:59:26] exception: Aula não especificada
+[2025-12-15 22:53:33] exception: Aula não especificada
+[2025-12-15 22:58:26] exception: Aula não especificada
+[2025-12-19 00:59:18] exception: Aula não especificada
+[2026-01-06 15:14:54] exception: Aula não especificada
+[2026-01-18 18:21:22] exception: Aula não especificada
+[2026-01-18 23:23:26] exception: Aula não especificada
+[2026-01-18 23:26:07] exception: Aula não especificada
+[2026-01-18 23:46:04] login_failed: Falha de login para ariete@gmail.com
+[2026-01-18 23:46:19] login_failed: Falha de login para mateus@gmail.com
+[2026-01-24 17:58:59] exception: Aula não especificada
+[2026-01-24 18:13:33] exception: Aula não especificada
+[2026-01-24 18:13:55] exception: Aula não especificada
+[2026-01-25 18:47:28] exception: Aula não especificada
+[2026-01-25 18:47:30] exception: Aula não especificada
+[2026-01-25 18:47:30] exception: Aula não especificada
+[2026-01-25 18:48:03] exception: Aula não especificada
+[2026-01-25 18:48:12] exception: Aula não especificada
+[2026-01-25 18:49:12] exception: Aula não especificada
+[2026-01-25 18:49:17] exception: Aula não especificada
+[2026-01-25 23:42:55] exception: Aula não especificada
+[2026-01-25 23:44:49] exception: Aula não especificada
+[2026-04-13 21:34:06] exception: CertificateController::downloadCertificatePdfFromRenderUrl Falha ao gerar o PDF via Puppeteer: /opt/lampp/htdocs/Plataforma-EAD/bin/node: /opt/lampp/lib/libstdc++.so.6: version `CXXABI_1.3.11' not found (required by /opt/lampp/htdocs/Plataforma-EAD/bin/node)
+/opt/lampp/htdocs/Plataforma-EAD/bin/node: /opt/lampp/lib/libstdc++.so.6: version `CXXABI_1.3.8' not found (required by /opt/lampp/htdocs/Plataforma-EAD/bin/node)
+/opt/lampp/htdocs/Plataforma-EAD/bin/node: /opt/lampp/lib/libstdc++.so.6: version `GLIBCXX_3.4.20' not found (required by /opt/lampp/htdocs/Plataforma-EAD/bin/node)
+/opt/lampp/htdocs/Plataforma-EAD/bin/node: /opt/lampp/lib/libstdc++.so.6: version `GLIBCXX_3.4.21' not found (required by /opt/lampp/htdocs/Plataforma-EAD/bin/node)
+/opt/lampp/htdocs/Plataforma-EAD/bin/node: /opt/lampp/lib/libstdc++.so.6: version `CXXABI_1.3.9' not found (required by /opt/lampp/htdocs/Plataforma-EAD/bin/node)
+[2026-04-13 21:34:06] exception: certificado_pdf_route: Falha ao gerar o PDF via Puppeteer: /opt/lampp/htdocs/Plataforma-EAD/bin/node: /opt/lampp/lib/libstdc++.so.6: version `CXXABI_1.3.11' not found (required by /opt/lampp/htdocs/Plataforma-EAD/bin/node)
+/opt/lampp/htdocs/Plataforma-EAD/bin/node: /opt/lampp/lib/libstdc++.so.6: version `CXXABI_1.3.8' not found (required by /opt/lampp/htdocs/Plataforma-EAD/bin/node)
+/opt/lampp/htdocs/Plataforma-EAD/bin/node: /opt/lampp/lib/libstdc++.so.6: version `GLIBCXX_3.4.20' not found (required by /opt/lampp/htdocs/Plataforma-EAD/bin/node)
+/opt/lampp/htdocs/Plataforma-EAD/bin/node: /opt/lampp/lib/libstdc++.so.6: version `GLIBCXX_3.4.21' not found (required by /opt/lampp/htdocs/Plataforma-EAD/bin/node)
+/opt/lampp/htdocs/Plataforma-EAD/bin/node: /opt/lampp/lib/libstdc++.so.6: version `CXXABI_1.3.9' not found (required by /opt/lampp/htdocs/Plataforma-EAD/bin/node)
+[2026-04-13 21:34:13] exception: CertificateController::downloadCertificatePdfFromRenderUrl Falha ao gerar o PDF via Puppeteer: /opt/lampp/htdocs/Plataforma-EAD/bin/node: /opt/lampp/lib/libstdc++.so.6: version `CXXABI_1.3.11' not found (required by /opt/lampp/htdocs/Plataforma-EAD/bin/node)
+/opt/lampp/htdocs/Plataforma-EAD/bin/node: /opt/lampp/lib/libstdc++.so.6: version `CXXABI_1.3.8' not found (required by /opt/lampp/htdocs/Plataforma-EAD/bin/node)
+/opt/lampp/htdocs/Plataforma-EAD/bin/node: /opt/lampp/lib/libstdc++.so.6: version `GLIBCXX_3.4.20' not found (required by /opt/lampp/htdocs/Plataforma-EAD/bin/node)
+/opt/lampp/htdocs/Plataforma-EAD/bin/node: /opt/lampp/lib/libstdc++.so.6: version `GLIBCXX_3.4.21' not found (required by /opt/lampp/htdocs/Plataforma-EAD/bin/node)
+/opt/lampp/htdocs/Plataforma-EAD/bin/node: /opt/lampp/lib/libstdc++.so.6: version `CXXABI_1.3.9' not found (required by /opt/lampp/htdocs/Plataforma-EAD/bin/node)
+[2026-04-13 21:34:13] exception: certificado_pdf_route: Falha ao gerar o PDF via Puppeteer: /opt/lampp/htdocs/Plataforma-EAD/bin/node: /opt/lampp/lib/libstdc++.so.6: version `CXXABI_1.3.11' not found (required by /opt/lampp/htdocs/Plataforma-EAD/bin/node)
+/opt/lampp/htdocs/Plataforma-EAD/bin/node: /opt/lampp/lib/libstdc++.so.6: version `CXXABI_1.3.8' not found (required by /opt/lampp/htdocs/Plataforma-EAD/bin/node)
+/opt/lampp/htdocs/Plataforma-EAD/bin/node: /opt/lampp/lib/libstdc++.so.6: version `GLIBCXX_3.4.20' not found (required by /opt/lampp/htdocs/Plataforma-EAD/bin/node)
+/opt/lampp/htdocs/Plataforma-EAD/bin/node: /opt/lampp/lib/libstdc++.so.6: version `GLIBCXX_3.4.21' not found (required by /opt/lampp/htdocs/Plataforma-EAD/bin/node)
+/opt/lampp/htdocs/Plataforma-EAD/bin/node: /opt/lampp/lib/libstdc++.so.6: version `CXXABI_1.3.9' not found (required by /opt/lampp/htdocs/Plataforma-EAD/bin/node)
+[2026-04-13 21:36:20] exception: CertificateController::downloadCertificatePdfFromRenderUrl Falha ao gerar o PDF via Puppeteer: Error: Failed to launch the browser process:  Code: null
+
+stderr:
+mkdir: não foi possível criar o diretório “/root”: Permissão negada
+touch: não foi possível tocar '/root/.local/share/applications/mimeapps.list': Permissão negada
+chrome_crashpad_handler: --database is required
+Try 'chrome_crashpad_handler --help' for more information.
+[25108:25108:0413/203617.497920:ERROR:third_party/crashpad/crashpad/util/linux/socket.cc:120] recvmsg: Conexão fechada pela outra ponta (104)
+
+TROUBLESHOOTING: https://pptr.dev/troubleshooting
+
+    at ChildProcess.onClose (/opt/lampp/htdocs/Plataforma-EAD/node_modules/@puppeteer/browsers/lib/cjs/launch.js:350:24)
+    at ChildProcess.emit (node:events:520:35)
+    at ChildProcess._handle.onexit (node:internal/child_process:294:12)
+[2026-04-13 21:36:20] exception: certificado_pdf_route: Falha ao gerar o PDF via Puppeteer: Error: Failed to launch the browser process:  Code: null
+
+stderr:
+mkdir: não foi possível criar o diretório “/root”: Permissão negada
+touch: não foi possível tocar '/root/.local/share/applications/mimeapps.list': Permissão negada
+chrome_crashpad_handler: --database is required
+Try 'chrome_crashpad_handler --help' for more information.
+[25108:25108:0413/203617.497920:ERROR:third_party/crashpad/crashpad/util/linux/socket.cc:120] recvmsg: Conexão fechada pela outra ponta (104)
+
+TROUBLESHOOTING: https://pptr.dev/troubleshooting
+
+    at ChildProcess.onClose (/opt/lampp/htdocs/Plataforma-EAD/node_modules/@puppeteer/browsers/lib/cjs/launch.js:350:24)
+    at ChildProcess.emit (node:events:520:35)
+    at ChildProcess._handle.onexit (node:internal/child_process:294:12)
+[2026-04-13 21:36:35] exception: CertificateController::downloadCertificatePdfFromRenderUrl Falha ao gerar o PDF via Puppeteer: Error: Failed to launch the browser process:  Code: null
+
+stderr:
+mkdir: não foi possível criar o diretório “/root”: Permissão negada
+touch: não foi possível tocar '/root/.local/share/applications/mimeapps.list': Permissão negada
+chrome_crashpad_handler: --database is required
+Try 'chrome_crashpad_handler --help' for more information.
+[25140:25140:0413/203633.615543:ERROR:third_party/crashpad/crashpad/util/linux/socket.cc:120] recvmsg: Conexão fechada pela outra ponta (104)
+
+TROUBLESHOOTING: https://pptr.dev/troubleshooting
+
+    at ChildProcess.onClose (/opt/lampp/htdocs/Plataforma-EAD/node_modules/@puppeteer/browsers/lib/cjs/launch.js:350:24)
+    at ChildProcess.emit (node:events:520:35)
+    at ChildProcess._handle.onexit (node:internal/child_process:294:12)
+[2026-04-13 21:36:35] exception: certificado_pdf_route: Falha ao gerar o PDF via Puppeteer: Error: Failed to launch the browser process:  Code: null
+
+stderr:
+mkdir: não foi possível criar o diretório “/root”: Permissão negada
+touch: não foi possível tocar '/root/.local/share/applications/mimeapps.list': Permissão negada
+chrome_crashpad_handler: --database is required
+Try 'chrome_crashpad_handler --help' for more information.
+[25140:25140:0413/203633.615543:ERROR:third_party/crashpad/crashpad/util/linux/socket.cc:120] recvmsg: Conexão fechada pela outra ponta (104)
+
+TROUBLESHOOTING: https://pptr.dev/troubleshooting
+
+    at ChildProcess.onClose (/opt/lampp/htdocs/Plataforma-EAD/node_modules/@puppeteer/browsers/lib/cjs/launch.js:350:24)
+    at ChildProcess.emit (node:events:520:35)
+    at ChildProcess._handle.onexit (node:internal/child_process:294:12)
+[2026-04-25 21:27:04] mail_outbox: Email salvo em outbox local: 20260425_212704_97108ce0ec77.html
+[2026-04-25 20:08:31] smtp_error: Configuração SMTP incompleta: SMTP_HOST, SMTP_USER, SMTP_PASS, MAIL_FROM
+[2026-04-25 20:55:54] smtp_error: Falha SMTP ao enviar para gilsoncassende3@gmail.com: SMTP Error: Could not connect to SMTP host. Failed to connect to server
+[2026-04-25 20:56:12] smtp_success: Email enviado via SMTP para gilsoncassende3@gmail.com
+[2026-04-26 18:35:52] exception: CertificateController::getOwnedCertificatePdfMetadata Undefined constant "BASE_URL"
+[2026-04-26 18:35:52] exception: CertificateController::getOwnedCertificatePdfMetadata Undefined constant "BASE_URL"
+[2026-04-26 18:35:52] exception: CertificateController::getOwnedCertificatePdfMetadata Undefined constant "BASE_URL"
+[2026-04-26 18:35:52] EXPORT: user_id=13 tipo=aluno data=2026-04-26T18:35:52+02:00 cursos=4 certificados=3 (user_id=13)
+[2026-04-26 18:36:30] EXPORT: user_id=7 tipo=professor_course data=2026-04-26T18:36:30+02:00 cursos=1 alunos=1 course_id=9 (user_id=7)
+[2026-04-26 18:40:22] login_success: email=gil@gmail.com ip=::1 ok (user_id=13)
+[2026-04-26 18:41:14] exception: CertificateController::downloadCertificatePdfFromRenderUrl Falha ao gerar o PDF via Puppeteer: /usr/bin/env: “/opt/lampp/htdocs/Plataforma-EAD/bin/node”: Permissão negada
+[2026-04-26 18:41:14] exception: CertificateController::downloadOwnedCertificatePdf Falha ao gerar o PDF via Puppeteer: /usr/bin/env: “/opt/lampp/htdocs/Plataforma-EAD/bin/node”: Permissão negada
+[2026-04-26 18:41:14] exception: CertificateController::downloadCertificatePdfFromRenderUrl Falha ao gerar o PDF via Puppeteer: /usr/bin/env: “/opt/lampp/htdocs/Plataforma-EAD/bin/node”: Permissão negada
+[2026-04-26 18:41:14] exception: CertificateController::downloadOwnedCertificatePdf Falha ao gerar o PDF via Puppeteer: /usr/bin/env: “/opt/lampp/htdocs/Plataforma-EAD/bin/node”: Permissão negada
+[2026-04-26 18:41:14] exception: CertificateController::downloadCertificatePdfFromRenderUrl Falha ao gerar o PDF via Puppeteer: /usr/bin/env: “/opt/lampp/htdocs/Plataforma-EAD/bin/node”: Permissão negada
+[2026-04-26 18:41:14] exception: CertificateController::downloadOwnedCertificatePdf Falha ao gerar o PDF via Puppeteer: /usr/bin/env: “/opt/lampp/htdocs/Plataforma-EAD/bin/node”: Permissão negada
+[2026-04-26 18:41:14] EXPORT: user_id=13 tipo=aluno data=2026-04-26T18:41:14+02:00 cursos=4 certificados=3 (user_id=13)
+[2026-04-26 18:44:52] login_success: email=gilson@ead.com ip=::1 ok (user_id=7)
+[2026-04-26 18:45:14] EXPORT: user_id=7 tipo=professor_all data=2026-04-26T18:45:14+02:00 cursos=6 alunos=6 course_id=all (user_id=7)
+[2026-04-26 18:45:50] EXPORT: user_id=7 tipo=professor_course data=2026-04-26T18:45:50+02:00 cursos=1 alunos=1 course_id=9 (user_id=7)
+[2026-04-26 18:45:55] EXPORT: user_id=7 tipo=professor_students data=2026-04-26T18:45:55+02:00 cursos=1 alunos=1 course_id=9 (user_id=7)
+[2026-04-26 19:11:51] exception: CertificateController::downloadCertificatePdfFromRenderUrl Falha ao gerar o PDF via Puppeteer: /usr/bin/env: ‘/opt/lampp/htdocs/Plataforma-EAD/bin/node’: Permission denied
+[2026-04-26 19:11:51] exception: CertificateController::downloadOwnedCertificatePdf Falha ao gerar o PDF via Puppeteer: /usr/bin/env: ‘/opt/lampp/htdocs/Plataforma-EAD/bin/node’: Permission denied
+[2026-04-26 19:11:51] exception: CertificateController::downloadCertificatePdfFromRenderUrl Falha ao gerar o PDF via Puppeteer: /usr/bin/env: ‘/opt/lampp/htdocs/Plataforma-EAD/bin/node’: Permission denied
+[2026-04-26 19:11:51] exception: CertificateController::downloadOwnedCertificatePdf Falha ao gerar o PDF via Puppeteer: /usr/bin/env: ‘/opt/lampp/htdocs/Plataforma-EAD/bin/node’: Permission denied
+[2026-04-26 19:11:51] exception: CertificateController::downloadCertificatePdfFromRenderUrl Falha ao gerar o PDF via Puppeteer: /usr/bin/env: ‘/opt/lampp/htdocs/Plataforma-EAD/bin/node’: Permission denied
+[2026-04-26 19:11:51] exception: CertificateController::downloadOwnedCertificatePdf Falha ao gerar o PDF via Puppeteer: /usr/bin/env: ‘/opt/lampp/htdocs/Plataforma-EAD/bin/node’: Permission denied
+[2026-04-26 19:11:51] EXPORT: user_id=13 tipo=aluno data=2026-04-26T19:11:51+02:00 cursos=4 tentativas=6 certificados=3 (user_id=13)
+[2026-04-26 19:12:22] exception: CertificateController::downloadCertificatePdfFromRenderUrl Falha ao gerar o PDF via Puppeteer: /usr/bin/env: ‘/opt/lampp/htdocs/Plataforma-EAD/bin/node’: Permission denied
+[2026-04-26 19:12:22] exception: CertificateController::downloadOwnedCertificatePdf Falha ao gerar o PDF via Puppeteer: /usr/bin/env: ‘/opt/lampp/htdocs/Plataforma-EAD/bin/node’: Permission denied
+[2026-04-26 19:12:22] exception: CertificateController::downloadCertificatePdfFromRenderUrl Falha ao gerar o PDF via Puppeteer: /usr/bin/env: ‘/opt/lampp/htdocs/Plataforma-EAD/bin/node’: Permission denied
+[2026-04-26 19:12:22] exception: CertificateController::downloadOwnedCertificatePdf Falha ao gerar o PDF via Puppeteer: /usr/bin/env: ‘/opt/lampp/htdocs/Plataforma-EAD/bin/node’: Permission denied
+[2026-04-26 19:12:22] exception: CertificateController::downloadCertificatePdfFromRenderUrl Falha ao gerar o PDF via Puppeteer: /usr/bin/env: ‘/opt/lampp/htdocs/Plataforma-EAD/bin/node’: Permission denied
+[2026-04-26 19:12:22] exception: CertificateController::downloadOwnedCertificatePdf Falha ao gerar o PDF via Puppeteer: /usr/bin/env: ‘/opt/lampp/htdocs/Plataforma-EAD/bin/node’: Permission denied
+[2026-04-26 19:12:22] EXPORT: user_id=13 tipo=aluno data=2026-04-26T19:12:22+02:00 cursos=4 tentativas=6 certificados=3 (user_id=13)
+[2026-04-26 19:13:08] EXPORT: user_id=7 tipo=professor_all data=2026-04-26T19:13:08+02:00 cursos=6 matriculas=6 tentativas=1 course_id=all (user_id=7)
+[2026-04-26 20:00:14] exception: CertificateController::downloadCertificatePdfFromRenderUrl Falha ao gerar o PDF via Puppeteer: /usr/bin/env: ‘/opt/lampp/htdocs/Plataforma-EAD/bin/node’: Permission denied
+[2026-04-26 20:00:14] exception: CertificateController::downloadOwnedCertificatePdf Falha ao gerar o PDF via Puppeteer: /usr/bin/env: ‘/opt/lampp/htdocs/Plataforma-EAD/bin/node’: Permission denied
+[2026-04-26 20:00:14] exception: CertificateController::downloadCertificatePdfFromRenderUrl Falha ao gerar o PDF via Puppeteer: /usr/bin/env: ‘/opt/lampp/htdocs/Plataforma-EAD/bin/node’: Permission denied
+[2026-04-26 20:00:14] exception: CertificateController::downloadOwnedCertificatePdf Falha ao gerar o PDF via Puppeteer: /usr/bin/env: ‘/opt/lampp/htdocs/Plataforma-EAD/bin/node’: Permission denied
+[2026-04-26 20:00:14] exception: CertificateController::downloadCertificatePdfFromRenderUrl Falha ao gerar o PDF via Puppeteer: /usr/bin/env: ‘/opt/lampp/htdocs/Plataforma-EAD/bin/node’: Permission denied
+[2026-04-26 20:00:14] exception: CertificateController::downloadOwnedCertificatePdf Falha ao gerar o PDF via Puppeteer: /usr/bin/env: ‘/opt/lampp/htdocs/Plataforma-EAD/bin/node’: Permission denied
+[2026-04-26 20:00:15] EXPORT: user_id=13 tipo=aluno data=2026-04-26T20:00:15+02:00 cursos=4 tentativas=6 certificados=3 (user_id=13)
+[2026-04-26 20:00:36] EXPORT: user_id=7 tipo=professor_all data=2026-04-26T20:00:36+02:00 cursos=1 matriculas=1 tentativas=0 course_id=9 (user_id=7)
+[2026-04-26 20:02:30] EXPORT: user_id=7 tipo=professor_all data=2026-04-26T20:02:30+02:00 cursos=6 matriculas=6 tentativas=1 course_id=all (user_id=7)
+[2026-04-26 20:02:30] exception: CertificateController::downloadCertificatePdfFromRenderUrl Falha ao gerar o PDF via Puppeteer: /usr/bin/env: ‘/opt/lampp/htdocs/Plataforma-EAD/bin/node’: Permission denied
+[2026-04-26 20:02:30] exception: CertificateController::downloadOwnedCertificatePdf Falha ao gerar o PDF via Puppeteer: /usr/bin/env: ‘/opt/lampp/htdocs/Plataforma-EAD/bin/node’: Permission denied
+[2026-04-26 20:02:30] exception: CertificateController::downloadCertificatePdfFromRenderUrl Falha ao gerar o PDF via Puppeteer: /usr/bin/env: ‘/opt/lampp/htdocs/Plataforma-EAD/bin/node’: Permission denied
+[2026-04-26 20:02:30] exception: CertificateController::downloadOwnedCertificatePdf Falha ao gerar o PDF via Puppeteer: /usr/bin/env: ‘/opt/lampp/htdocs/Plataforma-EAD/bin/node’: Permission denied
+[2026-04-26 20:02:30] exception: CertificateController::downloadCertificatePdfFromRenderUrl Falha ao gerar o PDF via Puppeteer: /usr/bin/env: ‘/opt/lampp/htdocs/Plataforma-EAD/bin/node’: Permission denied
+[2026-04-26 20:02:30] exception: CertificateController::downloadOwnedCertificatePdf Falha ao gerar o PDF via Puppeteer: /usr/bin/env: ‘/opt/lampp/htdocs/Plataforma-EAD/bin/node’: Permission denied
+[2026-04-26 20:02:30] EXPORT: user_id=13 tipo=aluno data=2026-04-26T20:02:30+02:00 cursos=4 tentativas=6 certificados=3 (user_id=13)
+[2026-04-26 20:05:06] EXPORT: Falha exportar-dados-professor: O diretório de backups não possui permissão de escrita. (user_id=7)
+[2026-04-26 20:05:14] EXPORT: Falha exportar-dados-professor: O diretório de backups não possui permissão de escrita. (user_id=7)
+[2026-04-26 20:05:41] login_success: email=gil@gmail.com ip=::1 ok (user_id=13)
+[2026-04-26 20:06:29] EXPORT: Falha exportar-dados-aluno: O diretório de backups não possui permissão de escrita. (user_id=13)
+[2026-04-26 20:06:35] EXPORT: Falha exportar-dados-aluno: O diretório de backups não possui permissão de escrita. (user_id=13)
+[2026-04-26 20:07:16] EXPORT: Falha exportar-dados-aluno: O diretório de backups não possui permissão de escrita. (user_id=13)
+[2026-04-26 20:07:32] EXPORT: Falha exportar-dados-aluno: O diretório de backups não possui permissão de escrita. (user_id=13)
+[2026-04-26 20:12:55] exception: CertificateController::downloadCertificatePdfFromRenderUrl Falha ao gerar o PDF via Puppeteer: /usr/bin/env: ‘/opt/lampp/htdocs/Plataforma-EAD/bin/node’: Permission denied
+[2026-04-26 20:12:55] exception: CertificateController::downloadOwnedCertificatePdf Falha ao gerar o PDF via Puppeteer: /usr/bin/env: ‘/opt/lampp/htdocs/Plataforma-EAD/bin/node’: Permission denied
+[2026-04-26 20:12:55] exception: CertificateController::downloadCertificatePdfFromRenderUrl Falha ao gerar o PDF via Puppeteer: /usr/bin/env: ‘/opt/lampp/htdocs/Plataforma-EAD/bin/node’: Permission denied
+[2026-04-26 20:12:55] exception: CertificateController::downloadOwnedCertificatePdf Falha ao gerar o PDF via Puppeteer: /usr/bin/env: ‘/opt/lampp/htdocs/Plataforma-EAD/bin/node’: Permission denied
+[2026-04-26 20:12:55] exception: CertificateController::downloadCertificatePdfFromRenderUrl Falha ao gerar o PDF via Puppeteer: /usr/bin/env: ‘/opt/lampp/htdocs/Plataforma-EAD/bin/node’: Permission denied
+[2026-04-26 20:12:55] exception: CertificateController::downloadOwnedCertificatePdf Falha ao gerar o PDF via Puppeteer: /usr/bin/env: ‘/opt/lampp/htdocs/Plataforma-EAD/bin/node’: Permission denied
+[2026-04-26 20:12:55] EXPORT: user_id=13 tipo=aluno data=2026-04-26T20:12:55+02:00 cursos=4 tentativas=6 certificados=3 (user_id=13)
+[2026-04-26 20:21:47] EXPORT: Falha exportar-dados-aluno: O diretório de backups não possui permissão de escrita. (user_id=13)
+[2026-04-26 20:22:01] EXPORT: Falha exportar-dados-aluno: O diretório de backups não possui permissão de escrita. (user_id=13)
+[2026-04-26 21:17:25] exception: CertificateController::downloadCertificatePdfFromRenderUrl Falha ao gerar o PDF via Puppeteer: /usr/bin/env: ‘/opt/lampp/htdocs/Plataforma-EAD/bin/node’: Permission denied
+[2026-04-26 21:17:25] exception: CertificateController::downloadOwnedCertificatePdf Falha ao gerar o PDF via Puppeteer: /usr/bin/env: ‘/opt/lampp/htdocs/Plataforma-EAD/bin/node’: Permission denied
+[2026-04-26 21:17:25] exception: CertificateController::downloadCertificatePdfFromRenderUrl Falha ao gerar o PDF via Puppeteer: /usr/bin/env: ‘/opt/lampp/htdocs/Plataforma-EAD/bin/node’: Permission denied
+[2026-04-26 21:17:25] exception: CertificateController::downloadOwnedCertificatePdf Falha ao gerar o PDF via Puppeteer: /usr/bin/env: ‘/opt/lampp/htdocs/Plataforma-EAD/bin/node’: Permission denied
+[2026-04-26 21:17:25] exception: CertificateController::downloadCertificatePdfFromRenderUrl Falha ao gerar o PDF via Puppeteer: /usr/bin/env: ‘/opt/lampp/htdocs/Plataforma-EAD/bin/node’: Permission denied
+[2026-04-26 21:17:25] exception: CertificateController::downloadOwnedCertificatePdf Falha ao gerar o PDF via Puppeteer: /usr/bin/env: ‘/opt/lampp/htdocs/Plataforma-EAD/bin/node’: Permission denied
+[2026-04-26 21:17:25] EXPORT: user_id=13 tipo=aluno data=2026-04-26T21:17:25+02:00 cursos=4 tentativas=6 certificados=3 (user_id=13)
+[2026-04-26 21:18:32] EXPORT: Falha exportar-dados-aluno: O diretório de backups não possui permissão de escrita. (user_id=13)
+[2026-04-26 21:18:40] EXPORT: Falha exportar-dados-aluno: O diretório de backups não possui permissão de escrita. (user_id=13)
+[2026-04-26 21:19:13] EXPORT: Falha exportar-dados-aluno: O diretório de backups não possui permissão de escrita. (user_id=13)
+[2026-04-26 21:27:51] login_success: email=gil@gmail.com ip=::1 ok (user_id=13)
+[2026-04-26 23:42:41] EXPORT: Falha exportar-dados-aluno: O diretório de backups não possui permissão de escrita. (user_id=13)
+[2026-04-26 23:44:46] exception: CertificateController::downloadCertificatePdfFromRenderUrl Falha ao gerar o PDF via Puppeteer: /usr/bin/env: ‘/opt/lampp/htdocs/Plataforma-EAD/bin/node’: Permission denied
+[2026-04-26 23:44:46] exception: CertificateController::downloadOwnedCertificatePdf Falha ao gerar o PDF via Puppeteer: /usr/bin/env: ‘/opt/lampp/htdocs/Plataforma-EAD/bin/node’: Permission denied
+[2026-04-26 23:44:46] exception: CertificateController::downloadCertificatePdfFromRenderUrl Falha ao gerar o PDF via Puppeteer: /usr/bin/env: ‘/opt/lampp/htdocs/Plataforma-EAD/bin/node’: Permission denied
+[2026-04-26 23:44:46] exception: CertificateController::downloadOwnedCertificatePdf Falha ao gerar o PDF via Puppeteer: /usr/bin/env: ‘/opt/lampp/htdocs/Plataforma-EAD/bin/node’: Permission denied
+[2026-04-26 23:44:46] exception: CertificateController::downloadCertificatePdfFromRenderUrl Falha ao gerar o PDF via Puppeteer: /usr/bin/env: ‘/opt/lampp/htdocs/Plataforma-EAD/bin/node’: Permission denied
+[2026-04-26 23:44:46] exception: CertificateController::downloadOwnedCertificatePdf Falha ao gerar o PDF via Puppeteer: /usr/bin/env: ‘/opt/lampp/htdocs/Plataforma-EAD/bin/node’: Permission denied
+[2026-04-26 23:44:47] EXPORT: user_id=13 tipo=aluno data=2026-04-26T23:44:47+02:00 cursos=4 tentativas=6 certificados=3 (user_id=13)
+[2026-04-26 23:46:17] exception: CertificateController::downloadCertificatePdfFromRenderUrl Falha ao gerar o PDF via Puppeteer: /usr/bin/env: “/opt/lampp/htdocs/Plataforma-EAD/bin/node”: Permissão negada
+[2026-04-26 23:46:17] exception: CertificateController::downloadOwnedCertificatePdf Falha ao gerar o PDF via Puppeteer: /usr/bin/env: “/opt/lampp/htdocs/Plataforma-EAD/bin/node”: Permissão negada
+[2026-04-26 23:46:17] exception: CertificateController::downloadCertificatePdfFromRenderUrl Falha ao gerar o PDF via Puppeteer: /usr/bin/env: “/opt/lampp/htdocs/Plataforma-EAD/bin/node”: Permissão negada
+[2026-04-26 23:46:17] exception: CertificateController::downloadOwnedCertificatePdf Falha ao gerar o PDF via Puppeteer: /usr/bin/env: “/opt/lampp/htdocs/Plataforma-EAD/bin/node”: Permissão negada
+[2026-04-26 23:46:17] exception: CertificateController::downloadCertificatePdfFromRenderUrl Falha ao gerar o PDF via Puppeteer: /usr/bin/env: “/opt/lampp/htdocs/Plataforma-EAD/bin/node”: Permissão negada
+[2026-04-26 23:46:17] exception: CertificateController::downloadOwnedCertificatePdf Falha ao gerar o PDF via Puppeteer: /usr/bin/env: “/opt/lampp/htdocs/Plataforma-EAD/bin/node”: Permissão negada
+[2026-04-26 23:46:18] EXPORT: user_id=13 tipo=aluno data=2026-04-26T23:46:18+02:00 cursos=4 tentativas=6 certificados=3 (user_id=13)
+[2026-04-26 23:49:00] login_success: email=gilson@ead.com ip=::1 ok (user_id=7)
+[2026-04-26 23:50:30] EXPORT: user_id=7 tipo=professor_course data=2026-04-26T23:50:30+02:00 cursos=1 matriculas=1 tentativas=0 course_id=9 (user_id=7)
+[2026-04-27 00:22:55] login_success: email=admin@ead.com ip=::1 ok (user_id=1)
+[2026-04-27 00:24:43] login_success: email=gil@gmail.com ip=::1 ok (user_id=13)

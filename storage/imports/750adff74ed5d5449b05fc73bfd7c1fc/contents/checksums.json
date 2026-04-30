@@ -1,0 +1,13 @@
+{
+    "data/certificates.json": "4609662d4e9e2391c6b4d817744bc036e12dd9b3521bacfeb2f015a055a000d9",
+    "data/courses.json": "87b5fa40c169b29188bc2d1fb25d279d83363674eb0978f41c8940fc1320f40f",
+    "data/enrollments.json": "bcd40307a43e0731509a4fdf84d62e72c12a7576ecbba4575fe19cb67a121f32",
+    "data/lessons.json": "b3b0585591358d2e61c32493bec070b6d22dc2fa194eb5da15ebbe184114e929",
+    "data/modules.json": "c610c552d062b4a8be29b2d3aea3447dc95d911c82d32d6e8a956ceb3aacb476",
+    "data/progress.json": "b1fa387d29ada8a4e23d816448226032fecfe720af3cf815795d27ea6ee8de6a",
+    "data/quiz_attempts.json": "725705217192b2f87511efc775f72cb92d6f06539994e2e105fd29ff5c96585c",
+    "data/quizzes.json": "8d83ac0175db34ef501365bc42ec46b95c819f892816c152c9b4f2dd6529daf2",
+    "data/user.json": "f3a1f9331fc9908e2a3c97574800640db99b9ee8ce3a14beaf74c0d56c6245ab",
+    "files/avatars/69c30ea3b8e37_20260324232227.jpeg": "a399f480b6058187f7fdbb367fde4fd2f701afacc62ce9bf2167afab8cf1daf4",
+    "manifest.json": "d2ce35839ced3db74204c34cbea8d5b382822cc23375ef2f48fa779334dd3d4e"
+}

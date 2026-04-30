@@ -1,0 +1,73 @@
+.page-cursos .cursos-section {
+    padding: 0;
+    min-height: 600px;
+}
+
+.page-cursos .container {
+    max-width: 1180px;
+}
+
+.page-cursos .cursos-section h1 {
+    margin-bottom: 1.35rem;
+    font-size: clamp(1.9rem, 3vw, 2.45rem);
+}
+
+.page-cursos .cursos-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    align-items: center;
+    margin-bottom: 1.25rem;
+}
+
+.page-cursos .search-form {
+    display: flex;
+    flex: 1;
+    gap: 0.75rem;
+    min-width: 260px;
+}
+
+.page-cursos .cursos-toolbar__create-btn {
+    color: #fff;
+    background: linear-gradient(135deg, #3157a5 0%, #4f46e5 100%);
+    border-color: rgba(60, 88, 168, 0.92);
+    box-shadow: 0 10px 24px rgba(49, 87, 165, 0.18);
+}
+
+.page-cursos .cursos-toolbar__create-btn:hover {
+    box-shadow: 0 12px 28px rgba(49, 87, 165, 0.22);
+}
+
+.page-cursos .cursos-container {
+    width: 100%;
+}
+
+.page-cursos .cursos-container .course-grid,
+.page-cursos .cursos-container .cursos-grid,
+.page-cursos .cursos-container .courses-grid {
+    grid-template-columns: repeat(auto-fit, minmax(280px, 380px)) !important;
+    justify-content: start;
+    max-width: 100%;
+    margin-inline: 0;
+}
+
+.page-cursos .pagination {
+    justify-content: center;
+    margin-top: 2rem;
+}
+
+@media (max-width: 768px) {
+    .page-cursos .cursos-toolbar,
+    .page-cursos .search-form {
+        flex-direction: column;
+        align-items: stretch;
+    }
+}
+
+@media (max-width: 640px) {
+    .page-cursos .cursos-container .course-grid,
+    .page-cursos .cursos-container .cursos-grid,
+    .page-cursos .cursos-container .courses-grid {
+        grid-template-columns: 1fr !important;
+    }
+}

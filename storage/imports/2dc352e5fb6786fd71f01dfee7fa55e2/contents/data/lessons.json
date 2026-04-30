@@ -1,0 +1,30 @@
+[
+    {
+        "source_id": 6,
+        "course_id": 9,
+        "module_id": 1,
+        "titulo": "Começa aqui o novo ‪@cursoemvideo‬ de HTML5 e CSS3",
+        "descricao": "O Curso de HTML5 e CSS3 vai ensinar a criar sites usando a linguagem de marcação hipertexto (HTML) e  folhas de estilo em cascata (CSS), todas em suas versões mais recentes. Neste curso, o Professor Gustavo Guanabara criou um conjunto de vídeos, exercícios, desafios e um material de apoio em forma de e-book com 30 capítulos ao todo.   Acesse o material de apoio em PDF: == GitHub: https://github.com/gustavoguanabara/h...  Receba notificações de novos vídeos: == Canal no Telegram: https://t.me/cursoemvideo",
+        "tipo": "video",
+        "conteudo": "Conheça os patrocinadores desse curso:\r\n== HOSTNET: https://www.hostnet.com/cursoemvideo\r\n== RECODE: https://www.recode.org.br/novidades\r\n== ESTUDONAUTA: https://www.estudonauta.com/cursoemvideo",
+        "url_arquivo": "",
+        "video_id": "Ejkb_YpuHWs",
+        "ordem": 1,
+        "created_at": "2026-04-01 21:24:22",
+        "updated_at": "2026-04-01 21:24:22"
+    },
+    {
+        "source_id": 7,
+        "course_id": 9,
+        "module_id": 1,
+        "titulo": "O que vamos aprender no módulo 01?",
+        "descricao": "O que vamos aprender no módulo 1 do Curso em Vídeo de HTML5 e CSS3? Veja nesse vídeo os principais tópicos do nosso primeiro módulo do curso.",
+        "tipo": "video",
+        "conteudo": "Tópicos desse vídeo:\r\n00:00 - O que vamos aprender no curso?\r\n00:37 - O primeiro módulo\r\n01:27 - Esse curso é para mim?\r\n02:19 - Primeiras aulas\r\n03:22 - Primeiros passos em HTML5\r\n05:18 - HTML5 e CSS3\r\n05:52 - Agradecimentos especiais\r\n06:37 - O primeiro módulo começa aqui\r\n\r\nO Curso de HTML5 e CSS3 vai ensinar a criar sites usando a linguagem de marcação hipertexto (HTML) e  folhas de estilo em cascata (CSS), todas em suas versões mais recentes. Neste curso, o Professor Gustavo Guanabara criou um conjunto de vídeos, exercícios, desafios e um material de apoio em forma de e-book com 30 capítulos ao todo.",
+        "url_arquivo": "",
+        "video_id": "jgQjeqGRdgA",
+        "ordem": 2,
+        "created_at": "2026-04-01 21:29:09",
+        "updated_at": "2026-04-01 21:29:09"
+    }
+]

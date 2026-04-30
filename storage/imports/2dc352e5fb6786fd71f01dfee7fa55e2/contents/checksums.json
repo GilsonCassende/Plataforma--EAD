@@ -1,0 +1,14 @@
+{
+    "data/certificates.json": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "data/courses.json": "2d6e434b8e2c3e743a5a845b26306c89e4f2dbb6c50a7e11c75c84b60825794b",
+    "data/enrollments.json": "1636886c6bca4927d90345b590bc1a2fd8ee11fac7e84500eb27892c962f4fff",
+    "data/lessons.json": "9802deec72fa7cd640da754dc7ae2c18afeb50e12691544ba86d011aa6747aea",
+    "data/modules.json": "8be5dc07e35aa137511acc89527081904a9cdcd54b13c1fbd0de7755e4193968",
+    "data/progress.json": "bed80d8c0ffe69e025560aa772afd6f219f082a35881582490c8ee5677d683d7",
+    "data/quiz_attempts.json": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "data/quizzes.json": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "data/user.json": "1bbacd5fb6f4de09199e63b2140760d303c76e6b62d0a5c88938af9b90d20312",
+    "files/avatars/restored-avatar-20260426191222-ff46f2e9.jpeg": "a399f480b6058187f7fdbb367fde4fd2f701afacc62ce9bf2167afab8cf1daf4",
+    "files/thumbnails/9_restored-thumb-20260426191308-2390333e.jpg": "3742beb47258da3206dcb5ad149b8ce056a91f116aa0f98ffdf676cb1e656d7d",
+    "manifest.json": "b31194a223cc729e3ce337dcd33087ad395a94d25f0fcf5b37c3eefe46df1378"
+}

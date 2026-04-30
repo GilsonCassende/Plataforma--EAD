@@ -1,0 +1,17 @@
+{
+  "name": "plataforma-ead",
+  "version": "1.0.0",
+  "description": "Uma **plataforma completa de Educação a Distância** (EAD) desenvolvida em **PHP, MySQL, HTML5 e CSS3** com arquitetura **MVC** profissional, 100% responsiva e pronta para rodar no **XAMPP**.",
+  "main": "index.js",
+  "scripts": {
+    "certificate:pdf": "node scripts/generate-certificate-pdf.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "puppeteer-core": "^24.40.0"
+  }
+}

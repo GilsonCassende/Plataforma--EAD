@@ -1,0 +1,42 @@
+[
+    {
+        "source_id": 4,
+        "course_id": 5,
+        "titulo": "Módulo principal",
+        "descricao": "Estrutura inicial do curso.",
+        "ordem": 1,
+        "is_default": 1,
+        "created_at": "2026-04-01 23:05:27",
+        "updated_at": "2026-04-01 23:05:27"
+    },
+    {
+        "source_id": 5,
+        "course_id": 8,
+        "titulo": "Módulo principal",
+        "descricao": "Estrutura inicial do curso.",
+        "ordem": 1,
+        "is_default": 1,
+        "created_at": "2026-04-01 23:05:28",
+        "updated_at": "2026-04-01 23:05:28"
+    },
+    {
+        "source_id": 1,
+        "course_id": 9,
+        "titulo": "Módulo 1",
+        "descricao": "Primeiros passos no desenvolvimento web \r\n\r\nO primeiro módulo do Curso HTML5 e CSS3 do Curso em Vídeo marca o início da jornada do aluno no universo da criação de sites. Aqui, o objetivo é construir uma base sólida, capaz de sustentar o aprendizado técnico e prático dos módulos seguintes. Com a didática envolvente do professor Gustavo Guanabara, cada tema é apresentado de forma clara e acessível, permitindo que qualquer pessoa, mesmo sem experiência, consiga acompanhar o passo a passo da construção de uma página web. Entendendo a Internet e seu funcionamento Antes de mergulhar no código, o curso apresenta a evolução da internet e explica de maneira simples como ela realmente funciona. \r\n\r\nO aluno aprende o que são protocolos, pacotes de dados, domínios e hospedagens, entendendo como cada um desses elementos se conecta até o site aparecer na tela do usuário. Essa visão inicial é fundamental para compreender a estrutura que sustenta toda a web e o papel que o desenvolvedor exerce nesse processo. Do front-end ao back-end: papéis e linguagens Com essa base estabelecida, o módulo passa a explorar os diferentes papéis dentro do desenvolvimento de sites. O estudante descobre o que significam os termos front-end, back-end e full stack, e entende como essas áreas se complementam dentro de um projeto.\r\n\r\n O conteúdo também esclarece o funcionamento do HTML, do CSS e do JavaScript, mostrando que o HTML5 organiza o conteúdo da página, o CSS3 cuida do visual e o JavaScript adiciona interatividade. Essa distinção é essencial para compreender como as linguagens se relacionam entre si. Configurando o ambiente de desenvolvimento Antes de começar a escrever código, o aluno é orientado a preparar o próprio ambiente de trabalho. \r\n\r\nO curso ensina a instalar o Visual Studio Code, a configurar o navegador Google Chrome e a adicionar extensões que facilitam o processo de desenvolvimento. O estudante aprende também a salvar, testar e revisar seus códigos, adotando boas práticas que o acompanharão em toda a trajetória como desenvolvedor. \r\n\r\nPrimeiros códigos em HTML5 Com o ambiente pronto, chega o momento de criar as primeiras páginas em HTML5. O módulo explica a estrutura básica de um documento, o uso correto das tags e a importância da semântica para a organização do conteúdo. \r\n\r\nO aluno aprende a trabalhar com parágrafos, títulos e blocos de texto, a incluir símbolos, emojis e caracteres especiais, e a manter o código limpo e legível. Essa parte é essencial para desenvolver raciocínio lógico e pensamento estruturado, habilidades que fazem toda a diferença na hora de programar. Trabalhando com imagens, áudio e vídeo Após dominar o conteúdo textual, o curso introduz o uso de elementos multimídia. \r\n\r\nO aluno entende como preparar e otimizar imagens, ajustar tamanhos e resoluções e inserir arquivos que se adaptam automaticamente à tela. Também aprende a adicionar áudio e vídeo, compreendendo a diferença entre hospedar esses arquivos localmente ou incorporar conteúdo de plataformas externas como YouTube e Vimeo. O professor explica ainda as vantagens e limitações de cada método, mostrando como tornar o site mais leve, interativo e profissional. Introdução ao CSS3 O módulo encerra com uma introdução ao CSS3, onde o aluno descobre como aplicar estilos visuais ao conteúdo. São apresentados os diferentes modos de inserção do CSS — inline, interno e externo — e explicados os momentos em que cada um deve ser utilizado. O estudante entende a diferença entre conteúdo e forma, percebendo como o HTML define a estrutura enquanto o CSS controla o design. Essa etapa prepara o terreno para os módulos seguintes, onde os estilos serão explorados com mais profundidade. \r\n\r\nAprendizado completo e gratuito Todo o conteúdo do módulo é gratuito e inclui videoaulas, material em PDF e exercícios práticos. Mesmo quem já tem experiência encontrará conceitos atualizados e boas práticas de código. O curso oferece certificado mediante crédito na plataforma, e mais informações podem ser consultadas em cursoemvideo.com/adicionar-credito. \r\n\r\nFAQ \r\n\r\nO curso é realmente gratuito? \r\n\r\nSim. Todo o conteúdo do curso está disponível gratuitamente na plataforma do Curso em Vídeo. \r\n\r\nPreciso ter conhecimento prévio? \r\n\r\nNão. O módulo 1 foi criado para quem está começando do zero e quer aprender passo a passo. \r\n\r\nÉ possível emitir certificado?\r\n\r\n Sim. A plataforma oferece certificado mediante adição de crédito. Saiba mais. \r\n\r\nQuais ferramentas são usadas no curso? \r\n\r\nVisual Studio Code como editor de código e Google Chrome como navegador principal. Posso estudar no meu ritmo? Sim. As aulas ficam disponíveis na plataforma, e você pode assistir quando quiser.",
+        "ordem": 1,
+        "is_default": 1,
+        "created_at": "2026-04-01 20:56:04",
+        "updated_at": "2026-04-01 23:03:14"
+    },
+    {
+        "source_id": 8,
+        "course_id": 11,
+        "titulo": "Módulo principal",
+        "descricao": "Estrutura inicial do curso.",
+        "ordem": 1,
+        "is_default": 1,
+        "created_at": "2026-04-08 15:24:48",
+        "updated_at": "2026-04-08 15:24:48"
+    }
+]

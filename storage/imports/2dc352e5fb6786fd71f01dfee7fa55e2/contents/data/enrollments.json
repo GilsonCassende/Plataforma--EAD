@@ -1,0 +1,12 @@
+[
+    {
+        "source_id": 14,
+        "user_id": 13,
+        "course_id": 9,
+        "progress": 50,
+        "data_inscricao": "2026-04-01 23:04:00",
+        "data_conclusao": null,
+        "student_email": "gil@gmail.com",
+        "student_name": "gilson gil"
+    }
+]

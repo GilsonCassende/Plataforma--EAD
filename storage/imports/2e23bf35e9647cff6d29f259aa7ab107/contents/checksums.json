@@ -1,0 +1,19 @@
+{
+    "data/certificates.json": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+    "data/courses.json": "a4ef37bae2055cd69c308a10af5cfef5cb206c4112801c40e6f6b94a415a4c01",
+    "data/enrollments.json": "5d760423292f4c501f8b4228f64162928f7c95042bb007c7d12806cae86f84f3",
+    "data/lessons.json": "fabdca98352ef7968badee48421ecec443c2ef886945522f8df2109cb44fa9cc",
+    "data/modules.json": "f19d9a9547ee5b3a91e17969ab38c524a5d8a23a108eaab2f9339b90fdbc3de7",
+    "data/progress.json": "26b9b080566bdd5b1cdf5620d5cbc028639bd18cedc34f0b0fe3656bb2b34adb",
+    "data/quiz_attempts.json": "9044815285cdf252572f980a9bd0944fb36926123dc3036f8368cc011e0d6b7a",
+    "data/quizzes.json": "212708dc2b83a22bbc241eef4977e085760d8b437f57c9eae706c4d42a428a67",
+    "data/user.json": "6139f701b856234e3d9b083d520f4db579e01a4f16b9a5ca0db1ae07580a33a8",
+    "files/avatars/restored-avatar-20260426191222-ff46f2e9.jpeg": "a399f480b6058187f7fdbb367fde4fd2f701afacc62ce9bf2167afab8cf1daf4",
+    "files/thumbnails/2_697fe301c1a81_20260202003425.png": "c9796e039d20a03b17ddd69fde3a86ce2a79db2b4eaa0fd90d7d86c81b715607",
+    "files/thumbnails/4_697fe2ad59abf_20260202003301.png": "efb0ed4d4e0315264392c39881ec5a726ddba79b004d0b71e7159eb1aa2b7743",
+    "files/thumbnails/5_697fdb2b9acbb_20260202000059.png": "825bf73d95a457d158c606302ddaf1037a8e95c84c02c3ca22082c1458a6a6ce",
+    "files/thumbnails/6_697fd9cf3f9e0_20260201235511.png": "46f639252974493a34d47ccec015381a153b4830e8e32e5759236bc25f74f754",
+    "files/thumbnails/7_697fd91439b65_20260201235204.png": "1d6663d836157f4d08195e9acc2fcbbf8b44f9fc8d928f9215cc98a40d8285c7",
+    "files/thumbnails/9_69cd78536f849_20260401215603.jpg": "3742beb47258da3206dcb5ad149b8ce056a91f116aa0f98ffdf676cb1e656d7d",
+    "manifest.json": "b947b0e83fbb9d212459243b27c8c3c6a68a1ebe62e3c32c74ff870b50cf09f9"
+}

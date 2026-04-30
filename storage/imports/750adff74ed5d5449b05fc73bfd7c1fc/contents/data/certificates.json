@@ -1,0 +1,41 @@
+[
+    {
+        "source_id": 3,
+        "user_id": 13,
+        "course_id": 8,
+        "module_id": 5,
+        "type": "module",
+        "certificate_code": "8E248A5BAEE915A3",
+        "codigo_certificado": "8E248A5BAEE915A3",
+        "grade": 0,
+        "nota_final": 0,
+        "issued_at": "2026-04-13 20:19:59",
+        "data_emissao": "2026-04-13 20:19:59"
+    },
+    {
+        "source_id": 2,
+        "user_id": 13,
+        "course_id": 11,
+        "module_id": null,
+        "type": "course",
+        "certificate_code": "6D0B5B712C547816",
+        "codigo_certificado": "6D0B5B712C547816",
+        "grade": 15,
+        "nota_final": 15,
+        "issued_at": "2026-04-13 16:00:30",
+        "data_emissao": "2026-04-13 16:00:30"
+    },
+    {
+        "source_id": 1,
+        "user_id": 13,
+        "course_id": 11,
+        "module_id": 8,
+        "type": "module",
+        "certificate_code": "57763547C619C0F3",
+        "codigo_certificado": "57763547C619C0F3",
+        "grade": 0,
+        "nota_final": 0,
+        "issued_at": "2026-04-13 16:00:30",
+        "data_emissao": "2026-04-13 16:00:30"
+    }
+]

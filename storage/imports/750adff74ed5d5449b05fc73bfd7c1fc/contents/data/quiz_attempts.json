@@ -1,0 +1,342 @@
+[
+    {
+        "source_id": 8,
+        "user_id": 13,
+        "quiz_id": 5,
+        "course_id": 11,
+        "lesson_id": null,
+        "module_id": null,
+        "pontuacao": 14,
+        "percentual": 70,
+        "total_correto": 7,
+        "total_questoes": 10,
+        "tentativa_numero": 1,
+        "tempo_gasto": 120,
+        "aprovado": 1,
+        "data_realizacao": "2026-04-13 15:50:38",
+        "answers": [
+            {
+                "source_id": 24,
+                "attempt_id": 8,
+                "question_id": 14,
+                "resposta_usuario": "I'm good. How are you?",
+                "correta": 0,
+                "created_at": "2026-04-13 15:50:39"
+            },
+            {
+                "source_id": 25,
+                "attempt_id": 8,
+                "question_id": 15,
+                "resposta_usuario": "Nice to meet you.",
+                "correta": 1,
+                "created_at": "2026-04-13 15:50:39"
+            },
+            {
+                "source_id": 26,
+                "attempt_id": 8,
+                "question_id": 16,
+                "resposta_usuario": "How old are you?",
+                "correta": 1,
+                "created_at": "2026-04-13 15:50:39"
+            },
+            {
+                "source_id": 27,
+                "attempt_id": 8,
+                "question_id": 17,
+                "resposta_usuario": "Good evening.",
+                "correta": 1,
+                "created_at": "2026-04-13 15:50:39"
+            },
+            {
+                "source_id": 28,
+                "attempt_id": 8,
+                "question_id": 18,
+                "resposta_usuario": "E você? (para devolver uma pergunta).",
+                "correta": 1,
+                "created_at": "2026-04-13 15:50:39"
+            },
+            {
+                "source_id": 29,
+                "attempt_id": 8,
+                "question_id": 19,
+                "resposta_usuario": "I will travel next month.",
+                "correta": 1,
+                "created_at": "2026-04-13 15:50:39"
+            },
+            {
+                "source_id": 30,
+                "attempt_id": 8,
+                "question_id": 20,
+                "resposta_usuario": "I don't understand.",
+                "correta": 1,
+                "created_at": "2026-04-13 15:50:39"
+            },
+            {
+                "source_id": 31,
+                "attempt_id": 8,
+                "question_id": 21,
+                "resposta_usuario": "O que você faz da vida / Qual seu trabalho?",
+                "correta": 1,
+                "created_at": "2026-04-13 15:50:39"
+            },
+            {
+                "source_id": 32,
+                "attempt_id": 8,
+                "question_id": 22,
+                "resposta_usuario": "I amma student.",
+                "correta": 0,
+                "created_at": "2026-04-13 15:50:39"
+            },
+            {
+                "source_id": 33,
+                "attempt_id": 8,
+                "question_id": 23,
+                "resposta_usuario": "Não respondida",
+                "correta": 0,
+                "created_at": "2026-04-13 15:50:39"
+            }
+        ]
+    },
+    {
+        "source_id": 7,
+        "user_id": 13,
+        "quiz_id": 4,
+        "course_id": 11,
+        "lesson_id": 10,
+        "module_id": 8,
+        "pontuacao": 15,
+        "percentual": 75,
+        "total_correto": 3,
+        "total_questoes": 4,
+        "tentativa_numero": 1,
+        "tempo_gasto": 41,
+        "aprovado": 1,
+        "data_realizacao": "2026-04-08 17:11:01",
+        "answers": [
+            {
+                "source_id": 20,
+                "attempt_id": 7,
+                "question_id": 10,
+                "resposta_usuario": "Good evening é usado ao chegar a um local à noite e Good night é usado ao se despedir.",
+                "correta": 1,
+                "created_at": "2026-04-08 17:11:02"
+            },
+            {
+                "source_id": 21,
+                "attempt_id": 7,
+                "question_id": 11,
+                "resposta_usuario": "What is going?",
+                "correta": 0,
+                "created_at": "2026-04-08 17:11:02"
+            },
+            {
+                "source_id": 22,
+                "attempt_id": 7,
+                "question_id": 12,
+                "resposta_usuario": "O que você faz para viver / Qual seu trabalho?",
+                "correta": 1,
+                "created_at": "2026-04-08 17:11:02"
+            },
+            {
+                "source_id": 23,
+                "attempt_id": 7,
+                "question_id": 13,
+                "resposta_usuario": "I like to read a book.",
+                "correta": 1,
+                "created_at": "2026-04-08 17:11:02"
+            }
+        ]
+    },
+    {
+        "source_id": 6,
+        "user_id": 13,
+        "quiz_id": 3,
+        "course_id": 11,
+        "lesson_id": 8,
+        "module_id": 8,
+        "pontuacao": 20,
+        "percentual": 100,
+        "total_correto": 4,
+        "total_questoes": 4,
+        "tentativa_numero": 3,
+        "tempo_gasto": 60,
+        "aprovado": 1,
+        "data_realizacao": "2026-04-08 16:45:34",
+        "answers": [
+            {
+                "source_id": 16,
+                "attempt_id": 6,
+                "question_id": 6,
+                "resposta_usuario": "I'm good. How are you?",
+                "correta": 1,
+                "created_at": "2026-04-08 16:45:34"
+            },
+            {
+                "source_id": 17,
+                "attempt_id": 6,
+                "question_id": 7,
+                "resposta_usuario": "Nice to meet you too.",
+                "correta": 1,
+                "created_at": "2026-04-08 16:45:35"
+            },
+            {
+                "source_id": 18,
+                "attempt_id": 6,
+                "question_id": 8,
+                "resposta_usuario": "I'm 17 years old.",
+                "correta": 1,
+                "created_at": "2026-04-08 16:45:35"
+            },
+            {
+                "source_id": 19,
+                "attempt_id": 6,
+                "question_id": 9,
+                "resposta_usuario": "Qual é a sua profissão ou ocupação?",
+                "correta": 1,
+                "created_at": "2026-04-08 16:45:35"
+            }
+        ]
+    },
+    {
+        "source_id": 5,
+        "user_id": 13,
+        "quiz_id": 3,
+        "course_id": 11,
+        "lesson_id": 8,
+        "module_id": 8,
+        "pontuacao": 15,
+        "percentual": 75,
+        "total_correto": 3,
+        "total_questoes": 4,
+        "tentativa_numero": 2,
+        "tempo_gasto": 33,
+        "aprovado": 1,
+        "data_realizacao": "2026-04-08 16:44:32",
+        "answers": [
+            {
+                "source_id": 12,
+                "attempt_id": 5,
+                "question_id": 6,
+                "resposta_usuario": "I'm good. How are you?",
+                "correta": 1,
+                "created_at": "2026-04-08 16:44:32"
+            },
+            {
+                "source_id": 13,
+                "attempt_id": 5,
+                "question_id": 7,
+                "resposta_usuario": "Nice to meet you too.",
+                "correta": 1,
+                "created_at": "2026-04-08 16:44:32"
+            },
+            {
+                "source_id": 14,
+                "attempt_id": 5,
+                "question_id": 8,
+                "resposta_usuario": "I'm 17 years old.",
+                "correta": 1,
+                "created_at": "2026-04-08 16:44:32"
+            },
+            {
+                "source_id": 15,
+                "attempt_id": 5,
+                "question_id": 9,
+                "resposta_usuario": "O que você está fazendo agora?",
+                "correta": 0,
+                "created_at": "2026-04-08 16:44:32"
+            }
+        ]
+    },
+    {
+        "source_id": 4,
+        "user_id": 13,
+        "quiz_id": 3,
+        "course_id": 11,
+        "lesson_id": 8,
+        "module_id": 8,
+        "pontuacao": 0,
+        "percentual": 0,
+        "total_correto": 0,
+        "total_questoes": 4,
+        "tentativa_numero": 1,
+        "tempo_gasto": 61,
+        "aprovado": 0,
+        "data_realizacao": "2026-04-08 16:37:18",
+        "answers": [
+            {
+                "source_id": 8,
+                "attempt_id": 4,
+                "question_id": 6,
+                "resposta_usuario": "Não respondida",
+                "correta": 0,
+                "created_at": "2026-04-08 16:37:18"
+            },
+            {
+                "source_id": 9,
+                "attempt_id": 4,
+                "question_id": 7,
+                "resposta_usuario": "Não respondida",
+                "correta": 0,
+                "created_at": "2026-04-08 16:37:18"
+            },
+            {
+                "source_id": 10,
+                "attempt_id": 4,
+                "question_id": 8,
+                "resposta_usuario": "Não respondida",
+                "correta": 0,
+                "created_at": "2026-04-08 16:37:18"
+            },
+            {
+                "source_id": 11,
+                "attempt_id": 4,
+                "question_id": 9,
+                "resposta_usuario": "Não respondida",
+                "correta": 0,
+                "created_at": "2026-04-08 16:37:18"
+            }
+        ]
+    },
+    {
+        "source_id": 3,
+        "user_id": 13,
+        "quiz_id": 2,
+        "course_id": 5,
+        "lesson_id": 1,
+        "module_id": 4,
+        "pontuacao": 20,
+        "percentual": 100,
+        "total_correto": 3,
+        "total_questoes": 3,
+        "tentativa_numero": 1,
+        "tempo_gasto": 28,
+        "aprovado": 1,
+        "data_realizacao": "2026-03-31 19:06:38",
+        "answers": [
+            {
+                "source_id": 5,
+                "attempt_id": 3,
+                "question_id": 3,
+                "resposta_usuario": "Linguagem de Marcação de Hiper Textos",
+                "correta": 1,
+                "created_at": "2026-03-31 19:06:38"
+            },
+            {
+                "source_id": 6,
+                "attempt_id": 3,
+                "question_id": 4,
+                "resposta_usuario": "1989",
+                "correta": 1,
+                "created_at": "2026-03-31 19:06:39"
+            },
+            {
+                "source_id": 7,
+                "attempt_id": 3,
+                "question_id": 5,
+                "resposta_usuario": "Tim Berners-Lee",
+                "correta": 1,
+                "created_at": "2026-03-31 19:06:39"
+            }
+        ]
+    }
+]

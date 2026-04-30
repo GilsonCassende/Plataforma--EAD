@@ -1,0 +1,9 @@
+.page-criar-curso .editor-card,
+.page-criar-curso .modal .create-course {
+    width: min(100%, 760px);
+    margin-inline: auto;
+}
+
+.page-criar-curso .editor-card__body {
+    gap: 1.1rem;
+}

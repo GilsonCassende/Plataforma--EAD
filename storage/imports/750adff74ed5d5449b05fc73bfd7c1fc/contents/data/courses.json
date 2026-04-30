@@ -1,0 +1,62 @@
+[
+    {
+        "source_id": 11,
+        "titulo": "MINI CURSO GRATUITO DE INGLÊS",
+        "descricao": "\r\n\r\nBem-vindo ao meu mini curso gratuito de inglês com foco 100% na prática e no aprendizado rápido! Este curso foi cuidadosamente desenvolvido para ajudá-lo a alcançar resultados excelentes em pouco tempo e sem gastar um centavo. Eu quero te deixar motivado a querer aprender mais. ",
+        "categoria": "Línguas",
+        "status": "ativo",
+        "course_structure": "single_module",
+        "teacher_id": 11,
+        "teacher_name": "Josue Ferreira",
+        "teacher_email": "ferreira2@gmail.com",
+        "thumbnail": "69d6653007d4c_20260408162448.jpg",
+        "created_at": "2026-04-08 15:24:48",
+        "updated_at": "2026-04-08 15:24:48",
+        "thumbnail_backup_path": "files/thumbnails/11_69d6653007d4c_20260408162448.jpg"
+    },
+    {
+        "source_id": 9,
+        "titulo": "HTML5 & CSS3 Gustavo Guanabara",
+        "descricao": "Faça agora mesmo o Curso de HTML5 e CSS3 do Professor Gustavo Guanabara, com aulas atualizadas e com material de apoio em PDF.\r\n",
+        "categoria": "programação",
+        "status": "ativo",
+        "course_structure": "multi_module",
+        "teacher_id": 7,
+        "teacher_name": "Gilson Cassende",
+        "teacher_email": "gilson@ead.com",
+        "thumbnail": "69cd78536f849_20260401215603.jpg",
+        "created_at": "2026-04-01 20:56:03",
+        "updated_at": "2026-04-01 20:56:03",
+        "thumbnail_backup_path": "files/thumbnails/9_69cd78536f849_20260401215603.jpg"
+    },
+    {
+        "source_id": 5,
+        "titulo": "HTML5 & CSS3",
+        "descricao": "Aprenda HTML5 e CSS3 do basico ao avançado",
+        "categoria": "Programação",
+        "status": "ativo",
+        "course_structure": "single_module",
+        "teacher_id": 7,
+        "teacher_name": "Gilson Cassende",
+        "teacher_email": "gilson@ead.com",
+        "thumbnail": "697fdb2b9acbb_20260202000059.png",
+        "created_at": "2025-11-27 23:16:41",
+        "updated_at": "2026-02-02 00:00:59",
+        "thumbnail_backup_path": "files/thumbnails/5_697fdb2b9acbb_20260202000059.png"
+    },
+    {
+        "source_id": 8,
+        "titulo": " Curso Grátis de JavaScript e ECMAScript para Iniciantes",
+        "descricao": "Curso de linguagem JavaScript, voltado para iniciantes e para quem quiser aprender mais sobre ECMAScript, a versão padronizada do JS. Em um curso patrocinado pelo Google, o professor Gustavo Guanabara vai ensinar o conteúdo básico em 6 módulos:\r\n\r\nMódulo 01: Conhecendo o JavaScript\r\nMódulo 02: Comandos básicos do JavaScript\r\nMódulo 03: Document Object Model\r\nMódulo 04: Condições em JavaScript\r\nMódulo 05: Repetições (laços) em JavaScript\r\nMódulo 06: Avançando nos estudos em JavaScript",
+        "categoria": "Programação",
+        "status": "ativo",
+        "course_structure": "single_module",
+        "teacher_id": 2,
+        "teacher_name": "Prof. João Silva",
+        "teacher_email": "joao@ead.com",
+        "thumbnail": "697fe0827776a_20260202002346.png",
+        "created_at": "2026-01-24 17:48:18",
+        "updated_at": "2026-02-02 00:23:46",
+        "thumbnail_backup_path": "files/thumbnails/8_697fe0827776a_20260202002346.png"
+    }
+]

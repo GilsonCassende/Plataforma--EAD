@@ -1,0 +1,150 @@
+/* ====================================
+   LEGACY COMPATIBILITY
+   Keep only selectors still used by templates that have not been
+   fully migrated into system.css or page-specific stylesheets.
+   ==================================== */
+
+@import 'variables.css';
+
+.text-center {
+    text-align: center;
+}
+
+.text-right {
+    text-align: right;
+}
+
+.mt-20 {
+    margin-top: 1.25rem;
+}
+
+.mb-20 {
+    margin-bottom: 1.25rem;
+}
+
+.p-20 {
+    padding: 1.25rem;
+}
+
+.hidden {
+    display: none;
+}
+
+.thumb-preview {
+    height: 60px;
+    margin-left: 0.5rem;
+    vertical-align: middle;
+    border-radius: 6px;
+}
+
+.students-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 0.875rem;
+}
+
+.student-card {
+    display: flex;
+    flex-direction: column;
+    gap: 0.875rem;
+    padding: 0.95rem;
+    border: 1px solid #e6eef8;
+    border-radius: 14px;
+    background: #fff;
+}
+
+.student-info {
+    display: flex;
+    gap: 0.75rem;
+    align-items: center;
+}
+
+.avatar {
+    width: 48px;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 999px;
+    color: #fff;
+    font-weight: 800;
+    background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+}
+
+.student-name {
+    font-weight: 700;
+}
+
+.student-email,
+.student-course,
+.student-progress-text {
+    font-size: 0.8125rem;
+    color: #6b7280;
+}
+
+.student-meta {
+    display: grid;
+    gap: 0.4rem;
+}
+
+.recent-list {
+    padding: 0;
+    margin: 0;
+    list-style: none;
+}
+
+.recent-list li {
+    padding: 0.6rem 0;
+    border-bottom: 1px dashed #e5e7eb;
+    color: #374151;
+}
+
+.cursos-table table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.cursos-table {
+    overflow: hidden;
+    border-radius: 12px;
+    background: #fff;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.04);
+}
+
+.cursos-table thead {
+    background: #f8fafc;
+}
+
+.cursos-table th,
+.cursos-table td {
+    padding: 0.85rem 0.95rem;
+    text-align: left;
+    border-bottom: 1px solid #edf2f7;
+}
+
+.cursos-table td.actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+.badge-ghost {
+    color: var(--primary);
+    background: #f1f5ff;
+}
+
+.badge-admin {
+    color: #5b21b6;
+    background: #efe7ff;
+}
+
+.badge-professor {
+    color: #0f766e;
+    background: #def7f3;
+}
+
+.badge-aluno {
+    color: #1d4ed8;
+    background: #e8f0ff;
+}

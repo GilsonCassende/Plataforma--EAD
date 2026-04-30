@@ -1,0 +1,32 @@
+.page-meus-cursos .page {
+    max-width: 1200px;
+}
+
+.page-meus-cursos .page-header-block {
+    margin-bottom: 1.5rem;
+}
+
+.page-meus-cursos .page-header-block h1 {
+    margin-bottom: 0.35rem;
+    font-size: clamp(2rem, 3vw, 2.6rem);
+}
+
+.page-meus-cursos .page-header-block p {
+    max-width: 720px;
+    color: var(--color-text-muted);
+}
+
+.page-meus-cursos .pagination {
+    justify-content: center;
+}
+
+.page-meus-cursos .course-grid--instructor {
+    max-width: none;
+    margin-inline: 0;
+}
+
+@media (min-width: 1180px) {
+    .page-meus-cursos .course-grid--instructor {
+        grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+    }
+}

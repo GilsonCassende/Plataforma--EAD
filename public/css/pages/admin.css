@@ -1,0 +1,807 @@
+:is(.page-dashboard, .page-admin-cursos, .page-admin-quizzes) .admin-shell {
+    padding: 0;
+}
+
+:is(.page-dashboard, .page-admin-cursos, .page-admin-quizzes) .admin-shell .container {
+    max-width: 1320px;
+}
+
+:is(.page-dashboard, .page-admin-cursos, .page-admin-quizzes) .admin-layout {
+    display: grid;
+    grid-template-columns: 248px minmax(0, 1fr);
+    gap: 1.5rem;
+    align-items: start;
+}
+
+:is(.page-dashboard, .page-admin-cursos, .page-admin-quizzes) .admin-sidebar {
+    position: sticky;
+    top: 5.7rem;
+    display: grid;
+    gap: 1.25rem;
+    padding: 1.25rem;
+    border: 1px solid rgba(218, 227, 239, 0.94);
+    border-radius: 26px;
+    background:
+        radial-gradient(circle at top left, rgba(59, 130, 246, 0.14), transparent 24%),
+        linear-gradient(180deg, rgba(18, 24, 43, 0.98) 0%, rgba(29, 38, 64, 0.98) 100%);
+    box-shadow: 0 22px 50px rgba(15, 23, 42, 0.18);
+}
+
+:is(.page-dashboard, .page-admin-cursos, .page-admin-quizzes) .admin-sidebar__brand {
+    display: grid;
+    gap: 0.45rem;
+    color: rgba(241, 245, 249, 0.84);
+}
+
+:is(.page-dashboard, .page-admin-cursos, .page-admin-quizzes) .admin-sidebar__brand strong {
+    font-size: 1.15rem;
+    color: #fff;
+}
+
+:is(.page-dashboard, .page-admin-cursos, .page-admin-quizzes) .admin-sidebar__brand p {
+    margin: 0;
+    font-size: 0.88rem;
+    line-height: 1.55;
+}
+
+:is(.page-dashboard, .page-admin-cursos, .page-admin-quizzes) .admin-sidebar__eyebrow {
+    display: inline-flex;
+    align-items: center;
+    width: fit-content;
+    padding: 0.42rem 0.72rem;
+    border-radius: 999px;
+    background: rgba(96, 165, 250, 0.12);
+    color: #bfdbfe;
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+}
+
+:is(.page-dashboard, .page-admin-cursos, .page-admin-quizzes) .admin-topbar__eyebrow {
+    display: inline-flex;
+    align-items: center;
+    width: fit-content;
+    padding: 0.38rem 0.72rem;
+    border-radius: 999px;
+    background: #eef4fb;
+    color: #475569;
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+}
+
+:is(.page-dashboard, .page-admin-cursos, .page-admin-quizzes) .admin-panel__eyebrow {
+    display: inline-flex;
+    align-items: center;
+    width: fit-content;
+    padding: 0.38rem 0.72rem;
+    border-radius: 999px;
+    background: #eef4fb;
+    color: #475569;
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+}
+
+:is(.page-dashboard, .page-admin-cursos, .page-admin-quizzes) .admin-nav {
+    display: grid;
+    gap: 0.45rem;
+}
+
+:is(.page-dashboard, .page-admin-cursos, .page-admin-quizzes) .admin-nav__item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    min-height: 44px;
+    padding: 0.8rem 0.95rem;
+    border-radius: 16px;
+    color: rgba(241, 245, 249, 0.82);
+    text-decoration: none;
+    transition: transform 180ms ease, background 180ms ease, color 180ms ease;
+}
+
+:is(.page-dashboard, .page-admin-cursos, .page-admin-quizzes) .admin-nav__item:hover,
+:is(.page-dashboard, .page-admin-cursos, .page-admin-quizzes) .admin-nav__item.is-active {
+    background: rgba(255, 255, 255, 0.1);
+    color: #fff;
+    transform: translateX(2px);
+}
+
+:is(.page-dashboard, .page-admin-cursos, .page-admin-quizzes) .admin-nav__icon {
+    width: 1.5rem;
+    text-align: center;
+    color: #93c5fd;
+    font-weight: 800;
+}
+
+:is(.page-dashboard, .page-admin-cursos, .page-admin-quizzes) .admin-sidebar__meta {
+    display: grid;
+    gap: 0.55rem;
+}
+
+:is(.page-dashboard, .page-admin-cursos, .page-admin-quizzes) .admin-sidebar__pill {
+    display: inline-flex;
+    align-items: center;
+    min-height: 2.25rem;
+    padding: 0.55rem 0.8rem;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.08);
+    color: rgba(241, 245, 249, 0.82);
+    font-size: 0.82rem;
+    font-weight: 700;
+}
+
+:is(.page-dashboard, .page-admin-cursos, .page-admin-quizzes) .admin-main {
+    display: grid;
+    gap: 1.35rem;
+    min-width: 0;
+}
+
+:is(.page-dashboard, .page-admin-cursos, .page-admin-quizzes) .admin-topbar,
+:is(.page-dashboard, .page-admin-cursos, .page-admin-quizzes) .admin-panel,
+:is(.page-dashboard, .page-admin-cursos, .page-admin-quizzes) .admin-metric-card {
+    border: 1px solid rgba(218, 227, 239, 0.92);
+    border-radius: 26px;
+    background: rgba(255, 255, 255, 0.96);
+    box-shadow: var(--shadow-sm);
+}
+
+:is(.page-dashboard, .page-admin-cursos, .page-admin-quizzes) .admin-topbar {
+    display: flex;
+    justify-content: space-between;
+    gap: 1.25rem;
+    padding: 1.45rem 1.5rem;
+    background:
+        radial-gradient(circle at top right, rgba(79, 70, 229, 0.1), transparent 24%),
+        radial-gradient(circle at left center, rgba(14, 165, 183, 0.08), transparent 22%),
+        linear-gradient(135deg, rgba(255, 255, 255, 0.99) 0%, rgba(245, 248, 253, 0.97) 100%);
+}
+
+:is(.page-dashboard, .page-admin-cursos, .page-admin-quizzes) .admin-topbar__copy {
+    display: grid;
+    gap: 0.65rem;
+    max-width: 760px;
+}
+
+:is(.page-dashboard, .page-admin-cursos, .page-admin-quizzes) .admin-topbar__copy h1 {
+    margin: 0;
+    font-size: clamp(2rem, 3vw, 2.7rem);
+    color: #0f172a;
+}
+
+:is(.page-dashboard, .page-admin-cursos, .page-admin-quizzes) .admin-topbar__copy p {
+    margin: 0;
+    color: #64748b;
+    line-height: 1.65;
+}
+
+:is(.page-dashboard, .page-admin-cursos, .page-admin-quizzes) .admin-topbar__actions {
+    display: grid;
+    gap: 0.9rem;
+    justify-items: end;
+    align-content: start;
+}
+
+:is(.page-dashboard, .page-admin-cursos, .page-admin-quizzes) .admin-topbar__quickstats,
+:is(.page-dashboard, .page-admin-cursos, .page-admin-quizzes) .admin-topbar__buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+    justify-content: flex-end;
+}
+
+:is(.page-dashboard, .page-admin-cursos, .page-admin-quizzes) .admin-topbar__chip {
+    display: inline-flex;
+    align-items: center;
+    min-height: 2.35rem;
+    padding: 0.55rem 0.85rem;
+    border-radius: 999px;
+    border: 1px solid rgba(205, 216, 231, 0.94);
+    background: rgba(255, 255, 255, 0.82);
+    color: #475569;
+    font-size: 0.84rem;
+    font-weight: 700;
+}
+
+:is(.page-dashboard, .page-admin-cursos, .page-admin-quizzes) .admin-topbar__buttons .btn {
+    min-width: 9.75rem;
+    justify-content: center;
+}
+
+:is(.page-dashboard, .page-admin-cursos, .page-admin-quizzes) .admin-metrics {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1rem;
+}
+
+:is(.page-dashboard, .page-admin-cursos, .page-admin-quizzes) .admin-metric-card {
+    display: grid;
+    gap: 0.55rem;
+    padding: 1.15rem 1.2rem;
+}
+
+:is(.page-dashboard, .page-admin-cursos, .page-admin-quizzes) .admin-metric-card__label {
+    color: #64748b;
+    font-size: 0.82rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+:is(.page-dashboard, .page-admin-cursos, .page-admin-quizzes) .admin-metric-card__value {
+    color: #0f172a;
+    font-size: clamp(1.8rem, 2.5vw, 2.4rem);
+    line-height: 1;
+}
+
+:is(.page-dashboard, .page-admin-cursos, .page-admin-quizzes) .admin-metric-card__note {
+    margin: 0;
+    color: #64748b;
+    line-height: 1.5;
+}
+
+:is(.page-dashboard, .page-admin-cursos, .page-admin-quizzes) .admin-panel {
+    padding: 1.25rem;
+}
+
+:is(.page-dashboard, .page-admin-cursos, .page-admin-quizzes) .admin-panel--compact {
+    padding: 1.1rem 1.2rem 1.2rem;
+}
+
+:is(.page-dashboard, .page-admin-cursos, .page-admin-quizzes) .admin-panel__header {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    align-items: flex-start;
+    margin-bottom: 1rem;
+}
+
+:is(.page-dashboard, .page-admin-cursos, .page-admin-quizzes) .admin-panel__header h2 {
+    margin: 0.45rem 0 0;
+    color: #0f172a;
+    font-size: 1.32rem;
+}
+
+:is(.page-dashboard, .page-admin-cursos, .page-admin-quizzes) .admin-panel__header p {
+    margin: 0.45rem 0 0;
+    color: #64748b;
+    line-height: 1.55;
+}
+
+:is(.page-dashboard, .page-admin-cursos, .page-admin-quizzes) .admin-summary-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.85rem;
+}
+
+:is(.page-dashboard, .page-admin-cursos, .page-admin-quizzes) .admin-summary-item {
+    display: grid;
+    gap: 0.35rem;
+    min-height: 7.25rem;
+    padding: 0.95rem 1rem;
+    border: 1px solid #e5edf7;
+    border-radius: 20px;
+    background: #f8fbff;
+}
+
+:is(.page-dashboard, .page-admin-cursos, .page-admin-quizzes) .admin-summary-item span {
+    color: #64748b;
+    font-size: 0.85rem;
+}
+
+:is(.page-dashboard, .page-admin-cursos, .page-admin-quizzes) .admin-summary-item strong {
+    color: #0f172a;
+    font-size: 1.35rem;
+}
+
+:is(.page-dashboard, .page-admin-cursos, .page-admin-quizzes) .admin-action-list {
+    display: grid;
+    gap: 0.8rem;
+}
+
+:is(.page-dashboard, .page-admin-cursos, .page-admin-quizzes) .admin-action-item {
+    display: grid;
+    gap: 0.35rem;
+    padding: 0.95rem 1rem;
+    border: 1px solid #e6edf7;
+    border-radius: 18px;
+    background: #fbfdff;
+}
+
+:is(.page-dashboard, .page-admin-cursos, .page-admin-quizzes) .admin-action-item strong {
+    color: #0f172a;
+}
+
+:is(.page-dashboard, .page-admin-cursos, .page-admin-quizzes) .admin-action-item p {
+    margin: 0;
+    color: #64748b;
+    line-height: 1.55;
+}
+
+:is(.page-dashboard, .page-admin-cursos, .page-admin-quizzes) .admin-panel--table {
+    padding: 1.25rem;
+}
+
+:is(.page-dashboard, .page-admin-cursos, .page-admin-quizzes) .admin-table-wrap {
+    overflow-x: auto;
+    border-top: 1px solid #edf2f9;
+}
+
+:is(.page-dashboard, .page-admin-cursos, .page-admin-quizzes) .admin-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+:is(.page-dashboard, .page-admin-cursos, .page-admin-quizzes) .admin-table thead {
+    background: #f8fbff;
+    border-bottom: 1px solid #e8eef7;
+}
+
+:is(.page-dashboard, .page-admin-cursos, .page-admin-quizzes) .admin-table th,
+:is(.page-dashboard, .page-admin-cursos, .page-admin-quizzes) .admin-table td {
+    padding: 0.95rem 1rem;
+    text-align: left;
+    color: #243041;
+    vertical-align: middle;
+}
+
+:is(.page-dashboard, .page-admin-cursos, .page-admin-quizzes) .admin-table td:last-child {
+    width: 280px;
+}
+
+:is(.page-dashboard, .page-admin-cursos, .page-admin-quizzes) .admin-table th {
+    font-size: 0.8rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #64748b;
+}
+
+:is(.page-dashboard, .page-admin-cursos, .page-admin-quizzes) .admin-table tbody tr {
+    border-bottom: 1px solid #eef2f7;
+    transition: background 180ms ease;
+}
+
+:is(.page-dashboard, .page-admin-cursos, .page-admin-quizzes) .admin-table tbody tr:hover {
+    background: #fbfdff;
+}
+
+:is(.page-dashboard, .page-admin-cursos, .page-admin-quizzes) .admin-entity {
+    display: flex;
+    gap: 0.8rem;
+    align-items: center;
+}
+
+:is(.page-dashboard, .page-admin-cursos, .page-admin-quizzes) .admin-entity__avatar {
+    width: 2.6rem;
+    height: 2.6rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 14px;
+    background: #eef4ff;
+    color: #3157a5;
+    font-weight: 800;
+}
+
+:is(.page-dashboard, .page-admin-cursos, .page-admin-quizzes) .admin-entity__copy,
+:is(.page-dashboard, .page-admin-cursos, .page-admin-quizzes) .admin-course-cell {
+    display: grid;
+    gap: 0.15rem;
+}
+
+:is(.page-dashboard, .page-admin-cursos, .page-admin-quizzes) .admin-entity__copy strong,
+:is(.page-dashboard, .page-admin-cursos, .page-admin-quizzes) .admin-course-cell strong {
+    color: #0f172a;
+}
+
+:is(.page-dashboard, .page-admin-cursos, .page-admin-quizzes) .admin-entity__copy span,
+:is(.page-dashboard, .page-admin-cursos, .page-admin-quizzes) .admin-course-cell span {
+    color: #64748b;
+    font-size: 0.84rem;
+}
+
+:is(.page-dashboard, .page-admin-cursos, .page-admin-quizzes) .admin-role-pill,
+:is(.page-dashboard, .page-admin-cursos, .page-admin-quizzes) .admin-status-pill {
+    display: inline-flex;
+    align-items: center;
+    min-height: 2rem;
+    padding: 0.4rem 0.7rem;
+    border-radius: 999px;
+    font-size: 0.78rem;
+    font-weight: 800;
+}
+
+:is(.page-dashboard, .page-admin-cursos, .page-admin-quizzes) .admin-role-pill--aluno {
+    background: #e8f0ff;
+    color: #3157a5;
+}
+
+:is(.page-dashboard, .page-admin-cursos, .page-admin-quizzes) .admin-role-pill--professor {
+    background: #e8f7f8;
+    color: #0f766e;
+}
+
+:is(.page-dashboard, .page-admin-cursos, .page-admin-quizzes) .admin-role-pill--admin {
+    background: #fff4d6;
+    color: #9a6700;
+}
+
+:is(.page-dashboard, .page-admin-cursos, .page-admin-quizzes) .admin-status-pill--active {
+    background: #e8f7ee;
+    color: #167a4a;
+}
+
+:is(.page-dashboard, .page-admin-cursos, .page-admin-quizzes) .admin-status-pill--inactive {
+    background: #fff5d9;
+    color: #8c6500;
+}
+
+:is(.page-dashboard, .page-admin-cursos, .page-admin-quizzes) .admin-status-pill--draft {
+    background: #eef2ff;
+    color: #4f46e5;
+}
+
+:is(.page-dashboard, .page-admin-cursos, .page-admin-quizzes) .admin-table__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+:is(.page-dashboard, .page-admin-cursos, .page-admin-quizzes) .admin-table__actions--compact {
+    display: contents;
+}
+
+:is(.page-dashboard, .page-admin-cursos, .page-admin-quizzes) .admin-actions-stack {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.5rem;
+    align-items: stretch;
+    min-width: 15.5rem;
+    width: 100%;
+}
+
+:is(.page-dashboard, .page-admin-cursos, .page-admin-quizzes) .admin-inline-form {
+    margin: 0;
+    width: 100%;
+}
+
+:is(.page-dashboard, .page-admin-cursos, .page-admin-quizzes) .admin-status-form {
+    display: contents;
+}
+
+:is(.page-dashboard, .page-admin-cursos, .page-admin-quizzes) .admin-self-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 2rem;
+    padding: 0.45rem 0.9rem;
+    border-radius: 999px;
+    background: #eef2ff;
+    color: #3730a3;
+    font-size: 0.78rem;
+    font-weight: 800;
+    white-space: nowrap;
+    border: 1px solid #d9defc;
+}
+
+:is(.page-dashboard, .page-admin-cursos, .page-admin-quizzes) .admin-contact-link {
+    text-decoration: none;
+}
+
+:is(.page-dashboard, .page-admin-cursos, .page-admin-quizzes) .admin-toolbar {
+    display: grid;
+    grid-template-columns: minmax(0, 1.3fr) 220px auto;
+    gap: 0.85rem;
+    align-items: end;
+}
+
+:is(.page-dashboard, .page-admin-cursos, .page-admin-quizzes) .admin-toolbar__field {
+    display: grid;
+    gap: 0.45rem;
+}
+
+:is(.page-dashboard, .page-admin-cursos, .page-admin-quizzes) .admin-toolbar__field label {
+    color: #475569;
+    font-size: 0.82rem;
+    font-weight: 800;
+}
+
+:is(.page-dashboard, .page-admin-cursos, .page-admin-quizzes) .admin-toolbar__field input,
+:is(.page-dashboard, .page-admin-cursos, .page-admin-quizzes) .admin-toolbar__field select,
+:is(.page-dashboard, .page-admin-cursos, .page-admin-quizzes) .admin-select {
+    min-height: 2.9rem;
+    padding: 0.75rem 0.95rem;
+    border: 1px solid #d7e2f0;
+    border-radius: 14px;
+    background: #fff;
+    color: #0f172a;
+}
+
+:is(.page-dashboard, .page-admin-cursos, .page-admin-quizzes) .admin-toolbar__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.55rem;
+}
+
+:is(.page-dashboard, .page-admin-cursos, .page-admin-quizzes) .admin-select {
+    width: 100%;
+    min-width: 0;
+    min-height: 2.7rem;
+    padding: 0.68rem 0.9rem;
+    padding-right: 2.5rem;
+    white-space: nowrap;
+}
+
+:is(.page-dashboard, .page-admin-cursos, .page-admin-quizzes) .admin-table__actions .btn,
+:is(.page-dashboard, .page-admin-cursos, .page-admin-quizzes) .admin-table__actions .admin-inline-form,
+:is(.page-dashboard, .page-admin-cursos, .page-admin-quizzes) .admin-status-form .btn {
+    margin: 0;
+    white-space: nowrap;
+}
+
+:is(.page-dashboard, .page-admin-cursos, .page-admin-quizzes) .admin-table__actions .btn,
+:is(.page-dashboard, .page-admin-cursos, .page-admin-quizzes) .admin-status-form .btn {
+    justify-content: center;
+    width: 100%;
+    min-height: 2.7rem;
+    padding: 0.68rem 0.9rem;
+    font-size: 0.95rem;
+}
+
+:is(.page-dashboard, .page-admin-cursos, .page-admin-quizzes) .admin-pagination {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.55rem;
+    margin-top: 1rem;
+}
+
+:is(.page-dashboard, .page-admin-cursos, .page-admin-quizzes) .admin-pagination__item {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 2.5rem;
+    min-height: 2.5rem;
+    padding: 0.4rem 0.75rem;
+    border: 1px solid #d6e1ef;
+    border-radius: 12px;
+    background: #fff;
+    color: #334155;
+    font-weight: 700;
+    text-decoration: none;
+    transition: border-color 180ms ease, color 180ms ease, background 180ms ease;
+}
+
+:is(.page-dashboard, .page-admin-cursos, .page-admin-quizzes) .admin-pagination__item:hover,
+:is(.page-dashboard, .page-admin-cursos, .page-admin-quizzes) .admin-pagination__item.is-active {
+    border-color: #4f46e5;
+    background: #eef2ff;
+    color: #312e81;
+}
+
+:is(.page-dashboard, .page-admin-cursos, .page-admin-quizzes) .admin-empty-state {
+    padding: 1rem 0.2rem 0.25rem;
+    color: #64748b;
+}
+
+:is(.page-dashboard, .page-admin-cursos, .page-admin-quizzes) .admin-audit-list {
+    display: grid;
+    gap: 0.85rem;
+}
+
+:is(.page-dashboard, .page-admin-cursos, .page-admin-quizzes) .admin-audit-item {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.95rem 1rem;
+    border: 1px solid #e6edf7;
+    border-radius: 18px;
+    background: #fbfdff;
+}
+
+:is(.page-dashboard, .page-admin-cursos, .page-admin-quizzes) .admin-audit-item strong {
+    color: #0f172a;
+}
+
+:is(.page-dashboard, .page-admin-cursos, .page-admin-quizzes) .admin-audit-item p {
+    margin: 0.25rem 0 0;
+    color: #64748b;
+    line-height: 1.55;
+}
+
+:is(.page-dashboard, .page-admin-cursos, .page-admin-quizzes) .admin-audit-item__meta {
+    display: grid;
+    gap: 0.15rem;
+    justify-items: end;
+    text-align: right;
+    white-space: nowrap;
+}
+
+:is(.page-dashboard, .page-admin-cursos, .page-admin-quizzes) .admin-audit-item__meta span {
+    color: #0f172a;
+    font-weight: 800;
+}
+
+:is(.page-dashboard, .page-admin-cursos, .page-admin-quizzes) .admin-audit-item__meta small {
+    color: #64748b;
+}
+
+.page-admin-quizzes .admin-table th,
+.page-admin-quizzes .admin-table td {
+    padding-top: 0.7rem;
+    padding-bottom: 0.7rem;
+}
+
+.page-admin-quizzes .admin-table td:last-child {
+    width: 210px;
+}
+
+.page-admin-quizzes .admin-course-cell {
+    gap: 0.08rem;
+}
+
+.page-admin-quizzes .admin-course-cell strong {
+    line-height: 1.35;
+}
+
+.page-admin-quizzes .admin-course-cell span {
+    font-size: 0.8rem;
+    line-height: 1.35;
+}
+
+.page-admin-quizzes .admin-status-pill {
+    min-height: 1.8rem;
+    padding: 0.3rem 0.62rem;
+    font-size: 0.74rem;
+}
+
+.page-admin-quizzes .admin-actions-stack {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    min-width: 0;
+}
+
+.page-admin-quizzes .admin-table__actions {
+    gap: 0.45rem;
+}
+
+.page-admin-quizzes .admin-table__actions--compact {
+    display: flex;
+    flex-wrap: nowrap;
+    width: auto;
+}
+
+.page-admin-quizzes .admin-inline-form {
+    width: auto;
+}
+
+.page-admin-quizzes .admin-table__actions .btn,
+.page-admin-quizzes .admin-inline-form .btn {
+    width: auto;
+    min-width: 7rem;
+    min-height: 2.45rem;
+    padding: 0.55rem 0.9rem;
+    font-size: 0.9rem;
+    box-shadow: none;
+}
+
+.page-admin-quizzes .admin-table tbody tr:hover .btn-secondary {
+    border-color: rgba(167, 186, 212, 0.96);
+}
+
+.page-dashboard .admin-table td:last-child {
+    width: 260px;
+}
+
+.page-dashboard .admin-actions-stack {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    min-width: 0;
+}
+
+.page-dashboard .admin-table__actions {
+    gap: 0.4rem;
+}
+
+.page-dashboard .admin-table__actions--compact {
+    display: flex;
+    flex-wrap: nowrap;
+    width: auto;
+}
+
+.page-dashboard .admin-inline-form {
+    width: auto;
+}
+
+.page-dashboard .admin-table__actions .btn,
+.page-dashboard .admin-inline-form .btn,
+.page-dashboard .admin-contact-link {
+    width: auto;
+    min-width: 6.8rem;
+    min-height: 2.35rem;
+    padding: 0.5rem 0.82rem;
+    font-size: 0.88rem;
+    box-shadow: none;
+}
+
+.page-dashboard .admin-self-badge {
+    min-height: 2.35rem;
+    padding: 0.5rem 0.82rem;
+    font-size: 0.74rem;
+}
+
+@media (max-width: 1180px) {
+    :is(.page-dashboard, .page-admin-cursos, .page-admin-quizzes) .admin-metrics {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 980px) {
+    :is(.page-dashboard, .page-admin-cursos, .page-admin-quizzes) .admin-layout {
+        grid-template-columns: 1fr;
+    }
+
+    :is(.page-dashboard, .page-admin-cursos, .page-admin-quizzes) .admin-sidebar {
+        position: static;
+    }
+
+    :is(.page-dashboard, .page-admin-cursos, .page-admin-quizzes) .admin-topbar {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    :is(.page-dashboard, .page-admin-cursos, .page-admin-quizzes) .admin-topbar__actions,
+    :is(.page-dashboard, .page-admin-cursos, .page-admin-quizzes) .admin-topbar__quickstats,
+    :is(.page-dashboard, .page-admin-cursos, .page-admin-quizzes) .admin-topbar__buttons {
+        justify-content: flex-start;
+        justify-items: start;
+    }
+
+    :is(.page-dashboard, .page-admin-cursos, .page-admin-quizzes) .admin-toolbar {
+        grid-template-columns: 1fr;
+    }
+
+    :is(.page-dashboard, .page-admin-cursos, .page-admin-quizzes) .admin-status-form {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 768px) {
+    :is(.page-dashboard, .page-admin-cursos, .page-admin-quizzes) .admin-metrics,
+    :is(.page-dashboard, .page-admin-cursos, .page-admin-quizzes) .admin-summary-grid {
+        grid-template-columns: 1fr;
+    }
+
+    :is(.page-dashboard, .page-admin-cursos, .page-admin-quizzes) .admin-nav {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    :is(.page-dashboard, .page-admin-cursos, .page-admin-quizzes) .admin-table__actions {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    :is(.page-dashboard, .page-admin-cursos, .page-admin-quizzes) .admin-table__actions--compact {
+        flex-wrap: wrap;
+    }
+
+    :is(.page-dashboard, .page-admin-cursos, .page-admin-quizzes) .admin-actions-stack {
+        min-width: 100%;
+    }
+
+    :is(.page-dashboard, .page-admin-cursos, .page-admin-quizzes) .admin-audit-item {
+        flex-direction: column;
+    }
+
+    :is(.page-dashboard, .page-admin-cursos, .page-admin-quizzes) .admin-audit-item__meta {
+        justify-items: start;
+        text-align: left;
+        white-space: normal;
+    }
+}

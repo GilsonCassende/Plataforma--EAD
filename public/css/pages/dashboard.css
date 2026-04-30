@@ -1,0 +1,591 @@
+.page-dashboard .dashboard__header {
+    margin-bottom: 1.25rem;
+}
+
+.page-dashboard .container {
+    max-width: 1200px;
+}
+
+.page-dashboard .dashboard__stats {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 1.25rem;
+}
+
+.page-dashboard .dashboard__subtitle {
+    max-width: 640px;
+}
+
+.page-dashboard .dashboard__courses .course-card,
+.page-dashboard .professor-course-grid .course-card {
+    height: 100%;
+}
+
+.page-dashboard .dashboard__courses .course-grid,
+.page-dashboard .dashboard__courses .cursos-grid,
+.page-dashboard .dashboard__courses .courses-grid {
+    grid-template-columns: repeat(auto-fit, minmax(280px, 380px)) !important;
+    justify-content: start;
+    max-width: 100%;
+    margin-inline: 0;
+}
+
+.page-dashboard .professor-course-grid {
+    max-width: none;
+    margin-inline: 0;
+}
+
+.page-dashboard .dashboard-grid .main-col .meus-cursos {
+    width: calc(100% + 300px + 1.375rem);
+    margin-right: calc(-300px - 1.375rem);
+}
+
+.page-dashboard .dashboard-grid .main-col .meus-cursos > .section-heading,
+.page-dashboard .dashboard-grid .main-col .meus-cursos > h2,
+.page-dashboard .dashboard-grid .main-col .meus-cursos > p {
+    max-width: 100%;
+}
+
+@media (min-width: 1180px) {
+    .page-dashboard .professor-course-grid {
+        grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+    }
+}
+
+@media (max-width: 640px) {
+    .page-dashboard .dashboard__courses .course-grid,
+    .page-dashboard .dashboard__courses .cursos-grid,
+    .page-dashboard .dashboard__courses .courses-grid {
+        grid-template-columns: 1fr !important;
+    }
+}
+
+.page-dashboard .dashboard__courses .course-card__progress {
+    padding: 0.7rem 0.8rem;
+}
+
+.page-dashboard .professor-dashboard {
+    max-width: 1280px;
+    margin: 1.75rem auto 0;
+}
+
+.page-dashboard .professor-panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1.35rem;
+    padding: 1.5rem 1.6rem;
+    border: 1px solid rgba(216, 226, 239, 0.92);
+    border-radius: 28px;
+    background:
+        radial-gradient(circle at top right, rgba(79, 70, 229, 0.1), transparent 24%),
+        radial-gradient(circle at left center, rgba(14, 165, 183, 0.08), transparent 22%),
+        linear-gradient(135deg, rgba(255, 255, 255, 0.98) 0%, rgba(244, 248, 252, 0.96) 100%);
+    box-shadow: var(--shadow-sm);
+}
+
+.page-dashboard .professor-panel-header h1 {
+    margin: 0;
+    font-size: clamp(2rem, 4vw, 3rem);
+    color: #0f172a;
+}
+
+.page-dashboard .stats-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.875rem;
+    margin-bottom: 1.125rem;
+}
+
+.page-dashboard .dashboard__stats .stat-card {
+    min-height: 0;
+    padding: 1.05rem 1.1rem;
+    text-align: left;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.96) 0%, rgba(246, 248, 252, 0.96) 100%);
+    box-shadow: var(--shadow-sm);
+}
+
+.page-dashboard .dashboard__stats .stat-number,
+.page-dashboard .dashboard__stats .stat-label {
+    color: inherit;
+    text-shadow: none;
+}
+
+.page-dashboard .dashboard__stats .stat-number {
+    font-size: clamp(1.45rem, 2.2vw, 1.9rem);
+    color: #0f172a;
+}
+
+.page-dashboard .dashboard__stats .stat-label {
+    color: #64748b;
+    font-weight: 700;
+}
+
+.page-dashboard .stats-row .stat-card {
+    flex: 1 1 170px;
+    min-width: 170px;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 1rem;
+    color: inherit;
+    text-decoration: none;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.96) 0%, rgba(246, 248, 252, 0.96) 100%);
+    box-shadow: var(--shadow-sm);
+}
+
+.page-dashboard .stats-row .stat-number,
+.page-dashboard .stats-row .stat-label {
+    color: inherit;
+}
+
+.page-dashboard .stat-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 3rem;
+    height: 3rem;
+    border-radius: 16px;
+    color: #fff;
+    background: var(--gradient-brand);
+    box-shadow: 0 14px 30px rgba(102, 126, 234, 0.18);
+}
+
+.page-dashboard .dashboard-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 300px;
+    gap: 1.375rem;
+    align-items: start;
+}
+
+.page-dashboard .card {
+    background: rgba(255, 255, 255, 0.92);
+    border-radius: 22px;
+    border: 1px solid rgba(220, 228, 239, 0.9);
+    box-shadow: var(--shadow-md);
+}
+
+.page-dashboard .dashboard-grid > .main-col > .card:first-child {
+    background:
+        radial-gradient(circle at top right, rgba(56, 189, 248, 0.08), transparent 28%),
+        linear-gradient(180deg, rgba(255, 255, 255, 0.99) 0%, rgba(247, 250, 255, 0.97) 100%);
+}
+
+.page-dashboard .card-header {
+    padding: 1.2rem 1.3rem 1rem;
+    border-bottom: 1px solid rgba(15, 23, 42, 0.06);
+}
+
+.page-dashboard .card-title,
+.page-dashboard .recent-list {
+    color: #6b7280;
+}
+
+.page-dashboard .chart-card {
+    padding: 1.2rem 1.3rem 1.3rem;
+}
+
+.page-dashboard .chart-card canvas {
+    width: 100% !important;
+    height: 150px !important;
+}
+
+.page-dashboard .professor-course-grid .course-card__secondary-actions {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.page-dashboard .cursos-table td.actions {
+    width: 360px;
+}
+
+.page-dashboard .meus-cursos__actions-cell {
+    width: 360px;
+}
+
+.page-dashboard .cursos-table th:last-child,
+.page-dashboard .cursos-table td:last-child {
+    text-align: right;
+}
+
+.page-dashboard .cursos-table th:first-child,
+.page-dashboard .cursos-table td:first-child {
+    width: 42%;
+}
+
+.page-dashboard .badge-ghost {
+    border: 1px solid #e6e9f2;
+    background: transparent;
+    color: #374151;
+}
+
+.page-dashboard .quick-actions,
+.page-dashboard .recent-activity,
+.page-dashboard .side-col > .card {
+    padding: 1.1rem;
+}
+
+.page-dashboard .quick-actions {
+    display: grid;
+    grid-template-rows: auto 1fr;
+    gap: 1rem;
+    padding: 1.35rem 1.2rem 1.2rem;
+    background:
+        radial-gradient(circle at top right, rgba(76, 79, 206, 0.09), transparent 34%),
+        linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, rgba(244, 248, 252, 0.96) 100%);
+    border: 1px solid rgba(220, 228, 239, 0.95);
+}
+
+.page-dashboard .side-col {
+    align-self: start;
+}
+
+.page-dashboard .quick-actions__header {
+    display: grid;
+    gap: 0.35rem;
+}
+
+.page-dashboard .quick-actions h3 {
+    margin: 0;
+    font-size: clamp(1.5rem, 2vw, 1.9rem);
+    color: #1e293b;
+}
+
+.page-dashboard .quick-actions__header p {
+    margin: 0;
+    color: #64748b;
+    font-size: 0.88rem;
+    line-height: 1.45;
+}
+
+.page-dashboard .quick-actions .btn,
+.page-dashboard .recent-activity .btn,
+.page-dashboard .side-col > .card .btn {
+    justify-content: flex-start;
+}
+
+.page-dashboard .dashboard__courses h2,
+.page-dashboard .meus-cursos h2 {
+    font-size: clamp(1.65rem, 2.5vw, 2.1rem);
+    margin-bottom: 0.8rem;
+}
+
+.page-dashboard .actions-list {
+    display: grid;
+    gap: 0.8rem;
+    align-content: center;
+}
+
+.page-dashboard .quick-actions .actions-list .btn {
+    min-height: 2.9rem;
+    padding: 0.92rem 1rem;
+    border-radius: 18px;
+    font-size: 0.96rem;
+    font-weight: 700;
+    justify-content: center;
+    border: 1px solid rgba(98, 113, 255, 0.2);
+    box-shadow: 0 12px 24px rgba(76, 79, 206, 0.18);
+    transition: transform 180ms ease, box-shadow 180ms ease, filter 180ms ease;
+}
+
+.page-dashboard .quick-actions .actions-list .btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 16px 28px rgba(76, 79, 206, 0.22);
+    filter: saturate(1.04);
+}
+
+.page-dashboard .quick-action-picker {
+    display: grid;
+    gap: 1rem;
+}
+
+.page-dashboard .quick-action-picker__intro {
+    display: grid;
+    gap: 0.45rem;
+}
+
+.page-dashboard .quick-action-picker__title {
+    margin: 0;
+    font-size: 1.05rem;
+    font-weight: 800;
+    color: #0f172a;
+}
+
+.page-dashboard .quick-action-picker__copy {
+    margin: 0;
+    color: #64748b;
+    line-height: 1.6;
+}
+
+.page-dashboard .quick-action-picker__list {
+    display: grid;
+    gap: 0.75rem;
+}
+
+.page-dashboard .quick-action-picker__option {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: 0.85rem;
+    align-items: start;
+    padding: 0.95rem 1rem;
+    border: 1px solid #dbe5f2;
+    border-radius: 18px;
+    background: #f8fbff;
+    cursor: pointer;
+    transition: border-color 180ms ease, background 180ms ease, transform 180ms ease;
+}
+
+.page-dashboard .quick-action-picker__option:hover {
+    border-color: #b8c9ea;
+    background: #ffffff;
+    transform: translateY(-1px);
+}
+
+.page-dashboard .quick-action-picker__option input[type="radio"] {
+    margin-top: 0.2rem;
+}
+
+.page-dashboard .quick-action-picker__option:has(input:checked) {
+    border-color: #667eea;
+    background: rgba(102, 126, 234, 0.08);
+    box-shadow: 0 12px 28px rgba(102, 126, 234, 0.1);
+}
+
+.page-dashboard .quick-action-picker__meta {
+    display: grid;
+    gap: 0.25rem;
+}
+
+.page-dashboard .quick-action-picker__meta strong {
+    color: #0f172a;
+    font-size: 0.98rem;
+}
+
+@media (max-width: 900px) {
+    .page-dashboard .professor-dashboard {
+        max-width: 100%;
+    }
+
+    .page-dashboard .dashboard-grid {
+        grid-template-columns: 1fr;
+    }
+
+}
+
+.page-dashboard .quick-action-picker__meta small {
+    color: #64748b;
+    font-size: 0.83rem;
+}
+
+.page-dashboard .professor-evaluation-panel {
+    padding: 1.15rem;
+}
+
+.page-dashboard .professor-evaluation-metrics {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.85rem;
+    margin-bottom: 1rem;
+}
+
+.page-dashboard .professor-evaluation-metric {
+    display: grid;
+    gap: 0.35rem;
+    padding: 1rem 1.05rem;
+    border: 1px solid rgba(219, 229, 241, 0.9);
+    border-radius: 18px;
+    background: linear-gradient(180deg, rgba(248, 251, 255, 0.95) 0%, rgba(255, 255, 255, 0.98) 100%);
+}
+
+.page-dashboard .professor-evaluation-metric__label {
+    color: #64748b;
+    font-size: 0.82rem;
+    font-weight: 700;
+}
+
+.page-dashboard .professor-evaluation-metric strong {
+    color: #0f172a;
+    font-size: 1.45rem;
+}
+
+.page-dashboard .professor-evaluation-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1rem;
+}
+
+.page-dashboard .professor-evaluation-block {
+    display: grid;
+    gap: 0.8rem;
+    padding: 1rem 1.05rem;
+    border: 1px solid rgba(226, 232, 240, 0.92);
+    border-radius: 20px;
+    background: #fbfdff;
+}
+
+.page-dashboard .professor-evaluation-block h4 {
+    margin: 0;
+    font-size: 1rem;
+    color: #0f172a;
+}
+
+.page-dashboard .professor-evaluation-list {
+    display: grid;
+    gap: 0.75rem;
+}
+
+.page-dashboard .professor-evaluation-item {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.9rem 0.95rem;
+    border: 1px solid rgba(226, 232, 240, 0.88);
+    border-radius: 16px;
+    background: #fff;
+}
+
+.page-dashboard .professor-evaluation-item strong,
+.page-dashboard .professor-evaluation-item__meta span {
+    color: #0f172a;
+}
+
+.page-dashboard .professor-evaluation-item small {
+    display: block;
+    margin-top: 0.2rem;
+    color: #64748b;
+    line-height: 1.45;
+}
+
+.page-dashboard .professor-evaluation-item__meta {
+    display: grid;
+    justify-items: end;
+    gap: 0.2rem;
+    text-align: right;
+    white-space: nowrap;
+}
+
+.page-dashboard .professor-evaluation-item.is-critical {
+    background: linear-gradient(180deg, rgba(255, 251, 235, 0.85) 0%, rgba(255, 255, 255, 0.98) 100%);
+}
+
+@media (max-width: 900px) {
+    .page-dashboard .dashboard-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .page-dashboard .dashboard-grid .main-col .meus-cursos {
+        width: auto;
+        margin-right: 0;
+    }
+
+    .page-dashboard .professor-panel-header {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .page-dashboard .dashboard__hero-badges {
+        gap: 0.5rem;
+    }
+
+    .page-dashboard .dashboard__stats {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .page-dashboard .professor-evaluation-metrics,
+    .page-dashboard .professor-evaluation-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.page-dashboard .dashboard-admin .admin-section {
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    background: #fff;
+    border: 1px solid rgba(220, 228, 239, 0.9);
+    border-radius: 22px;
+    box-shadow: var(--shadow-md);
+}
+
+.page-dashboard .dashboard-admin .usuarios-table,
+.page-dashboard .dashboard-admin .cursos-table {
+    overflow-x: auto;
+}
+
+.page-dashboard .dashboard-admin .dashboard__stats {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.page-dashboard .dashboard-admin table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.page-dashboard .dashboard-admin thead {
+    background: #f8fbff;
+    border-bottom: 2px solid #eef2f7;
+}
+
+.page-dashboard .dashboard-admin th,
+.page-dashboard .dashboard-admin td {
+    padding: 0.9rem 1rem;
+    text-align: left;
+    font-size: 0.9rem;
+    color: #243041;
+}
+
+.page-dashboard .dashboard-admin tbody tr {
+    border-bottom: 1px solid #eef2f7;
+}
+
+.page-dashboard .dashboard-admin tbody tr:hover {
+    background: #f8fbff;
+}
+
+.page-dashboard .dashboard-admin .actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.page-dashboard .dashboard-admin .badge-aluno {
+    background: #d4edda;
+    color: #155724;
+}
+
+.page-dashboard .dashboard-admin .badge-professor {
+    background: #d1ecf1;
+    color: #0c5460;
+}
+
+.page-dashboard .dashboard-admin .badge-admin {
+    background: #fff3cd;
+    color: #856404;
+}
+
+@media (max-width: 768px) {
+    .page-dashboard .dashboard__hero-badge {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .page-dashboard .dashboard__stats {
+        grid-template-columns: 1fr;
+    }
+
+    .page-dashboard .dashboard-admin .dashboard__stats {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .page-dashboard .dashboard-admin .actions {
+        flex-direction: column;
+    }
+
+    .page-dashboard .professor-evaluation-item {
+        flex-direction: column;
+    }
+
+    .page-dashboard .professor-evaluation-item__meta {
+        justify-items: start;
+        text-align: left;
+        white-space: normal;
+    }
+}
