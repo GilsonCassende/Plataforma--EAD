@@ -142,10 +142,15 @@ class AuthController
 
         $emailEnviado = $this->enviarEmailConfirmacao($nome, $email, $codigo, $role);
         if (!$emailEnviado) {
-            $this->userModel->deletarPendentePorId((int)($resultado['user_id'] ?? 0));
             if (function_exists('registrar_log')) {
                 registrar_log('signup_email_failed', 'Falha ao enviar email de confirmação para ' . $email);
             }
+            if ($this->allowInlineVerificationFallback()) {
+                $this->storeInlineVerificationCode($email, $codigo);
+                return ['sucesso' => true, 'mensagem' => 'Cadastro realizado. Como o email falhou agora, use o código exibido na próxima tela para ativar a conta.'];
+            }
+
+            $this->userModel->deletarPendentePorId((int)($resultado['user_id'] ?? 0));
             return ['sucesso' => false, 'mensagem' => 'Não foi possível enviar o email de ativação agora. Tente novamente em instantes.'];
         }
 
@@ -234,6 +239,10 @@ class AuthController
             registrar_log($resultado['sucesso'] ? 'email_verified' : 'email_verify_failed', 'Confirmacao de email');
         }
 
+        if (!empty($resultado['sucesso'])) {
+            $this->clearInlineVerificationCode($email);
+        }
+
         return $resultado;
     }
 
@@ -272,6 +281,11 @@ class AuthController
             if (function_exists('registrar_log')) {
                 registrar_log('verification_email_failed', 'Falha ao reenviar confirmação para ' . $email, (int)($usuario['id'] ?? 0));
             }
+            if ($this->allowInlineVerificationFallback()) {
+                $this->storeInlineVerificationCode($email, $codigo);
+                return ['sucesso' => true, 'mensagem' => 'O email falhou agora, mas o código foi disponibilizado na tela para continuar a ativação.'];
+            }
+
             return ['sucesso' => false, 'mensagem' => 'Não foi possível reenviar o email agora. Tente novamente em instantes.'];
         }
 
@@ -489,6 +503,40 @@ class AuthController
     private function formatFutureDate(string $modifier): string
     {
         return (new DateTimeImmutable($modifier))->format('Y-m-d H:i:s');
+    }
+
+    private function allowInlineVerificationFallback(): bool
+    {
+        if (function_exists('env_bool')) {
+            return env_bool('EMAIL_VERIFICATION_INLINE_FALLBACK', true);
+        }
+
+        return true;
+    }
+
+    private function storeInlineVerificationCode(string $email, string $codigo): void
+    {
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
+        }
+
+        $_SESSION['inline_verification_code'] = [
+            'email' => $email,
+            'codigo' => $codigo,
+            'created_at' => time(),
+        ];
+    }
+
+    private function clearInlineVerificationCode(string $email): void
+    {
+        if (session_status() !== PHP_SESSION_ACTIVE) {
+            return;
+        }
+
+        $stored = $_SESSION['inline_verification_code'] ?? null;
+        if (is_array($stored) && (($stored['email'] ?? '') === $email)) {
+            unset($_SESSION['inline_verification_code']);
+        }
     }
 
     public static function estaAutenticado()

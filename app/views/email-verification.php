@@ -6,6 +6,20 @@
 $email = trim((string)($email ?? ''));
 $context = trim((string)($context ?? ''));
 $contextLabel = 'Enviamos um código de 6 dígitos para concluir a ativação da sua conta.';
+$inlineVerificationCode = null;
+
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
+$storedInlineVerification = $_SESSION['inline_verification_code'] ?? null;
+if (
+    is_array($storedInlineVerification)
+    && (($storedInlineVerification['email'] ?? '') === $email)
+    && !empty($storedInlineVerification['codigo'])
+) {
+    $inlineVerificationCode = (string)$storedInlineVerification['codigo'];
+}
 
 if ($context === 'signup') {
     $contextLabel = 'Sua conta foi criada. Falta só confirmar o código enviado para ativar o primeiro acesso.';
@@ -55,6 +69,13 @@ if ($context === 'signup') {
         <div class="verify-code-note">
             O código tem 6 dígitos e foi enviado para o email informado no cadastro.
         </div>
+
+        <?php if ($inlineVerificationCode !== null): ?>
+            <div class="alert alert-warning" style="margin-top:16px;">
+                O envio do email falhou agora. Use este código para ativar a conta:
+                <strong style="display:block;font-size:28px;letter-spacing:6px;margin-top:8px;"><?php echo htmlspecialchars($inlineVerificationCode, ENT_QUOTES, 'UTF-8'); ?></strong>
+            </div>
+        <?php endif; ?>
 
         <div class="verify-code-footer">
             <a href="<?php echo BASE_URL; ?>/index.php?page=login">← Voltar</a>
