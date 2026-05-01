@@ -10,9 +10,9 @@ RUN composer install \
     --no-progress \
     --optimize-autoloader
 
-FROM php:8.2-apache
+FROM php:8.2-cli
 
-WORKDIR /var/www/html
+WORKDIR /app
 
 RUN apt-get update && apt-get install -y \
     libfreetype6-dev \
@@ -24,17 +24,14 @@ RUN apt-get update && apt-get install -y \
     zip \
     && docker-php-ext-configure gd --with-freetype --with-jpeg --with-webp \
     && docker-php-ext-install -j"$(nproc)" gd mysqli pdo_mysql zip \
-    && a2dismod mpm_event mpm_worker || true \
-    && a2enmod mpm_prefork \
-    && a2enmod rewrite \
     && rm -rf /var/lib/apt/lists/*
 
-COPY .docker/apache-vhost.conf /etc/apache2/sites-available/000-default.conf
+COPY . /app
+COPY --from=composer_deps /app/vendor /app/vendor
 
-COPY . /var/www/html
-COPY --from=composer_deps /app/vendor /var/www/html/vendor
+RUN mkdir -p /app/public/uploads /app/storage /app/logs \
+    && chmod -R 775 /app/public/uploads /app/storage /app/logs
 
-RUN mkdir -p /var/www/html/public/uploads /var/www/html/storage /var/www/html/logs \
-    && chown -R www-data:www-data /var/www/html/public/uploads /var/www/html/storage /var/www/html/logs
+EXPOSE 8080
 
-EXPOSE 80
+CMD ["sh", "-lc", "php -S 0.0.0.0:${PORT:-8080} -t public public/router.php"]
