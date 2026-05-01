@@ -24,6 +24,8 @@ RUN apt-get update && apt-get install -y \
     zip \
     && docker-php-ext-configure gd --with-freetype --with-jpeg --with-webp \
     && docker-php-ext-install -j"$(nproc)" gd mysqli pdo_mysql zip \
+    && a2dismod mpm_event mpm_worker || true \
+    && a2enmod mpm_prefork \
     && a2enmod rewrite \
     && rm -rf /var/lib/apt/lists/*
 
@@ -36,4 +38,3 @@ RUN mkdir -p /var/www/html/public/uploads /var/www/html/storage /var/www/html/lo
     && chown -R www-data:www-data /var/www/html/public/uploads /var/www/html/storage /var/www/html/logs
 
 EXPOSE 80
-
