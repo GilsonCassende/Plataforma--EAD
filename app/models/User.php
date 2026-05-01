@@ -53,14 +53,8 @@ class User
         return !$stmt->fetch();
     }
 
-    public function criarPendente(
-        string $nome,
-        string $email,
-        string $senhaHash,
-        string $role,
-        string $verificationTokenHash,
-        string $verificationTokenExpiresAt
-    ): array {
+    public function criar(string $nome, string $email, string $senhaHash, string $role): array
+    {
         try {
             $stmt = $this->pdo->prepare('SELECT id, email_verified FROM users WHERE email = ? LIMIT 1');
             $stmt->execute([$email]);
@@ -73,8 +67,8 @@ class User
             if ($existente) {
                 $stmt = $this->pdo->prepare(
                     'UPDATE users
-                     SET nome = ?, senha_hash = ?, role = ?, email_verified = 0,
-                         verification_token = ?, verification_token_expires_at = ?,
+                     SET nome = ?, senha_hash = ?, role = ?, email_verified = 1,
+                         verification_token = NULL, verification_token_expires_at = NULL,
                          reset_token = NULL, reset_token_expires_at = NULL,
                          login_attempts = 0, locked_until = NULL, updated_at = NOW()
                      WHERE id = ?'
@@ -83,84 +77,24 @@ class User
                     $nome,
                     $senhaHash,
                     $role,
-                    $verificationTokenHash,
-                    $verificationTokenExpiresAt,
                     $existente['id']
                 ]);
 
-                return ['sucesso' => true, 'user_id' => (int)$existente['id'], 'mensagem' => 'Conta pendente atualizada.'];
+                return ['sucesso' => true, 'user_id' => (int)$existente['id'], 'mensagem' => 'Conta atualizada com sucesso.'];
             }
 
             $stmt = $this->pdo->prepare(
                 'INSERT INTO users
                     (nome, email, senha_hash, role, email_verified, verification_token, verification_token_expires_at, reset_token, reset_token_expires_at, login_attempts, locked_until)
                  VALUES
-                    (?, ?, ?, ?, 0, ?, ?, NULL, NULL, 0, NULL)'
+                    (?, ?, ?, ?, 1, NULL, NULL, NULL, NULL, 0, NULL)'
             );
-            $stmt->execute([$nome, $email, $senhaHash, $role, $verificationTokenHash, $verificationTokenExpiresAt]);
+            $stmt->execute([$nome, $email, $senhaHash, $role]);
 
             return ['sucesso' => true, 'user_id' => (int)$this->pdo->lastInsertId(), 'mensagem' => 'Conta criada com sucesso.'];
         } catch (Throwable $e) {
             return ['sucesso' => false, 'mensagem' => 'Não foi possível concluir o cadastro agora.'];
         }
-    }
-
-    public function deletarPendentePorId(int $id): bool
-    {
-        try {
-            $stmt = $this->pdo->prepare('DELETE FROM users WHERE id = ? AND email_verified = 0');
-            return $stmt->execute([$id]);
-        } catch (Throwable $e) {
-            return false;
-        }
-    }
-
-    public function confirmarEmailPorCodigo(string $email, string $codigoHash): array
-    {
-        $email = trim($email);
-        $stmt = $this->pdo->prepare(
-            'SELECT id, email_verified
-             FROM users
-             WHERE email = ?
-               AND verification_token = ?
-               AND verification_token_expires_at IS NOT NULL
-               AND verification_token_expires_at >= NOW()
-             LIMIT 1'
-        );
-        $stmt->execute([$email, $codigoHash]);
-        $usuario = $stmt->fetch();
-
-        if (!$usuario) {
-            return ['sucesso' => false, 'mensagem' => 'O código de confirmação é inválido ou expirou.'];
-        }
-
-        if ((int)($usuario['email_verified'] ?? 0) === 1) {
-            return ['sucesso' => true, 'mensagem' => 'Sua conta já estava ativada.'];
-        }
-
-        $stmt = $this->pdo->prepare(
-            'UPDATE users
-             SET email_verified = 1,
-                 verification_token = NULL,
-                 verification_token_expires_at = NULL,
-                 login_attempts = 0,
-                 locked_until = NULL,
-                 updated_at = NOW()
-             WHERE id = ?'
-        );
-        $stmt->execute([$usuario['id']]);
-
-        return ['sucesso' => true, 'mensagem' => 'Email confirmado com sucesso. Já pode fazer login.'];
-    }
-
-    public function atualizarTokenVerificacaoPorEmail(string $email, string $tokenHash, string $expiresAt): bool
-    {
-        $stmt = $this->pdo->prepare(
-            'UPDATE users
-             SET verification_token = ?, verification_token_expires_at = ?, updated_at = NOW()
-             WHERE email = ? AND email_verified = 0'
-        );
-        return $stmt->execute([$tokenHash, $expiresAt, $email]);
     }
 
     public function salvarResetToken(int $userId, string $tokenHash, string $expiresAt): bool

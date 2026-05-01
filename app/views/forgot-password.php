@@ -34,7 +34,6 @@
 
         <div class="auth-footer">
             <p>Lembrou a senha? <a href="<?php echo BASE_URL; ?>/index.php?page=login">Voltar para login</a></p>
-            <p>O problema é ativação da conta? <a href="<?php echo BASE_URL; ?>/index.php?page=confirmar-email">Reenviar código</a></p>
         </div>
     </div>
 </section>

@@ -233,20 +233,10 @@ try {
             break;
 
         case 'confirmar-email':
-            $titulo = 'Confirmar Email - Plataforma EAD';
-            $conteudo = renderizar('email-verification', [
-                'email' => (string)($_GET['email'] ?? ''),
-                'context' => (string)($_GET['context'] ?? ''),
-            ]);
-            break;
-
         case 'verificacao-email':
-            $titulo = 'Verificação de Email - Plataforma EAD';
-            $conteudo = renderizar('email-verification', [
-                'email' => (string)($_GET['email'] ?? ''),
-                'context' => (string)($_GET['context'] ?? ''),
-            ]);
-            break;
+            $_SESSION['mensagem'] = 'A confirmação por código foi desativada. Faça login normalmente.';
+            header('Location: ' . BASE_URL . '/index.php?page=login');
+            exit;
 
         case 'esqueci-senha':
             $titulo = 'Recuperar Senha - Plataforma EAD';
@@ -1788,20 +1778,11 @@ function processarAcao($post, $pdo)
                 }
             } else {
                 if ($isAjax) {
-                    $payload = ['sucesso' => false, 'mensagem' => $result['mensagem']];
-                    if (($result['mensagem'] ?? '') === 'Verifique seu email para ativar sua conta antes de entrar.') {
-                        $payload['redirect'] = BASE_URL . '/index.php?page=confirmar-email&email=' . urlencode((string)($post['email'] ?? '')) . '&context=login';
-                    }
                     header('Content-Type: application/json');
-                    echo json_encode($payload);
+                    echo json_encode(['sucesso' => false, 'mensagem' => $result['mensagem']]);
                 } else {
-                    if (($result['mensagem'] ?? '') === 'Verifique seu email para ativar sua conta antes de entrar.') {
-                        $_SESSION['erro'] = $result['mensagem'];
-                        header('Location: ' . BASE_URL . '/index.php?page=confirmar-email&email=' . urlencode((string)($post['email'] ?? '')) . '&context=login');
-                    } else {
-                        $_SESSION['erro'] = $result['mensagem'];
-                        header('Location: ' . BASE_URL . '/index.php?page=login');
-                    }
+                    $_SESSION['erro'] = $result['mensagem'];
+                    header('Location: ' . BASE_URL . '/index.php?page=login');
                 }
             }
             exit;
@@ -1822,11 +1803,11 @@ function processarAcao($post, $pdo)
                     echo json_encode([
                         'sucesso' => true,
                         'mensagem' => $result['mensagem'],
-                        'redirect' => BASE_URL . '/index.php?page=confirmar-email&email=' . urlencode((string)($post['email'] ?? '')) . '&context=signup'
+                        'redirect' => BASE_URL . '/index.php?page=login'
                     ]);
                 } else {
                     $_SESSION['mensagem'] = $result['mensagem'];
-                    header('Location: ' . BASE_URL . '/index.php?page=confirmar-email&email=' . urlencode((string)($post['email'] ?? '')) . '&context=signup');
+                    header('Location: ' . BASE_URL . '/index.php?page=login');
                 }
             } else {
                 $erroMsg = implode(', ', $result['erros'] ?? [$result['mensagem']]);
@@ -1840,45 +1821,20 @@ function processarAcao($post, $pdo)
             exit;
 
         case 'reenviar_confirmacao_email':
-            $auth = new AuthController($pdo);
-            $result = $auth->solicitarReenvioConfirmacaoEmail($post['email'] ?? '');
-
             if ($isAjax) {
-                echo json_encode([
-                    'sucesso' => !empty($result['sucesso']),
-                    'mensagem' => $result['mensagem'] ?? 'Processamos sua solicitação.',
-                ]);
+                echo json_encode(['sucesso' => false, 'mensagem' => 'A confirmação por código foi desativada.']);
             } else {
-                $_SESSION[!empty($result['sucesso']) ? 'mensagem' : 'erro'] = $result['mensagem'] ?? 'Processamos sua solicitação.';
-                header('Location: ' . BASE_URL . '/index.php?page=confirmar-email&email=' . urlencode((string)($post['email'] ?? '')));
+                $_SESSION['mensagem'] = 'A confirmação por código foi desativada.';
+                header('Location: ' . BASE_URL . '/index.php?page=login');
             }
             exit;
 
         case 'confirmar_email_codigo':
-            $auth = new AuthController($pdo);
-            $result = $auth->confirmarEmailPorCodigo(
-                $post['email'] ?? '',
-                $post['codigo'] ?? ''
-            );
-
-            if ($result['sucesso']) {
-                if ($isAjax) {
-                    echo json_encode([
-                        'sucesso' => true,
-                        'mensagem' => $result['mensagem'],
-                        'redirect' => BASE_URL . '/index.php?page=login'
-                    ]);
-                } else {
-                    $_SESSION['mensagem'] = $result['mensagem'];
-                    header('Location: ' . BASE_URL . '/index.php?page=login');
-                }
+            if ($isAjax) {
+                echo json_encode(['sucesso' => false, 'mensagem' => 'A confirmação por código foi desativada.']);
             } else {
-                if ($isAjax) {
-                    echo json_encode(['sucesso' => false, 'mensagem' => $result['mensagem']]);
-                } else {
-                    $_SESSION['erro'] = $result['mensagem'];
-                    header('Location: ' . BASE_URL . '/index.php?page=confirmar-email&email=' . urlencode((string)($post['email'] ?? '')));
-                }
+                $_SESSION['mensagem'] = 'A confirmação por código foi desativada.';
+                header('Location: ' . BASE_URL . '/index.php?page=login');
             }
             exit;
 

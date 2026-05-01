@@ -8,7 +8,7 @@
     <div class="auth-card auth-card--wide">
         <span class="auth-eyebrow">Cadastro de aluno</span>
         <h1 id="registro-title">Crie sua conta</h1>
-        <p class="subtitle">Cadastre-se para acompanhar cursos, quizzes e certificados com uma conta protegida por verificação de email.</p>
+        <p class="subtitle">Cadastre-se para acompanhar cursos, quizzes e certificados com acesso imediato após criar a conta.</p>
 
         <form id="registro-form" method="POST" class="form" novalidate data-loading-form>
             <input type="hidden" name="acao" value="registrar">
@@ -67,14 +67,9 @@
             <button type="submit" class="btn btn-primary btn-block" data-loading-text="Criando conta...">Criar conta</button>
         </form>
 
-        <div class="auth-note">
-            <strong>Importante:</strong> após o cadastro, enviaremos um código para ativar sua conta antes do primeiro acesso.
-        </div>
-
         <div class="auth-footer">
             <p>Já tem conta? <a href="<?php echo BASE_URL; ?>/index.php?page=login">Fazer login</a></p>
             <p>Vai lecionar? <a href="<?php echo BASE_URL; ?>/index.php?page=registro-professor">Criar conta de instrutor</a></p>
-            <p>Já se cadastrou e quer validar o email? <a href="<?php echo BASE_URL; ?>/index.php?page=confirmar-email">Confirmar conta</a></p>
         </div>
     </div>
 </section>

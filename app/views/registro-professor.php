@@ -8,7 +8,7 @@
     <div class="auth-card auth-card--wide">
         <span class="auth-eyebrow">Cadastro de instrutor</span>
         <h1 id="registro-professor-title">Criar conta de instrutor</h1>
-        <p class="subtitle">Cadastre-se para publicar e gerir cursos com um fluxo de autenticação profissional, protegido e validado por email.</p>
+        <p class="subtitle">Cadastre-se para publicar e gerir cursos com acesso imediato após criar a conta.</p>
 
         <form id="registro-professor-form" method="POST" class="form" novalidate data-loading-form>
             <input type="hidden" name="acao" value="registrar">
@@ -67,14 +67,9 @@
             <button type="submit" class="btn btn-primary btn-block ui-btn ui-btn--primary" data-loading-text="Criando conta...">Criar conta de instrutor</button>
         </form>
 
-        <div class="auth-note">
-            <strong>Ativação obrigatória:</strong> você só poderá entrar e criar cursos depois de confirmar o código enviado pela plataforma.
-        </div>
-
         <div class="auth-footer">
             <p>Já tem conta? <a href="<?php echo BASE_URL; ?>/index.php?page=login">Fazer login</a></p>
             <p>Quer estudar? <a href="<?php echo BASE_URL; ?>/index.php?page=registro">Criar conta de aluno</a></p>
-            <p>Já se cadastrou e quer validar o email? <a href="<?php echo BASE_URL; ?>/index.php?page=confirmar-email">Confirmar conta</a></p>
         </div>
     </div>
 </section>

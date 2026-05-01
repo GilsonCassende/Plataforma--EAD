@@ -8,7 +8,7 @@
     <div class="auth-card auth-card--wide">
         <span class="auth-eyebrow">Acesso seguro</span>
         <h1 id="login-title">Entrar na sua conta</h1>
-        <p class="subtitle">Use seu email e sua senha para acessar a plataforma. Contas novas precisam confirmar o email antes do primeiro login.</p>
+        <p class="subtitle">Use seu email e sua senha para acessar a plataforma.</p>
 
         <form id="login-form" method="POST" class="form" novalidate data-loading-form>
             <input type="hidden" name="acao" value="login">
@@ -45,13 +45,12 @@
         </form>
 
         <div class="auth-note">
-            <strong>Segurança:</strong> bloqueamos tentativas excessivas e exigimos confirmação de email para proteger sua conta.
+            <strong>Segurança:</strong> bloqueamos tentativas excessivas para proteger sua conta.
         </div>
 
         <div class="auth-footer">
             <p>Não tem conta? <a href="<?php echo BASE_URL; ?>/index.php?page=registro">Criar conta de aluno</a></p>
             <p>Quer publicar cursos? <a href="<?php echo BASE_URL; ?>/index.php?page=registro-professor">Criar conta de instrutor</a></p>
-            <p>Não recebeu o código? <a href="<?php echo BASE_URL; ?>/index.php?page=confirmar-email">Confirmar conta</a></p>
         </div>
     </div>
 </section>
