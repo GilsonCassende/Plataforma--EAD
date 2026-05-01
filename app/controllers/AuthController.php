@@ -147,7 +147,7 @@ class AuthController
             }
             if ($this->allowInlineVerificationFallback()) {
                 $this->storeInlineVerificationCode($email, $codigo);
-                return ['sucesso' => true, 'mensagem' => 'Cadastro realizado. Como o email falhou agora, use o código exibido na próxima tela para ativar a conta.'];
+                return ['sucesso' => true, 'mensagem' => 'Cadastro realizado. Como o email falhou agora, use este código para ativar a conta: ' . $codigo];
             }
 
             $this->userModel->deletarPendentePorId((int)($resultado['user_id'] ?? 0));
@@ -283,7 +283,7 @@ class AuthController
             }
             if ($this->allowInlineVerificationFallback()) {
                 $this->storeInlineVerificationCode($email, $codigo);
-                return ['sucesso' => true, 'mensagem' => 'O email falhou agora, mas o código foi disponibilizado na tela para continuar a ativação.'];
+                return ['sucesso' => true, 'mensagem' => 'O email falhou agora. Use este código para continuar a ativação: ' . $codigo];
             }
 
             return ['sucesso' => false, 'mensagem' => 'Não foi possível reenviar o email agora. Tente novamente em instantes.'];
