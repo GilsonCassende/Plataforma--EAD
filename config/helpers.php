@@ -482,12 +482,15 @@ function upload_image_url($file, array $params = [])
  */
 function enviar_email($para, $assunto, $mensagem, $tipo_conteudo = 'text/plain', array $attachments = [])
 {
+    set_last_mail_error(null);
+
     if (function_exists('load_project_env')) {
         load_project_env(__DIR__ . '/../.env');
     }
 
     // Validar endereço de email destinatário
     if (!filter_var($para, FILTER_VALIDATE_EMAIL)) {
+        set_last_mail_error('Endereço de email inválido.');
         return false;
     }
 
@@ -543,6 +546,7 @@ function enviar_email($para, $assunto, $mensagem, $tipo_conteudo = 'text/plain',
 
     if (!class_exists('PHPMailer\\PHPMailer\\PHPMailer')) {
         $erro = 'PHPMailer não está disponível. Execute composer install para carregar vendor/autoload.php.';
+        set_last_mail_error($erro);
         if (function_exists('registrar_log')) {
             registrar_log('smtp_error', $erro);
         }
@@ -552,6 +556,7 @@ function enviar_email($para, $assunto, $mensagem, $tipo_conteudo = 'text/plain',
 
     if ($smtpMissing) {
         $erro = 'Configuração SMTP incompleta: ' . implode(', ', array_unique($smtpMissing));
+        set_last_mail_error($erro);
         if (function_exists('registrar_log')) {
             registrar_log('smtp_error', $erro);
         }
@@ -570,6 +575,7 @@ function enviar_email($para, $assunto, $mensagem, $tipo_conteudo = 'text/plain',
 
     if (!array_key_exists($smtpSecure, $secureMap)) {
         $erro = 'Valor inválido para SMTP_SECURE. Use tls, ssl ou none.';
+        set_last_mail_error($erro);
         if (function_exists('registrar_log')) {
             registrar_log('smtp_error', $erro);
         }
@@ -629,6 +635,7 @@ function enviar_email($para, $assunto, $mensagem, $tipo_conteudo = 'text/plain',
         return $sent;
     } catch (\Throwable $e) {
         $erro = 'Falha SMTP ao enviar para ' . $para . ': ' . $e->getMessage();
+        set_last_mail_error($erro);
         if (function_exists('registrar_log')) {
             registrar_log('smtp_error', $erro);
         }
@@ -683,6 +690,17 @@ function email_fallback_outbox($para, $assunto, $mensagem, $tipo_conteudo, $fall
     }
 
     return false;
+}
+
+function set_last_mail_error(?string $message): void
+{
+    $GLOBALS['last_mail_error'] = $message;
+}
+
+function get_last_mail_error(): ?string
+{
+    $value = $GLOBALS['last_mail_error'] ?? null;
+    return is_string($value) && $value !== '' ? $value : null;
 }
 
 /**
