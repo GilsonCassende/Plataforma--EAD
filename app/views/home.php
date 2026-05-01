@@ -9,7 +9,7 @@
     <div class="carousel-track" id="carouselTrack">
         <section class="carousel-slide" role="group" aria-roledescription="slide" aria-label="1 de 3">
             <figure class="slide-figure">
-                <img class="slide-img" loading="lazy" src="<?php echo BASE_URL; ?>/uploads/slide_1_custom.png" alt="Instrutor demonstrando conteúdo para grupo de alunos em ambiente moderno">
+                <img class="slide-img" loading="eager" fetchpriority="high" src="<?php echo htmlspecialchars(upload_image_url('slide_1_custom.png', ['w' => 1600, 'h' => 720, 'fit' => 'cover', 'q' => 80]), ENT_QUOTES, 'UTF-8'); ?>" alt="Instrutor demonstrando conteúdo para grupo de alunos em ambiente moderno">
             </figure>
             <div class="slide-overlay"></div>
             <div class="slide-content container">
@@ -23,7 +23,7 @@
 
         <section class="carousel-slide" role="group" aria-roledescription="slide" aria-label="2 de 3">
             <figure class="slide-figure">
-                <img class="slide-img" loading="lazy" src="<?php echo BASE_URL; ?>/uploads/slide_2_custom.png" alt="Profissional estudando em casa com laptop, caderno e café, luz natural">
+                <img class="slide-img" loading="lazy" src="<?php echo htmlspecialchars(upload_image_url('slide_2_custom.png', ['w' => 1600, 'h' => 720, 'fit' => 'cover', 'q' => 80]), ENT_QUOTES, 'UTF-8'); ?>" alt="Profissional estudando em casa com laptop, caderno e café, luz natural">
             </figure>
             <div class="slide-overlay"></div>
             <div class="slide-content container">
@@ -37,7 +37,7 @@
 
         <section class="carousel-slide" role="group" aria-roledescription="slide" aria-label="3 de 3">
             <figure class="slide-figure">
-                <img class="slide-img" loading="lazy" src="<?php echo BASE_URL; ?>/uploads/slide_3_custom.png" alt="Profissional com certificado e dashboard de performance em monitor grande">
+                <img class="slide-img" loading="lazy" src="<?php echo htmlspecialchars(upload_image_url('slide_3_custom.png', ['w' => 1600, 'h' => 720, 'fit' => 'cover', 'q' => 80]), ENT_QUOTES, 'UTF-8'); ?>" alt="Profissional com certificado e dashboard de performance em monitor grande">
             </figure>
             <div class="slide-overlay"></div>
             <div class="slide-content container">

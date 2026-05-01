@@ -192,6 +192,7 @@ function fazer_upload($arquivo, $pasta_destino, $extensoes_permitidas = [])
             'jpeg' => 'image/jpeg',
             'png' => 'image/png',
             'gif' => 'image/gif',
+            'webp' => 'image/webp',
             'pdf' => 'application/pdf',
             'mp4' => 'video/mp4'
         ];
@@ -201,9 +202,14 @@ function fazer_upload($arquivo, $pasta_destino, $extensoes_permitidas = [])
         }
     }
 
+    $isImageUpload = in_array($ext, ['jpg', 'jpeg', 'png', 'gif', 'webp'], true);
+    $targetExt = $isImageUpload ? 'webp' : $ext;
+
     // Gerar nome único
-    $nome_novo = uniqid() . '_' . date('YmdHis') . '.' . $ext;
+    $nome_novo = uniqid() . '_' . date('YmdHis') . '.' . $targetExt;
     $caminho = $pasta_destino . '/' . $nome_novo;
+    $nome_fallback = uniqid() . '_' . date('YmdHis') . '.' . $ext;
+    $caminhoFallback = $pasta_destino . '/' . $nome_fallback;
 
     // Criar pasta se não existir
     if (!is_dir($pasta_destino)) {
@@ -219,17 +225,36 @@ function fazer_upload($arquivo, $pasta_destino, $extensoes_permitidas = [])
     }
 
     // Mover arquivo
-    if (move_uploaded_file($arquivo['tmp_name'], $caminho)) {
-        // Se for imagem, tentar criar uma versão redimensionada para limitar tamanho e garantir consistência
-        if (in_array($ext, ['jpg', 'jpeg', 'png', 'gif']) && function_exists('getimagesize')) {
-            // Limites recomendados para capinhas
-            $maxW = 1200;
-            $maxH = 800;
+    $tempPath = $isImageUpload
+        ? $pasta_destino . '/' . uniqid('upload_tmp_', true) . '.' . $ext
+        : $caminho;
+
+    if (move_uploaded_file($arquivo['tmp_name'], $tempPath)) {
+        if ($isImageUpload && function_exists('getimagesize')) {
+            $maxW = 1600;
+            $maxH = 1600;
             try {
-                image_resize($caminho, $caminho, $maxW, $maxH);
+                image_resize($tempPath, $caminho, $maxW, $maxH, 'webp');
+                if ($tempPath !== $caminho && is_file($tempPath)) {
+                    @unlink($tempPath);
+                }
             } catch (Exception $e) {
-                // Não falhar o upload por causa do redimensionamento
-                @error_log('Erro ao redimensionar imagem: ' . $e->getMessage());
+                @error_log('Erro ao converter imagem para WebP: ' . $e->getMessage());
+                try {
+                    image_resize($tempPath, $caminhoFallback, $maxW, $maxH, null);
+                    $nome_novo = $nome_fallback;
+                    $caminho = $caminhoFallback;
+                    if ($tempPath !== $caminhoFallback && is_file($tempPath)) {
+                        @unlink($tempPath);
+                    }
+                } catch (Exception $fallbackException) {
+                    if (!@rename($tempPath, $caminhoFallback)) {
+                        @unlink($tempPath);
+                        return ['sucesso' => false, 'mensagem' => 'Erro ao processar imagem'];
+                    }
+                    $nome_novo = $nome_fallback;
+                    $caminho = $caminhoFallback;
+                }
             }
         }
 
@@ -428,16 +453,28 @@ function safe_echo($str)
  */
 function thumbnail_url($thumb)
 {
-    if (empty($thumb)) return '';
-    // se já for URL absoluta ou path absoluto, retornar como está
-    if (preg_match('#^https?://#i', $thumb) || strpos($thumb, '/') === 0) {
-        return $thumb;
+    return upload_image_url($thumb, [
+        'w' => 640,
+        'h' => 360,
+        'fit' => 'cover',
+        'q' => 82,
+    ]);
+}
+
+/**
+ * Construir URL pública para imagens armazenadas em uploads, com suporte a redimensionamento.
+ */
+function upload_image_url($file, array $params = [])
+{
+    if (empty($file)) return '';
+    if (preg_match('#^https?://#i', $file) || strpos($file, '/') === 0) {
+        return $file;
     }
-    // caso contrário considerar arquivo salvo em BASE_URL/uploads/
-    if (!defined('BASE_URL')) {
-        return '/uploads/' . $thumb;
-    }
-    return rtrim(BASE_URL, '/') . '/uploads/' . $thumb;
+
+    $base = defined('BASE_URL') ? rtrim(BASE_URL, '/') : '';
+    $query = http_build_query(array_merge(['src' => $file], array_filter($params, static fn($value) => $value !== null && $value !== '')));
+
+    return ($base !== '' ? $base : '') . '/image.php?' . $query;
 }
 
 /**
@@ -769,7 +806,7 @@ function is_course_owner_by_id($course_id)
  * @param int $max_height Altura máxima permitida
  * @throws Exception
  */
-function image_resize($src, $dst, $max_width, $max_height)
+function image_resize($src, $dst, $max_width, $max_height, $outputFormat = null)
 {
     if (!extension_loaded('gd')) {
         throw new Exception('GD não disponível');
@@ -803,6 +840,12 @@ function image_resize($src, $dst, $max_width, $max_height)
         case IMAGETYPE_GIF:
             $srcImg = imagecreatefromgif($src);
             break;
+        case IMAGETYPE_WEBP:
+            if (!function_exists('imagecreatefromwebp')) {
+                throw new Exception('WebP não suportado neste servidor');
+            }
+            $srcImg = imagecreatefromwebp($src);
+            break;
         default:
             throw new Exception('Formato de imagem não suportado');
     }
@@ -813,13 +856,17 @@ function image_resize($src, $dst, $max_width, $max_height)
 
     $dstImg = imagecreatetruecolor($targetW, $targetH);
 
-    // Preservar transparência PNG/GIF
-    if ($type == IMAGETYPE_PNG) {
+    $shouldPreserveAlpha = in_array($type, [IMAGETYPE_PNG, IMAGETYPE_GIF, IMAGETYPE_WEBP], true)
+        || $outputFormat === 'webp';
+
+    if ($shouldPreserveAlpha) {
         imagealphablending($dstImg, false);
         imagesavealpha($dstImg, true);
         $transparent = imagecolorallocatealpha($dstImg, 255, 255, 255, 127);
         imagefilledrectangle($dstImg, 0, 0, $targetW, $targetH, $transparent);
-    } elseif ($type == IMAGETYPE_GIF) {
+    }
+
+    if ($type == IMAGETYPE_GIF) {
         $transparent_index = imagecolortransparent($srcImg);
         if ($transparent_index >= 0) {
             $transparent_color = imagecolorsforindex($srcImg, $transparent_index);
@@ -831,17 +878,36 @@ function image_resize($src, $dst, $max_width, $max_height)
 
     imagecopyresampled($dstImg, $srcImg, 0, 0, 0, 0, $targetW, $targetH, $width, $height);
 
-    // Salvar arquivo de acordo com tipo
-    switch ($type) {
-        case IMAGETYPE_JPEG:
+    $resolvedOutputFormat = $outputFormat;
+    if ($resolvedOutputFormat === null) {
+        $resolvedOutputFormat = match ($type) {
+            IMAGETYPE_JPEG => 'jpeg',
+            IMAGETYPE_PNG => 'png',
+            IMAGETYPE_GIF => 'gif',
+            IMAGETYPE_WEBP => 'webp',
+            default => 'jpeg',
+        };
+    }
+
+    switch ($resolvedOutputFormat) {
+        case 'webp':
+            if (!function_exists('imagewebp')) {
+                throw new Exception('WebP não suportado neste servidor');
+            }
+            imagewebp($dstImg, $dst, 82);
+            break;
+        case 'jpeg':
+        case 'jpg':
             imagejpeg($dstImg, $dst, 85);
             break;
-        case IMAGETYPE_PNG:
+        case 'png':
             imagepng($dstImg, $dst, 6);
             break;
-        case IMAGETYPE_GIF:
+        case 'gif':
             imagegif($dstImg, $dst);
             break;
+        default:
+            throw new Exception('Formato de saída não suportado');
     }
 
     // Liberar referências aos recursos de imagem (GC cuidará da liberação)

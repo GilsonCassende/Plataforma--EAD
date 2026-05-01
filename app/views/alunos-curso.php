@@ -120,7 +120,7 @@ $completionRate = $totalStudents > 0 ? (int)round(($completedStudents / $totalSt
                             <div class="student-card__identity">
                                 <div class="student-card__avatar">
                                     <?php if (!empty($student['fotografia'])): ?>
-                                        <img src="<?php echo htmlspecialchars(BASE_URL . '/uploads/' . ltrim((string)$student['fotografia'], '/'), ENT_QUOTES, 'UTF-8'); ?>" alt="<?php echo htmlspecialchars((string)$student['nome'], ENT_QUOTES, 'UTF-8'); ?>">
+                                        <img src="<?php echo htmlspecialchars(upload_image_url((string)$student['fotografia'], ['w' => 120, 'h' => 120, 'fit' => 'cover', 'q' => 80]), ENT_QUOTES, 'UTF-8'); ?>" alt="<?php echo htmlspecialchars((string)$student['nome'], ENT_QUOTES, 'UTF-8'); ?>">
                                     <?php else: ?>
                                         <span><?php echo htmlspecialchars(strtoupper(substr((string)($student['nome'] ?? 'A'), 0, 1)), ENT_QUOTES, 'UTF-8'); ?></span>
                                     <?php endif; ?>

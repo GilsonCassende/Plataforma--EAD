@@ -51,7 +51,7 @@ if (isset($_GET['partial']) && $_GET['partial'] == '1'):
                 <?php if (!empty($curso['thumbnail'])): ?>
                     <div class="current-thumb">
                         <span>Thumb atual</span>
-                        <img class="thumb-preview" src="<?php echo BASE_URL; ?>/uploads/<?php echo htmlspecialchars($curso['thumbnail']); ?>" alt="Thumbnail">
+                        <img class="thumb-preview" src="<?php echo htmlspecialchars(upload_image_url((string)$curso['thumbnail'], ['w' => 640, 'h' => 360, 'fit' => 'cover', 'q' => 82]), ENT_QUOTES, 'UTF-8'); ?>" alt="Thumbnail">
                     </div>
                 <?php endif; ?>
             </div>
@@ -108,7 +108,7 @@ endif;
                 <?php if (!empty($curso['thumbnail'])): ?>
                     <div class="current-thumb">
                         <span>Thumb atual</span>
-                        <img class="thumb-preview" src="<?php echo BASE_URL; ?>/uploads/<?php echo htmlspecialchars($curso['thumbnail']); ?>" alt="Thumbnail">
+                        <img class="thumb-preview" src="<?php echo htmlspecialchars(upload_image_url((string)$curso['thumbnail'], ['w' => 640, 'h' => 360, 'fit' => 'cover', 'q' => 82]), ENT_QUOTES, 'UTF-8'); ?>" alt="Thumbnail">
                     </div>
                 <?php endif; ?>
             </div>

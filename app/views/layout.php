@@ -141,7 +141,7 @@ $pageCssFiles = $pageCssMap[$pageName] ?? [];
                                 </span>
                                 <span class="nav-user-avatar">
                                     <?php if ($usuarioFoto !== ''): ?>
-                                        <img src="<?php echo htmlspecialchars(BASE_URL . '/uploads/' . ltrim($usuarioFoto, '/'), ENT_QUOTES, 'UTF-8'); ?>" alt="<?php echo htmlspecialchars($usuarioNome, ENT_QUOTES, 'UTF-8'); ?>">
+                                        <img src="<?php echo htmlspecialchars(upload_image_url($usuarioFoto, ['w' => 96, 'h' => 96, 'fit' => 'cover', 'q' => 80]), ENT_QUOTES, 'UTF-8'); ?>" alt="<?php echo htmlspecialchars($usuarioNome, ENT_QUOTES, 'UTF-8'); ?>">
                                     <?php else: ?>
                                         <?php echo htmlspecialchars(mb_strtoupper(mb_substr($usuarioNome, 0, 1, 'UTF-8'), 'UTF-8'), ENT_QUOTES, 'UTF-8'); ?>
                                     <?php endif; ?>

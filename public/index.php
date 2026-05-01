@@ -1598,7 +1598,7 @@ function processarAcao($post, $pdo)
 
             $thumbnail_name = null;
             if (!empty($_FILES['thumbnail']) && $_FILES['thumbnail']['error'] === UPLOAD_ERR_OK) {
-                $upload = fazer_upload($_FILES['thumbnail'], __DIR__ . '/uploads', ['jpg', 'jpeg', 'png']);
+                $upload = fazer_upload($_FILES['thumbnail'], __DIR__ . '/uploads', ['jpg', 'jpeg', 'png', 'gif', 'webp']);
                 if ($upload['sucesso']) {
                     $thumbnail_name = basename($upload['nome']);
                 }
@@ -1635,7 +1635,7 @@ function processarAcao($post, $pdo)
 
             $thumbnail_name = null;
             if (!empty($_FILES['thumbnail']) && $_FILES['thumbnail']['error'] === UPLOAD_ERR_OK) {
-                $upload = fazer_upload($_FILES['thumbnail'], __DIR__ . '/uploads', ['jpg', 'jpeg', 'png']);
+                $upload = fazer_upload($_FILES['thumbnail'], __DIR__ . '/uploads', ['jpg', 'jpeg', 'png', 'gif', 'webp']);
                 if ($upload['sucesso']) {
                     $thumbnail_name = basename($upload['nome']);
                 }
@@ -1973,7 +1973,7 @@ function processarAcao($post, $pdo)
             $fotografia = null;
             if (!empty($_FILES['fotografia']) && ($_FILES['fotografia']['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_NO_FILE) {
                 if ($_FILES['fotografia']['error'] === UPLOAD_ERR_OK) {
-                    $upload = fazer_upload($_FILES['fotografia'], __DIR__ . '/uploads', ['jpg', 'jpeg', 'png', 'gif']);
+                    $upload = fazer_upload($_FILES['fotografia'], __DIR__ . '/uploads', ['jpg', 'jpeg', 'png', 'gif', 'webp']);
                     if (!($upload['sucesso'] ?? false)) {
                         $_SESSION['erro'] = $upload['mensagem'] ?? 'Erro ao enviar a foto de perfil.';
                         header('Location: ' . BASE_URL . '/index.php?page=perfil');
@@ -2070,8 +2070,10 @@ function processarAcao($post, $pdo)
             $tipo = $_POST['tipo'] ?? 'texto';
             $url_arquivo = null;
             if (!empty($_FILES['arquivo']) && $_FILES['arquivo']['error'] === UPLOAD_ERR_OK) {
-                $allowed = ['pdf', 'mp4', 'jpg', 'jpeg', 'png'];
-                $upload = fazer_upload($_FILES['arquivo'], __DIR__ . '/uploads', $allowed);
+	                $allowed = ['pdf', 'mp4', 'jpg', 'jpeg', 'png'];
+	                $allowed[] = 'gif';
+	                $allowed[] = 'webp';
+	                $upload = fazer_upload($_FILES['arquivo'], __DIR__ . '/uploads', $allowed);
                 if ($upload['sucesso']) {
                     $url_arquivo = basename($upload['nome']);
                 }
@@ -2127,6 +2129,8 @@ function processarAcao($post, $pdo)
 
             if (!empty($_FILES['arquivo']) && $_FILES['arquivo']['error'] === UPLOAD_ERR_OK) {
                 $allowed = ['pdf', 'mp4', 'jpg', 'jpeg', 'png'];
+                $allowed[] = 'gif';
+                $allowed[] = 'webp';
                 $upload = fazer_upload($_FILES['arquivo'], __DIR__ . '/uploads', $allowed);
                 if ($upload['sucesso']) {
                     $url_arquivo = basename($upload['nome']);

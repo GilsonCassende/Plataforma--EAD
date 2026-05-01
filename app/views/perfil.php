@@ -18,7 +18,7 @@
                     <div class="perfil-info">
                         <div class="avatar">
                             <?php if (!empty($usuario['fotografia'])): ?>
-                                <img src="<?php echo htmlspecialchars(BASE_URL . '/uploads/' . ltrim($usuario['fotografia'], '/'), ENT_QUOTES, 'UTF-8'); ?>" alt="<?php echo htmlspecialchars($usuario['nome']); ?>">
+                                <img src="<?php echo htmlspecialchars(upload_image_url((string)$usuario['fotografia'], ['w' => 320, 'h' => 320, 'fit' => 'cover', 'q' => 82]), ENT_QUOTES, 'UTF-8'); ?>" alt="<?php echo htmlspecialchars($usuario['nome']); ?>">
                             <?php else: ?>
                                 <span><?php echo strtoupper(substr($usuario['nome'], 0, 1)); ?></span>
                             <?php endif; ?>
@@ -190,13 +190,13 @@
                                 <div class="perfil-upload">
                                     <div class="perfil-upload-preview">
                                         <?php if (!empty($usuario['fotografia'])): ?>
-                                            <img src="<?php echo htmlspecialchars(BASE_URL . '/uploads/' . ltrim($usuario['fotografia'], '/'), ENT_QUOTES, 'UTF-8'); ?>" alt="<?php echo htmlspecialchars($usuario['nome']); ?>">
+                                            <img src="<?php echo htmlspecialchars(upload_image_url((string)$usuario['fotografia'], ['w' => 320, 'h' => 320, 'fit' => 'cover', 'q' => 82]), ENT_QUOTES, 'UTF-8'); ?>" alt="<?php echo htmlspecialchars($usuario['nome']); ?>">
                                         <?php else: ?>
                                             <span><?php echo strtoupper(substr($usuario['nome'], 0, 1)); ?></span>
                                         <?php endif; ?>
                                     </div>
                                     <div class="perfil-upload-fields">
-                                        <input type="file" name="fotografia" accept=".jpg,.jpeg,.png,.gif,image/jpeg,image/png,image/gif">
+                                        <input type="file" name="fotografia" accept=".jpg,.jpeg,.png,.gif,.webp,image/jpeg,image/png,image/gif,image/webp">
                                         <small>Envie uma imagem JPG, PNG ou GIF de até 5MB.</small>
                                     </div>
                                 </div>
