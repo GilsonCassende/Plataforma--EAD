@@ -29,7 +29,8 @@ RUN apt-get update && apt-get install -y \
 COPY . /app
 COPY --from=composer_deps /app/vendor /app/vendor
 
-RUN mkdir -p /app/public/uploads /app/storage /app/logs \
+RUN mkdir -p /app/bootstrap_uploads /app/public/uploads /app/storage /app/logs \
+    && cp -a /app/public/uploads/. /app/bootstrap_uploads/ 2>/dev/null || true \
     && chmod -R 775 /app/public/uploads /app/storage /app/logs
 
 EXPOSE 8080
