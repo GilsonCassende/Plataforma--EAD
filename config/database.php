@@ -14,6 +14,7 @@ $isLocalHost = in_array($host, ['localhost', '127.0.0.1', '::1'], true) || PHP_S
 
 // Ler configuração sensível de variáveis de ambiente (12-factor)
 $db_host = env_value('DB_HOST');
+$db_port = env_value('DB_PORT');
 $db_user = env_value('DB_USER');
 $db_pass = env_value('DB_PASS');
 $db_name = env_value('DB_NAME');
@@ -22,6 +23,7 @@ $db_name = env_value('DB_NAME');
 $app_env = env_value('APP_ENV', $isLocalHost ? 'development' : 'production');
 if ($app_env === 'development' || $isLocalHost) {
     if (!$db_host) $db_host = 'localhost';
+    if (!$db_port) $db_port = '3306';
     if (!$db_user) $db_user = 'root';
     if ($db_pass === false) $db_pass = '';
     if (!$db_name) $db_name = 'ead_platform';
@@ -34,7 +36,7 @@ if (empty($db_host) || empty($db_user) || empty($db_name)) {
 
 try {
     $pdo = new PDO(
-        'mysql:host=' . $db_host . ';dbname=' . $db_name . ';charset=utf8mb4',
+        'mysql:host=' . $db_host . ';port=' . ($db_port ?: '3306') . ';dbname=' . $db_name . ';charset=utf8mb4',
         $db_user,
         $db_pass,
         [
