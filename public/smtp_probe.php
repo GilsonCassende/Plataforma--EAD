@@ -23,8 +23,8 @@ if ($to === '' || !filter_var($to, FILTER_VALIDATE_EMAIL)) {
     exit;
 }
 
-$subject = 'SMTP Probe - Plataforma EAD';
-$body = '<p>Teste SMTP executado no runtime atual da Railway.</p>'
+$subject = 'Mail Probe - Plataforma EAD';
+$body = '<p>Teste de email executado no runtime atual da Railway.</p>'
     . '<p><strong>APP_URL:</strong> ' . htmlspecialchars((string)APP_URL, ENT_QUOTES, 'UTF-8') . '</p>'
     . '<p><strong>Data/Hora:</strong> ' . htmlspecialchars(date('Y-m-d H:i:s'), ENT_QUOTES, 'UTF-8') . '</p>';
 
@@ -32,8 +32,10 @@ $ok = enviar_email($to, $subject, $body, 'text/html');
 $lastError = get_last_mail_error();
 
 header('Content-Type: text/plain; charset=utf-8');
-echo $ok ? "SMTP OK\n" : "SMTP FALHOU\n";
+echo $ok ? "EMAIL OK\n" : "EMAIL FALHOU\n";
 echo 'Destinatário: ' . $to . "\n";
+echo 'MAIL_TRANSPORT: ' . (string)env_value('MAIL_TRANSPORT', env_value('RESEND_API_KEY', '') !== '' ? 'resend' : 'smtp') . "\n";
+echo 'RESEND_API_KEY: ' . (env_value('RESEND_API_KEY', '') !== '' ? '[configurada]' : '[vazia]') . "\n";
 echo 'SMTP_HOST: ' . (string)env_value('SMTP_HOST', '') . "\n";
 echo 'SMTP_PORT: ' . (string)env_value('SMTP_PORT', '') . "\n";
 echo 'SMTP_USER: ' . (string)env_value('SMTP_USER', '') . "\n";

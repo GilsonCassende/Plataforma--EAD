@@ -14,18 +14,19 @@ if (!$to || !filter_var($to, FILTER_VALIDATE_EMAIL)) {
 }
 
 $timestamp = date('Y-m-d H:i:s');
-$subject = 'Teste SMTP - Plataforma EAD';
+$subject = 'Teste Email - Plataforma EAD';
 $body = '<div style="font-family:Arial,sans-serif;color:#172033;line-height:1.6">'
-    . '<h2>Teste SMTP da Plataforma EAD</h2>'
-    . '<p>Se este email chegou, o transporte SMTP real está funcionando.</p>'
+    . '<h2>Teste de email da Plataforma EAD</h2>'
+    . '<p>Se este email chegou, o transporte configurado está funcionando.</p>'
     . '<p><strong>Ambiente:</strong> ' . htmlspecialchars((string)env_value('APP_ENV', 'production'), ENT_QUOTES, 'UTF-8') . '</p>'
+    . '<p><strong>Transporte:</strong> ' . htmlspecialchars((string)env_value('MAIL_TRANSPORT', env_value('RESEND_API_KEY', '') !== '' ? 'resend' : 'smtp'), ENT_QUOTES, 'UTF-8') . '</p>'
     . '<p><strong>Data/Hora:</strong> ' . htmlspecialchars($timestamp, ENT_QUOTES, 'UTF-8') . '</p>';
 
 if ($mode === 'confirmacao') {
-    $subject = 'Teste SMTP - Fluxo de confirmação';
+    $subject = 'Teste Email - Fluxo de confirmação';
     $body .= '<p><a href="' . htmlspecialchars(APP_URL . '/index.php?page=confirmar-email&token=token-teste', ENT_QUOTES, 'UTF-8') . '">Link de confirmação de teste</a></p>';
 } elseif ($mode === 'recuperacao') {
-    $subject = 'Teste SMTP - Fluxo de recuperação';
+    $subject = 'Teste Email - Fluxo de recuperação';
     $body .= '<p><a href="' . htmlspecialchars(APP_URL . '/index.php?page=redefinir-senha&token=token-teste', ENT_QUOTES, 'UTF-8') . '">Link de recuperação de teste</a></p>';
 }
 
@@ -34,7 +35,7 @@ $body .= '</div>';
 $ok = enviar_email($to, $subject, $body, 'text/html');
 
 if (!$ok) {
-    fwrite(STDERR, "Falha ao enviar email via SMTP. Verifique logs/app.log e configuração .env\n");
+    fwrite(STDERR, "Falha ao enviar email. Verifique logs/app.log, .env e o transporte configurado.\n");
     exit(2);
 }
 

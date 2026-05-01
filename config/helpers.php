@@ -511,6 +511,8 @@ function enviar_email($para, $assunto, $mensagem, $tipo_conteudo = 'text/plain',
     $smtpUser = trim((string)$envReader('SMTP_USER', ''));
     $smtpPass = (string)$envReader('SMTP_PASS', '');
     $smtpSecure = strtolower(trim((string)$envReader('SMTP_SECURE', 'tls')));
+    $resendApiKey = trim((string)$envReader('RESEND_API_KEY', ''));
+    $mailTransport = strtolower(trim((string)$envReader('MAIL_TRANSPORT', $resendApiKey !== '' ? 'resend' : 'smtp')));
     $mailFrom = trim((string)$envReader('MAIL_FROM', ''));
     $mailFromName = trim((string)$envReader('MAIL_FROM_NAME', 'Plataforma EAD'));
     $smtpTimeout = function_exists('env_int') ? env_int('SMTP_TIMEOUT', 15) : (int)$envReader('SMTP_TIMEOUT', 15);
@@ -518,6 +520,20 @@ function enviar_email($para, $assunto, $mensagem, $tipo_conteudo = 'text/plain',
 
     if ($mailFrom === '' && filter_var($smtpUser, FILTER_VALIDATE_EMAIL)) {
         $mailFrom = $smtpUser;
+    }
+
+    if ($mailTransport === 'resend') {
+        return enviar_email_via_resend(
+            $para,
+            $assunto,
+            $mensagem,
+            $tipo_conteudo,
+            $attachments,
+            $resendApiKey,
+            $mailFrom,
+            $mailFromName,
+            $fallbackMode
+        );
     }
 
     $smtpMissing = [];
@@ -701,6 +717,116 @@ function get_last_mail_error(): ?string
 {
     $value = $GLOBALS['last_mail_error'] ?? null;
     return is_string($value) && $value !== '' ? $value : null;
+}
+
+function enviar_email_via_resend(
+    string $para,
+    string $assunto,
+    string $mensagem,
+    string $tipo_conteudo,
+    array $attachments,
+    string $apiKey,
+    string $mailFrom,
+    string $mailFromName,
+    string $fallbackMode
+): bool {
+    if ($apiKey === '') {
+        $erro = 'RESEND_API_KEY não configurada para MAIL_TRANSPORT=resend.';
+        set_last_mail_error($erro);
+        if (function_exists('registrar_log')) {
+            registrar_log('resend_error', $erro);
+        }
+        return email_fallback_outbox($para, $assunto, $mensagem, $tipo_conteudo, $fallbackMode, $erro);
+    }
+
+    if ($mailFrom === '' || !filter_var($mailFrom, FILTER_VALIDATE_EMAIL)) {
+        $erro = 'MAIL_FROM inválido para envio via Resend.';
+        set_last_mail_error($erro);
+        if (function_exists('registrar_log')) {
+            registrar_log('resend_error', $erro);
+        }
+        return email_fallback_outbox($para, $assunto, $mensagem, $tipo_conteudo, $fallbackMode, $erro);
+    }
+
+    $from = $mailFromName !== ''
+        ? $mailFromName . ' <' . $mailFrom . '>'
+        : $mailFrom;
+
+    $payload = [
+        'from' => $from,
+        'to' => [$para],
+        'subject' => $assunto,
+        'html' => stripos($tipo_conteudo, 'html') !== false ? (string)$mensagem : nl2br(htmlspecialchars((string)$mensagem, ENT_QUOTES, 'UTF-8')),
+        'text' => strip_tags(
+            preg_replace('/<br\s*\/?>/i', PHP_EOL, (string)$mensagem) ?? (string)$mensagem
+        ),
+    ];
+
+    if ($attachments !== []) {
+        $payload['attachments'] = [];
+        foreach ($attachments as $attachment) {
+            $path = (string)($attachment['path'] ?? '');
+            if ($path === '' || !is_file($path)) {
+                continue;
+            }
+
+            $content = @file_get_contents($path);
+            if ($content === false) {
+                continue;
+            }
+
+            $payload['attachments'][] = [
+                'filename' => (string)($attachment['name'] ?? basename($path)),
+                'content' => base64_encode($content),
+            ];
+        }
+    }
+
+    $context = stream_context_create([
+        'http' => [
+            'method' => 'POST',
+            'header' => implode("\r\n", [
+                'Authorization: Bearer ' . $apiKey,
+                'Content-Type: application/json',
+            ]),
+            'content' => json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
+            'timeout' => 20,
+            'ignore_errors' => true,
+        ],
+    ]);
+
+    $response = @file_get_contents('https://api.resend.com/emails', false, $context);
+    $httpStatus = 0;
+    foreach (($http_response_header ?? []) as $headerLine) {
+        if (preg_match('#^HTTP/\S+\s+(\d{3})#', $headerLine, $matches)) {
+            $httpStatus = (int)$matches[1];
+            break;
+        }
+    }
+
+    if ($response === false || $httpStatus < 200 || $httpStatus >= 300) {
+        $errorDetails = 'HTTP ' . ($httpStatus ?: 0);
+        $decoded = is_string($response) ? json_decode($response, true) : null;
+        if (is_array($decoded)) {
+            $message = $decoded['message'] ?? $decoded['error'] ?? null;
+            if (is_string($message) && $message !== '') {
+                $errorDetails .= ' - ' . $message;
+            }
+        }
+
+        $erro = 'Falha Resend ao enviar para ' . $para . ': ' . $errorDetails;
+        set_last_mail_error($erro);
+        if (function_exists('registrar_log')) {
+            registrar_log('resend_error', $erro);
+        }
+        return email_fallback_outbox($para, $assunto, $mensagem, $tipo_conteudo, $fallbackMode, $erro);
+    }
+
+    if (function_exists('registrar_log')) {
+        registrar_log('resend_success', 'Email enviado via Resend para ' . $para);
+    }
+
+    return true;
 }
 
 /**
