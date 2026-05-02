@@ -189,7 +189,8 @@ class CertificateController
                 throw new RuntimeException('URL de renderização do certificado inválida.');
             }
 
-            return $this->renderPdfWithPuppeteer($url);
+            $html = $this->buildPdfHtmlFromRenderUrl($url);
+            return $this->renderPdfWithPuppeteerHtml($html);
         } catch (Throwable $exception) {
             $this->logControllerError('downloadCertificatePdfFromRenderUrl', $exception);
             throw $exception;
@@ -277,6 +278,110 @@ class CertificateController
         } finally {
             $this->removeDirectoryRecursively($runtimeDir);
         }
+    }
+
+    private function renderPdfWithPuppeteerHtml(string $html)
+    {
+        $htmlPath = tempnam(sys_get_temp_dir(), 'cert_html_');
+        if ($htmlPath === false) {
+            throw new RuntimeException('Não foi possível criar arquivo temporário para o HTML do certificado.');
+        }
+
+        $htmlPath .= '.html';
+        if (@file_put_contents($htmlPath, $html) === false) {
+            throw new RuntimeException('Não foi possível gravar o HTML temporário do certificado.');
+        }
+
+        try {
+            return $this->renderPdfWithPuppeteer('file://' . $htmlPath);
+        } finally {
+            @unlink($htmlPath);
+        }
+    }
+
+    private function buildPdfHtmlFromRenderUrl(string $url): string
+    {
+        $query = [];
+        parse_str((string)parse_url($url, PHP_URL_QUERY), $query);
+
+        $pdfUserId = (int)($query['pdf_user_id'] ?? 0);
+        $courseId = (int)($query['course_id'] ?? 0);
+        $type = (!empty($query['module_id']) || (($query['type'] ?? '') === 'module')) ? 'module' : 'course';
+        $moduleId = $type === 'module' ? (int)($query['module_id'] ?? 0) : null;
+        $pdfExpires = (int)($query['pdf_expires'] ?? 0);
+        $pdfToken = (string)($query['pdf_token'] ?? '');
+
+        $ownedCertificate = $this->validatePdfRenderToken($pdfUserId, $courseId, $type, $moduleId, $pdfExpires, $pdfToken);
+        if (!$ownedCertificate) {
+            throw new RuntimeException('Token de renderização do certificado inválido.');
+        }
+
+        $this->syncCourseCertificates($pdfUserId, $courseId);
+        $pageData = $this->getStudentCertificatePageData($pdfUserId, $courseId, $type, $moduleId);
+
+        $conteudo = $this->renderView('certificado', [
+            'mode' => 'owner',
+            'certificado' => $pageData['certificate'] ?? null,
+            'snapshot' => $pageData['snapshot'] ?? [],
+            'requested_type' => $type,
+            'requested_module_id' => $moduleId,
+            'course_id' => $courseId,
+            'pdf_export' => true,
+        ]);
+
+        return $this->buildPdfHtmlDocument('Certificado - PDF', $conteudo);
+    }
+
+    private function renderView(string $view, array $data = []): string
+    {
+        $base = realpath(__DIR__ . '/../views');
+        $view = preg_replace('/[^a-z0-9_\-]/i', '', $view);
+        $path = $base . '/' . $view . '.php';
+        $real = realpath($path);
+
+        if ($real === false || strpos($real, $base) !== 0) {
+            throw new RuntimeException('View de certificado inválida.');
+        }
+
+        foreach ($data as $k => $v) {
+            if (preg_match('/^[a-z_][a-z0-9_]*$/i', (string)$k)) {
+                ${$k} = $v;
+            }
+        }
+
+        ob_start();
+        include $real;
+        return (string)ob_get_clean();
+    }
+
+    private function buildPdfHtmlDocument(string $titulo, string $conteudo): string
+    {
+        $assetUrl = function (string $relativePath): string {
+            $relativePath = ltrim($relativePath, '/');
+            $diskPath = realpath(__DIR__ . '/../../public/' . $relativePath) ?: (__DIR__ . '/../../public/' . $relativePath);
+            $version = is_file($diskPath) ? (string)filemtime($diskPath) : (string)time();
+            return rtrim(APP_URL, '/') . '/' . $relativePath . '?v=' . rawurlencode($version);
+        };
+
+        $tituloSeguro = htmlspecialchars($titulo, ENT_QUOTES, 'UTF-8');
+
+        return '<!doctype html>
+<html lang="pt-BR">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>' . $tituloSeguro . '</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;700;800&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="' . htmlspecialchars($assetUrl('css/system.css'), ENT_QUOTES, 'UTF-8') . '">
+    <link rel="stylesheet" href="' . htmlspecialchars($assetUrl('css/pages/certificado.css'), ENT_QUOTES, 'UTF-8') . '">
+    <link rel="stylesheet" href="' . htmlspecialchars($assetUrl('css/pages/certificado-pdf.css'), ENT_QUOTES, 'UTF-8') . '">
+</head>
+<body class="app-shell page-certificado-pdf page-pdf-export">
+' . $conteudo . '
+</body>
+</html>';
     }
 
     private function buildPdfTokenPayload($userId, $courseId, $type, $moduleId, $expiresAt)
