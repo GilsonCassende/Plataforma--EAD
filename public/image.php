@@ -21,16 +21,26 @@ $fit = (string)($_GET['fit'] ?? 'contain');
 $quality = max(40, min(90, (int)($_GET['q'] ?? 82)));
 
 $extension = strtolower(pathinfo($sourcePath, PATHINFO_EXTENSION));
-$cacheDir = dirname(__DIR__) . '/storage/image-cache';
-$cacheKey = md5($src . '|' . $width . '|' . $height . '|' . $fit . '|' . $quality . '|' . filemtime($sourcePath));
-$cacheFile = $cacheDir . '/' . $cacheKey . '.jpg';
+$cacheCandidates = [
+    dirname(__DIR__) . '/storage/image-cache',
+    rtrim(sys_get_temp_dir(), DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . 'plataforma-ead-image-cache',
+];
+$cacheDir = null;
 
-if (!is_dir($cacheDir) && !mkdir($cacheDir, 0775, true) && !is_dir($cacheDir)) {
-    http_response_code(500);
-    exit('Cache indisponível.');
+foreach ($cacheCandidates as $candidate) {
+    if (!is_dir($candidate) && !@mkdir($candidate, 0775, true) && !is_dir($candidate)) {
+        continue;
+    }
+    if (is_dir($candidate) && is_writable($candidate)) {
+        $cacheDir = $candidate;
+        break;
+    }
 }
 
-if (!is_file($cacheFile)) {
+$cacheKey = md5($src . '|' . $width . '|' . $height . '|' . $fit . '|' . $quality . '|' . filemtime($sourcePath));
+$cacheFile = $cacheDir ? ($cacheDir . '/' . $cacheKey . '.jpg') : null;
+
+if ($cacheFile === null || !is_file($cacheFile)) {
     switch ($extension) {
         case 'jpg':
         case 'jpeg':
@@ -93,6 +103,15 @@ if (!is_file($cacheFile)) {
         $srcWidth,
         $srcHeight
     );
+
+    if ($cacheFile === null) {
+        header('Content-Type: image/jpeg');
+        header('Cache-Control: no-store');
+        imagejpeg($targetImage, null, $quality);
+        imagedestroy($sourceImage);
+        imagedestroy($targetImage);
+        exit;
+    }
 
     imagejpeg($targetImage, $cacheFile, $quality);
     imagedestroy($sourceImage);
