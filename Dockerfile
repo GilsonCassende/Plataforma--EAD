@@ -23,6 +23,7 @@ WORKDIR /app
 
 RUN apt-get update && apt-get install -y \
     chromium \
+    nodejs \
     libfreetype6-dev \
     libjpeg62-turbo-dev \
     libpng-dev \
@@ -43,7 +44,7 @@ RUN mkdir -p /app/bootstrap_uploads /app/public/uploads /app/storage /app/logs \
     && chmod -R 775 /app/public/uploads /app/storage /app/logs
 
 ENV CHROME_BIN=/usr/bin/chromium
-ENV NODE_BIN=/usr/local/bin/node
+ENV NODE_BIN=/usr/bin/node
 
 EXPOSE 8080
 

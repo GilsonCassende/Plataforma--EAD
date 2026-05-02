@@ -757,7 +757,10 @@ try {
                 }
                 error_log('certificado_pdf_route: ' . $certificatePdfException->getMessage());
 
-                $_SESSION['erro'] = 'Não foi possível gerar o PDF do certificado no momento.';
+                $pdfDebugEnabled = function_exists('env_bool') ? env_bool('CERTIFICATE_PDF_DEBUG', false) : false;
+                $_SESSION['erro'] = $pdfDebugEnabled
+                    ? 'Falha ao gerar PDF: ' . $certificatePdfException->getMessage()
+                    : 'Não foi possível gerar o PDF do certificado no momento.';
                 $fallback = BASE_URL . '/index.php?page=dashboard';
                 if (!empty($query['course_id'])) {
                     $fallback = BASE_URL . '/index.php?page=certificado&course_id=' . urlencode((string)$query['course_id']);
