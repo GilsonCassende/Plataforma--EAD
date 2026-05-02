@@ -30,11 +30,17 @@ if (!defined('CERTIFICATE_PDF_SECRET')) {
 }
 
 if (!defined('CHROME_BIN')) {
-    define('CHROME_BIN', '/usr/bin/google-chrome');
+    $configuredChromeBin = trim((string)env_value('CHROME_BIN', '/usr/bin/google-chrome'));
+    define('CHROME_BIN', $configuredChromeBin !== '' ? $configuredChromeBin : '/usr/bin/google-chrome');
 }
 
 if (!defined('NODE_BIN')) {
     $projectNodeBin = dirname(__DIR__) . '/bin/node';
-    define('NODE_BIN', is_file($projectNodeBin) ? $projectNodeBin : 'node');
+    $configuredNodeBin = trim((string)env_value('NODE_BIN', ''));
+    if ($configuredNodeBin !== '') {
+        define('NODE_BIN', $configuredNodeBin);
+    } else {
+        define('NODE_BIN', is_file($projectNodeBin) ? $projectNodeBin : 'node');
+    }
 }
 ?>

@@ -10,11 +10,19 @@ RUN composer install \
     --no-progress \
     --optimize-autoloader
 
+FROM node:22-bookworm-slim AS node_deps
+
+WORKDIR /app
+
+COPY package.json package-lock.json ./
+RUN npm ci --omit=dev
+
 FROM php:8.2-cli
 
 WORKDIR /app
 
 RUN apt-get update && apt-get install -y \
+    chromium \
     libfreetype6-dev \
     libjpeg62-turbo-dev \
     libpng-dev \
@@ -28,10 +36,14 @@ RUN apt-get update && apt-get install -y \
 
 COPY . /app
 COPY --from=composer_deps /app/vendor /app/vendor
+COPY --from=node_deps /app/node_modules /app/node_modules
 
 RUN mkdir -p /app/bootstrap_uploads /app/public/uploads /app/storage /app/logs \
     && cp -a /app/public/uploads/. /app/bootstrap_uploads/ 2>/dev/null || true \
     && chmod -R 775 /app/public/uploads /app/storage /app/logs
+
+ENV CHROME_BIN=/usr/bin/chromium
+ENV NODE_BIN=/usr/local/bin/node
 
 EXPOSE 8080
 
