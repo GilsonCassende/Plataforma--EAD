@@ -47,4 +47,4 @@ ENV NODE_BIN=/usr/local/bin/node
 
 EXPOSE 8080
 
-CMD ["sh", "-lc", "php -S 0.0.0.0:${PORT:-8080} -t public public/router.php"]
+CMD ["sh", "-lc", "PHP_CLI_SERVER_WORKERS=${PHP_CLI_SERVER_WORKERS:-4} php -S 0.0.0.0:${PORT:-8080} -t public public/router.php"]
