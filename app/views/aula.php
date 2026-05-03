@@ -9,6 +9,8 @@
     <div class="container">
         <?php if (isset($aula) && $aula && isset($curso) && $curso): ?>
             <?php
+            $lessonModeCssVersion = @filemtime(__DIR__ . '/../../public/css/pages/aula-modos.css') ?: time();
+            $lessonModeJsVersion = @filemtime(__DIR__ . '/../../public/js/pages/aula-modos.js') ?: time();
             $usuario = usuario_atual();
             $isOwner = is_course_owner($curso);
             $totalAulasCurso = count($aulas_curso ?? []);
@@ -30,7 +32,67 @@
                     break;
                 }
             }
+
+            $showLessonModes = ($aula['tipo'] ?? '') === 'video';
+            $audioSourceUrl = lesson_audio_url($aula);
+            $hasEconomicAudio = $showLessonModes && $audioSourceUrl !== '';
+            $summaryMarkdown = trim((string)($aula['resumo'] ?? ''));
+            $summaryFallback = 'Resumo não disponível para esta aula';
+            $readingIntro = trim((string)($aula['descricao'] ?? ''));
+            $renderLessonMarkdown = static function (string $markdown): string {
+                $markdown = trim(str_replace(["\r\n", "\r"], "\n", $markdown));
+                if ($markdown === '') {
+                    return '';
+                }
+
+                $blocks = preg_split("/\n{2,}/", $markdown) ?: [];
+                $html = [];
+
+                foreach ($blocks as $block) {
+                    $lines = array_values(array_filter(array_map('trim', explode("\n", trim($block))), static function ($line) {
+                        return $line !== '';
+                    }));
+
+                    if ($lines === []) {
+                        continue;
+                    }
+
+                    $isList = true;
+                    foreach ($lines as $line) {
+                        if (!preg_match('/^[-*]\s+/', $line)) {
+                            $isList = false;
+                            break;
+                        }
+                    }
+
+                    if ($isList) {
+                        $items = [];
+                        foreach ($lines as $line) {
+                            $items[] = '<li>' . htmlspecialchars(preg_replace('/^[-*]\s+/', '', $line), ENT_QUOTES, 'UTF-8') . '</li>';
+                        }
+                        $html[] = '<ul>' . implode('', $items) . '</ul>';
+                        continue;
+                    }
+
+                    $headingLine = $lines[0];
+                    if (preg_match('/^(#{1,3})\s+(.+)$/', $headingLine, $matches)) {
+                        $level = min(strlen($matches[1]) + 2, 4);
+                        $html[] = '<h' . $level . '>' . htmlspecialchars($matches[2], ENT_QUOTES, 'UTF-8') . '</h' . $level . '>';
+
+                        $remaining = array_slice($lines, 1);
+                        if ($remaining !== []) {
+                            $html[] = '<p>' . nl2br(htmlspecialchars(implode("\n", $remaining), ENT_QUOTES, 'UTF-8')) . '</p>';
+                        }
+                        continue;
+                    }
+
+                    $html[] = '<p>' . nl2br(htmlspecialchars(implode("\n", $lines), ENT_QUOTES, 'UTF-8')) . '</p>';
+                }
+
+                return implode("\n", $html);
+            };
             ?>
+            <link rel="stylesheet" href="<?php echo htmlspecialchars(BASE_URL . '/css/pages/aula-modos.css?v=' . rawurlencode((string)$lessonModeCssVersion), ENT_QUOTES, 'UTF-8'); ?>">
             <div class="lesson-shell">
                 <main class="lesson-main">
                     <header class="aula-header">
@@ -75,9 +137,36 @@
 
                     <section class="lesson-stage">
                         <article class="lesson-player-card">
+                            <?php if ($showLessonModes): ?>
+                                <div class="lesson-mode-switch" data-lesson-mode-switch>
+                                    <button type="button" class="mode-btn is-active" data-mode-target="video" aria-pressed="true">
+                                        <span class="lesson-mode-icon" aria-hidden="true">🎥</span>
+                                        <span>Vídeo</span>
+                                    </button>
+                                    <button
+                                        type="button"
+                                        class="mode-btn<?php echo $hasEconomicAudio ? '' : ' is-disabled'; ?>"
+                                        data-mode-target="economico"
+                                        aria-pressed="false"
+                                        <?php if (!$hasEconomicAudio): ?>disabled aria-disabled="true" title="Áudio não disponível nesta aula"<?php endif; ?>>
+                                        <span class="lesson-mode-icon" aria-hidden="true">🎧</span>
+                                        <span>Econômico</span>
+                                    </button>
+                                    <button type="button" class="mode-btn" data-mode-target="leitura" aria-pressed="false">
+                                        <span class="lesson-mode-icon" aria-hidden="true">📄</span>
+                                        <span>Leitura</span>
+                                    </button>
+                                </div>
+                                <?php if (!$hasEconomicAudio): ?>
+                                    <p class="lesson-mode-helper" role="status">
+                                        O modo econômico está visível, mas o áudio ainda não foi cadastrado para esta aula.
+                                    </p>
+                                <?php endif; ?>
+                            <?php endif; ?>
                             <div class="aula-player">
                                 <?php if ($aula['tipo'] === 'video'): ?>
-                                    <div class="video-player">
+                                    <div class="lesson-mode-panel lesson-mode-panel--video" data-mode-panel="video">
+                                        <div class="video-player">
                                         <?php if (!empty($aula['video_id'])):
                                             $yid = htmlspecialchars($aula['video_id']);
                                             $thumb = "https://i.ytimg.com/vi/{$yid}/hqdefault.jpg";
@@ -106,10 +195,10 @@
                                                         </button>
                                                     </div>
                                                 <?php else: ?>
-                                                    <iframe class="media-frame" src="<?php echo htmlspecialchars($aula['url_arquivo']); ?>" title="<?php echo htmlspecialchars($aula['titulo']); ?>" frameborder="0" allowfullscreen></iframe>
+                                                    <iframe class="media-frame" src="<?php echo htmlspecialchars($aula['url_arquivo']); ?>" title="<?php echo htmlspecialchars($aula['titulo']); ?>" frameborder="0" allowfullscreen loading="lazy"></iframe>
                                                 <?php endif; ?>
                                             <?php else: ?>
-                                                <video controls class="media-video">
+                                                <video controls class="media-video" preload="metadata">
                                                     <source src="<?php echo htmlspecialchars($aula['url_arquivo']); ?>" type="video/mp4">
                                                     Seu navegador não suporta vídeo HTML5.
                                                 </video>
@@ -117,6 +206,65 @@
                                         <?php else: ?>
                                             <div class="media-unavailable">Vídeo não disponível.</div>
                                         <?php endif; ?>
+                                        </div>
+                                    </div>
+                                    <div class="lesson-mode-panel lesson-mode-panel--economico is-hidden" data-mode-panel="economico" aria-hidden="true">
+                                        <div class="lesson-mode-economic">
+                                            <div class="lesson-mode-banner" data-mode-banner="economico" hidden>
+                                                Modo econômico ativado — até 80% menos consumo de dados
+                                            </div>
+                                            <div class="lesson-mode-audio-card">
+                                                <div class="lesson-mode-section-head">
+                                                    <span class="lesson-mode-kicker">Baixo consumo</span>
+                                                    <h2>Ouça a aula com menos dados</h2>
+                                                </div>
+                                                <?php if ($hasEconomicAudio): ?>
+                                                    <audio controls preload="none" class="lesson-mode-audio">
+                                                        <source src="<?php echo htmlspecialchars($audioSourceUrl, ENT_QUOTES, 'UTF-8'); ?>" type="audio/mpeg">
+                                                        Seu navegador não suporta reprodução de áudio.
+                                                    </audio>
+                                                <?php else: ?>
+                                                    <div class="lesson-mode-empty-state">Áudio não disponível nesta aula.</div>
+                                                <?php endif; ?>
+                                            </div>
+                                            <div class="lesson-mode-summary-card">
+                                                <div class="lesson-mode-section-head">
+                                                    <span class="lesson-mode-kicker">Resumo rápido</span>
+                                                    <h2>Pontos principais da aula</h2>
+                                                </div>
+                                                <div class="lesson-mode-summary lesson-rich-text">
+                                                    <?php if ($summaryMarkdown !== ''): ?>
+                                                        <?php echo $renderLessonMarkdown($summaryMarkdown); ?>
+                                                    <?php else: ?>
+                                                        <p><?php echo htmlspecialchars($summaryFallback, ENT_QUOTES, 'UTF-8'); ?></p>
+                                                    <?php endif; ?>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="lesson-mode-panel lesson-mode-panel--leitura is-hidden" data-mode-panel="leitura" aria-hidden="true">
+                                        <div class="lesson-mode-reading">
+                                            <div class="lesson-mode-section-head">
+                                                <span class="lesson-mode-kicker">Modo foco</span>
+                                                <h2>Leitura da aula</h2>
+                                            </div>
+                                            <?php if ($readingIntro !== ''): ?>
+                                                <div class="aula-descricao lesson-mode-reading-intro">
+                                                    <p><?php echo htmlspecialchars($readingIntro, ENT_QUOTES, 'UTF-8'); ?></p>
+                                                </div>
+                                            <?php endif; ?>
+                                            <div class="aula-texto lesson-rich-text">
+                                                <?php
+                                                if (!empty($aula['conteudo'])) {
+                                                    echo sanitize_html($aula['conteudo']);
+                                                } elseif ($summaryMarkdown !== '') {
+                                                    echo $renderLessonMarkdown($summaryMarkdown);
+                                                } else {
+                                                    echo '<p>' . htmlspecialchars($summaryFallback, ENT_QUOTES, 'UTF-8') . '</p>';
+                                                }
+                                                ?>
+                                            </div>
+                                        </div>
                                     </div>
                                 <?php elseif ($aula['tipo'] === 'pdf'): ?>
                                     <div class="pdf-viewer">
@@ -354,3 +502,6 @@
         <?php endif; ?>
     </div>
 </section>
+<?php if (isset($aula) && $aula && ($aula['tipo'] ?? '') === 'video'): ?>
+    <script src="<?php echo htmlspecialchars(BASE_URL . '/js/pages/aula-modos.js?v=' . rawurlencode((string)$lessonModeJsVersion), ENT_QUOTES, 'UTF-8'); ?>"></script>
+<?php endif; ?>

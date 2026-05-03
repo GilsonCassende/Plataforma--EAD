@@ -93,6 +93,16 @@ class StorageService
         return $this->buildDescriptor($this->sanitizeKey($key), $path);
     }
 
+    public function delete(string $key): bool
+    {
+        $path = $this->resolvePath($key);
+        if (!is_file($path)) {
+            return false;
+        }
+
+        return @unlink($path);
+    }
+
     private function buildDescriptor(string $key, string $path): array
     {
         return [

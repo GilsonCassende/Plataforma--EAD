@@ -26,7 +26,7 @@ class LessonController
     /**
      * Criar aula (professor dono do curso)
      */
-    public function criar($course_id, $titulo, $descricao, $tipo, $conteudo, $url_arquivo = null, $video_id = null, $module_id = null)
+    public function criar($course_id, $titulo, $descricao, $tipo, $conteudo, $url_arquivo = null, $video_id = null, $module_id = null, $resumo = null, $audio_url = null, $audio_storage_disk = null, $audio_storage_key = null)
     {
         $usuario = $_SESSION['usuario'] ?? null;
         $curso = $this->courseModel->obterPorId($course_id);
@@ -49,7 +49,7 @@ class LessonController
         $aulas = $this->lessonModel->listarPorModulo($module_id);
         $ordem = count($aulas) + 1;
 
-        return $this->lessonModel->criar($course_id, $titulo, $descricao, $tipo, $conteudo, $url_arquivo, $video_id, $ordem, $module_id);
+        return $this->lessonModel->criar($course_id, $titulo, $descricao, $tipo, $conteudo, $url_arquivo, $video_id, $ordem, $module_id, $resumo, $audio_url, $audio_storage_disk, $audio_storage_key);
     }
 
     /**
@@ -167,7 +167,7 @@ class LessonController
     /**
      * Atualizar aula
      */
-    public function atualizar($lesson_id, $titulo, $descricao, $tipo, $conteudo, $url_arquivo = null, $video_id = null, $module_id = null)
+    public function atualizar($lesson_id, $titulo, $descricao, $tipo, $conteudo, $url_arquivo = null, $video_id = null, $module_id = null, $resumo = null, $audio_url = null, $audio_storage_disk = null, $audio_storage_key = null)
     {
         $aula = $this->lessonModel->obterPorId($lesson_id);
         if (!$aula) {
@@ -183,8 +183,17 @@ class LessonController
 
         $this->moduleModel->sincronizarCurso((int)$aula['course_id'], (string)($curso['titulo'] ?? ''), (string)($curso['course_structure'] ?? 'single_module'));
         $module_id = $this->resolverModuloAula((int)$aula['course_id'], $module_id ?? ($aula['module_id'] ?? 0), $curso);
+        $resolvedResumo = $resumo !== null ? $resumo : ($aula['resumo'] ?? null);
+        $resolvedAudioUrl = $audio_url !== null ? $audio_url : ($aula['audio_url'] ?? null);
+        $resolvedAudioStorageDisk = $audio_storage_disk !== null ? $audio_storage_disk : ($aula['audio_storage_disk'] ?? null);
+        $resolvedAudioStorageKey = $audio_storage_key !== null ? $audio_storage_key : ($aula['audio_storage_key'] ?? null);
+        $audioChanged = $audio_url !== null || $audio_storage_key !== null;
 
-        if ($this->lessonModel->atualizar($lesson_id, $titulo, $descricao, $tipo, $conteudo, $url_arquivo, $video_id, null, $module_id)) {
+        if ($this->lessonModel->atualizar($lesson_id, $titulo, $descricao, $tipo, $conteudo, $url_arquivo, $video_id, null, $module_id, $resolvedResumo, $resolvedAudioUrl, $resolvedAudioStorageDisk, $resolvedAudioStorageKey)) {
+            if ($audioChanged) {
+                $mediaService = new LessonMediaService();
+                $mediaService->cleanupLessonMedia($aula, ['remove_audio' => true]);
+            }
             return ['sucesso' => true, 'mensagem' => 'Aula atualizada com sucesso'];
         }
 
@@ -209,6 +218,8 @@ class LessonController
         }
 
         if ($this->lessonModel->deletar($lesson_id)) {
+            $mediaService = new LessonMediaService();
+            $mediaService->cleanupLessonMedia($aula, ['remove_audio' => true]);
             return ['sucesso' => true, 'mensagem' => 'Aula deletada com sucesso'];
         }
 

@@ -27,6 +27,7 @@ class ImportController
     public function __construct(PDO $pdo)
     {
         $this->pdo = $pdo;
+        new Lesson($pdo);
         $this->importDir = dirname(__DIR__, 2) . '/storage/imports';
         $this->backupLogs = new BackupLogService($pdo);
         $this->ensureImportDirectory();
@@ -736,6 +737,7 @@ class ImportController
             $titulo = trim((string)($lesson['titulo'] ?? ''));
             $ordem = (int)($lesson['ordem'] ?? 1);
             $upload = $this->restoreFileFromBackup($root, (string)($lesson['upload_backup_path'] ?? ''), 'restored-file');
+            $audioUpload = $this->restoreFileFromBackup($root, (string)($lesson['audio_backup_path'] ?? ''), 'restored-audio');
 
             $stmt = $this->pdo->prepare('SELECT id FROM lessons WHERE course_id = ? AND ordem = ? AND titulo = ? LIMIT 1');
             $stmt->execute([$courseId, $ordem, $titulo]);
@@ -744,7 +746,7 @@ class ImportController
             if ($existingId > 0) {
                 $stmt = $this->pdo->prepare(
                     'UPDATE lessons
-                     SET module_id = ?, descricao = ?, tipo = ?, conteudo = ?, url_arquivo = COALESCE(?, url_arquivo), video_id = ?
+                     SET module_id = ?, descricao = ?, tipo = ?, conteudo = ?, resumo = ?, url_arquivo = COALESCE(?, url_arquivo), audio_url = COALESCE(?, audio_url), audio_storage_disk = NULL, audio_storage_key = NULL, video_id = ?
                      WHERE id = ?'
                 );
                 $stmt->execute([
@@ -752,7 +754,9 @@ class ImportController
                     (string)($lesson['descricao'] ?? ''),
                     (string)($lesson['tipo'] ?? 'texto'),
                     (string)($lesson['conteudo'] ?? ''),
+                    (string)($lesson['resumo'] ?? ''),
                     $upload,
+                    $audioUpload ?: ((string)($lesson['audio_url'] ?? '') ?: null),
                     (string)($lesson['video_id'] ?? ''),
                     $existingId,
                 ]);
@@ -761,8 +765,8 @@ class ImportController
             }
 
             $stmt = $this->pdo->prepare(
-                'INSERT INTO lessons (course_id, module_id, titulo, descricao, tipo, conteudo, url_arquivo, video_id, ordem)
-                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)'
+                'INSERT INTO lessons (course_id, module_id, titulo, descricao, tipo, conteudo, resumo, url_arquivo, audio_url, audio_storage_disk, audio_storage_key, video_id, ordem)
+                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, NULL, ?, ?)'
             );
             $stmt->execute([
                 $courseId,
@@ -771,7 +775,9 @@ class ImportController
                 (string)($lesson['descricao'] ?? ''),
                 (string)($lesson['tipo'] ?? 'texto'),
                 (string)($lesson['conteudo'] ?? ''),
+                (string)($lesson['resumo'] ?? ''),
                 $upload,
+                $audioUpload ?: ((string)($lesson['audio_url'] ?? '') ?: null),
                 (string)($lesson['video_id'] ?? ''),
                 $ordem,
             ]);

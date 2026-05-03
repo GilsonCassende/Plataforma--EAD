@@ -484,6 +484,66 @@ try {
             ]);
             break;
 
+        case 'lesson-audio':
+            AuthController::exigirAutenticacao();
+
+            $lessonId = (int)($_GET['lesson_id'] ?? 0);
+            if ($lessonId <= 0) {
+                throw new Exception('Áudio da aula inválido.');
+            }
+
+            $lessonController = new LessonController($pdo);
+            $resultado = $lessonController->obter($lessonId);
+            if (empty($resultado['sucesso']) || empty($resultado['aula'])) {
+                throw new Exception('Aula não encontrada para streaming de áudio.');
+            }
+
+            $aula = $resultado['aula'];
+            $courseController = new CourseController($pdo);
+            $cursoResult = $courseController->obter((int)($aula['course_id'] ?? 0));
+            if (empty($cursoResult['sucesso']) || empty($cursoResult['curso'])) {
+                throw new Exception('Curso não encontrado para esta mídia.');
+            }
+
+            $curso = $cursoResult['curso'];
+            $usuarioAtual = AuthController::obterUsuarioAtual();
+            $ehAdmin = ($usuarioAtual['role'] ?? '') === 'admin';
+            $ehDono = (int)($curso['teacher_id'] ?? 0) === (int)($usuarioAtual['id'] ?? 0);
+            if (!$ehAdmin && !$ehDono) {
+                require_once __DIR__ . '/../app/models/Enrollment.php';
+                $enrollmentModel = new Enrollment($pdo);
+                if (!$enrollmentModel->estaMatriculado((int)($usuarioAtual['id'] ?? 0), (int)($curso['id'] ?? 0))) {
+                    throw new Exception('Você não tem permissão para acessar este áudio.');
+                }
+            }
+
+            while (ob_get_level() > 0) {
+                ob_end_clean();
+            }
+
+            $storageKey = trim((string)($aula['audio_storage_key'] ?? ''));
+            if ($storageKey !== '') {
+                $storage = new StorageService((string)($aula['audio_storage_disk'] ?? 'local'));
+                $descriptor = $storage->getDescriptor($storageKey);
+                header('Content-Type: ' . ((string)($descriptor['mime'] ?? 'audio/mpeg')));
+                header('Content-Length: ' . (string)($descriptor['size'] ?? 0));
+                header('Content-Disposition: inline; filename="' . basename((string)($aula['audio_url'] ?? 'audio.mp3')) . '"');
+                readfile((string)$descriptor['path']);
+                exit;
+            }
+
+            $localAudio = basename((string)($aula['audio_url'] ?? ''));
+            $localPath = __DIR__ . '/uploads/' . $localAudio;
+            if ($localAudio !== '' && is_file($localPath)) {
+                header('Content-Type: ' . ((string)(mime_content_type($localPath) ?: 'audio/mpeg')));
+                header('Content-Length: ' . (string)(filesize($localPath) ?: 0));
+                header('Content-Disposition: inline; filename="' . $localAudio . '"');
+                readfile($localPath);
+                exit;
+            }
+
+            throw new Exception('Áudio não encontrado para esta aula.');
+
         case 'admin-cursos':
             AuthController::exigirAutenticacao();
             AuthController::exigirPermissao(['admin']);
@@ -2026,15 +2086,51 @@ function processarAcao($post, $pdo)
             $titulo_a = trim($_POST['titulo'] ?? '');
             $descricao_a = trim($_POST['descricao'] ?? '');
             $conteudo_a = trim($_POST['conteudo'] ?? '');
+            $resumo_a = trim($_POST['resumo'] ?? '');
             $tipo = $_POST['tipo'] ?? 'texto';
             $url_arquivo = null;
+            $audio_url = null;
+            $audio_storage_disk = null;
+            $audio_storage_key = null;
+            $lessonMediaService = new LessonMediaService(__DIR__ . '/uploads');
             if (!empty($_FILES['arquivo']) && $_FILES['arquivo']['error'] === UPLOAD_ERR_OK) {
-	                $allowed = ['pdf', 'mp4', 'jpg', 'jpeg', 'png'];
-	                $allowed[] = 'gif';
-	                $allowed[] = 'webp';
-	                $upload = fazer_upload($_FILES['arquivo'], __DIR__ . '/uploads', $allowed);
+                    $allowed = ['pdf', 'mp4', 'jpg', 'jpeg', 'png'];
+                    $allowed[] = 'gif';
+                    $allowed[] = 'webp';
+                    $upload = fazer_upload($_FILES['arquivo'], __DIR__ . '/uploads', $allowed, 104857600);
                 if ($upload['sucesso']) {
                     $url_arquivo = basename($upload['nome']);
+                } else {
+                    $result = ['sucesso' => false, 'mensagem' => $upload['mensagem'] ?? 'Não foi possível enviar o arquivo da aula.'];
+                    if ($isAjax) {
+                        header('Content-Type: application/json');
+                        echo json_encode($result);
+                    } else {
+                        $_SESSION['erro'] = $result['mensagem'];
+                        header('Location: ' . BASE_URL . '/index.php?page=gerenciar-curso&id=' . $course_id);
+                    }
+                    exit;
+                }
+            }
+
+            if (!empty($_FILES['audio']) && $_FILES['audio']['error'] === UPLOAD_ERR_OK) {
+                try {
+                    $audioUpload = $lessonMediaService->storeUploadedAudio($_FILES['audio'], (int)$course_id);
+                    if ($audioUpload !== null) {
+                        $audio_url = basename((string)($audioUpload['audio_url'] ?? ''));
+                        $audio_storage_disk = (string)($audioUpload['disk'] ?? '');
+                        $audio_storage_key = (string)($audioUpload['key'] ?? '');
+                    }
+                } catch (Throwable $exception) {
+                    $result = ['sucesso' => false, 'mensagem' => $exception->getMessage() ?: 'Não foi possível enviar o áudio da aula.'];
+                    if ($isAjax) {
+                        header('Content-Type: application/json');
+                        echo json_encode($result);
+                    } else {
+                        $_SESSION['erro'] = $result['mensagem'];
+                        header('Location: ' . BASE_URL . '/index.php?page=gerenciar-curso&id=' . $course_id);
+                    }
+                    exit;
                 }
             }
 
@@ -2045,8 +2141,21 @@ function processarAcao($post, $pdo)
                 $video_id = youtube_id_from_url($youtube_url);
             }
 
+            if ($audio_url === null && $url_arquivo && strtolower(pathinfo($url_arquivo, PATHINFO_EXTENSION)) === 'mp4') {
+                $audio_url = $lessonMediaService->generateAudioFromVideo($url_arquivo);
+            }
+
+            if ($audio_url !== null && $audio_storage_key === null) {
+                $storageAudio = $lessonMediaService->offloadAudioToStorage($audio_url, (int)$course_id);
+                if ($storageAudio !== null) {
+                    $audio_url = basename((string)($storageAudio['audio_url'] ?? $audio_url));
+                    $audio_storage_disk = (string)($storageAudio['disk'] ?? '');
+                    $audio_storage_key = (string)($storageAudio['key'] ?? '');
+                }
+            }
+
             $lessonController = new LessonController($pdo);
-            $result = $lessonController->criar($course_id, $titulo_a, $descricao_a, $tipo, $conteudo_a, $url_arquivo, $video_id, $module_id);
+            $result = $lessonController->criar($course_id, $titulo_a, $descricao_a, $tipo, $conteudo_a, $url_arquivo, $video_id, $module_id, $resumo_a !== '' ? $resumo_a : null, $audio_url, $audio_storage_disk, $audio_storage_key);
             if ($isAjax) {
                 if (!empty($result['sucesso'])) {
                     $result['redirect'] = BASE_URL . '/index.php?page=gerenciar-curso&id=' . (int)$course_id;
@@ -2083,16 +2192,52 @@ function processarAcao($post, $pdo)
             $titulo_a = trim($_POST['titulo'] ?? '');
             $descricao_a = trim($_POST['descricao'] ?? '');
             $conteudo_a = trim($_POST['conteudo'] ?? '');
+            $resumo_a = trim($_POST['resumo'] ?? '');
             $tipo = $_POST['tipo'] ?? 'texto';
             $url_arquivo = null;
+            $audio_url = null;
+            $audio_storage_disk = null;
+            $audio_storage_key = null;
+            $lessonMediaService = new LessonMediaService(__DIR__ . '/uploads');
 
             if (!empty($_FILES['arquivo']) && $_FILES['arquivo']['error'] === UPLOAD_ERR_OK) {
                 $allowed = ['pdf', 'mp4', 'jpg', 'jpeg', 'png'];
                 $allowed[] = 'gif';
                 $allowed[] = 'webp';
-                $upload = fazer_upload($_FILES['arquivo'], __DIR__ . '/uploads', $allowed);
+                $upload = fazer_upload($_FILES['arquivo'], __DIR__ . '/uploads', $allowed, 104857600);
                 if ($upload['sucesso']) {
                     $url_arquivo = basename($upload['nome']);
+                } else {
+                    $result = ['sucesso' => false, 'mensagem' => $upload['mensagem'] ?? 'Não foi possível enviar o arquivo da aula.'];
+                    if ($isAjax) {
+                        header('Content-Type: application/json');
+                        echo json_encode($result);
+                    } else {
+                        $_SESSION['erro'] = $result['mensagem'];
+                        header('Location: ' . BASE_URL . '/index.php?page=gerenciar-curso&id=' . $course_id);
+                    }
+                    exit;
+                }
+            }
+
+            if (!empty($_FILES['audio']) && $_FILES['audio']['error'] === UPLOAD_ERR_OK) {
+                try {
+                    $audioUpload = $lessonMediaService->storeUploadedAudio($_FILES['audio'], (int)$course_id);
+                    if ($audioUpload !== null) {
+                        $audio_url = basename((string)($audioUpload['audio_url'] ?? ''));
+                        $audio_storage_disk = (string)($audioUpload['disk'] ?? '');
+                        $audio_storage_key = (string)($audioUpload['key'] ?? '');
+                    }
+                } catch (Throwable $exception) {
+                    $result = ['sucesso' => false, 'mensagem' => $exception->getMessage() ?: 'Não foi possível enviar o áudio da aula.'];
+                    if ($isAjax) {
+                        header('Content-Type: application/json');
+                        echo json_encode($result);
+                    } else {
+                        $_SESSION['erro'] = $result['mensagem'];
+                        header('Location: ' . BASE_URL . '/index.php?page=gerenciar-curso&id=' . $course_id);
+                    }
+                    exit;
                 }
             }
 
@@ -2102,8 +2247,21 @@ function processarAcao($post, $pdo)
                 $video_id = youtube_id_from_url($youtube_url);
             }
 
+            if ($audio_url === null && $url_arquivo && strtolower(pathinfo($url_arquivo, PATHINFO_EXTENSION)) === 'mp4') {
+                $audio_url = $lessonMediaService->generateAudioFromVideo($url_arquivo);
+            }
+
+            if ($audio_url !== null && $audio_storage_key === null) {
+                $storageAudio = $lessonMediaService->offloadAudioToStorage($audio_url, (int)$course_id);
+                if ($storageAudio !== null) {
+                    $audio_url = basename((string)($storageAudio['audio_url'] ?? $audio_url));
+                    $audio_storage_disk = (string)($storageAudio['disk'] ?? '');
+                    $audio_storage_key = (string)($storageAudio['key'] ?? '');
+                }
+            }
+
             $lessonController = new LessonController($pdo);
-            $result = $lessonController->atualizar($lesson_id, $titulo_a, $descricao_a, $tipo, $conteudo_a, $url_arquivo, $video_id, $module_id);
+            $result = $lessonController->atualizar($lesson_id, $titulo_a, $descricao_a, $tipo, $conteudo_a, $url_arquivo, $video_id, $module_id, $resumo_a !== '' ? $resumo_a : null, $audio_url, $audio_storage_disk, $audio_storage_key);
             if ($isAjax) {
                 if (!empty($result['sucesso'])) {
                     $result['redirect'] = BASE_URL . '/index.php?page=gerenciar-curso&id=' . (int)$course_id;

@@ -574,7 +574,11 @@ class ExportController
             'descricao' => (string)($lesson['descricao'] ?? ''),
             'tipo' => (string)($lesson['tipo'] ?? 'texto'),
             'conteudo' => (string)($lesson['conteudo'] ?? ''),
+            'resumo' => (string)($lesson['resumo'] ?? ''),
             'url_arquivo' => (string)($lesson['url_arquivo'] ?? ''),
+            'audio_url' => (string)($lesson['audio_url'] ?? ''),
+            'audio_storage_disk' => (string)($lesson['audio_storage_disk'] ?? ''),
+            'audio_storage_key' => (string)($lesson['audio_storage_key'] ?? ''),
             'video_id' => (string)($lesson['video_id'] ?? ''),
             'ordem' => (int)($lesson['ordem'] ?? 1),
             'created_at' => $lesson['created_at'] ?? null,
@@ -585,6 +589,27 @@ class ExportController
             $filename = $this->sanitizeFilename((string)$lesson['url_arquivo']);
             $record['upload_backup_path'] = 'files/course_files/' . ((int)($lesson['course_id'] ?? 0)) . '/' . ((int)($lesson['id'] ?? 0)) . '_' . $filename;
             $this->appendUploadFile($files, (string)$lesson['url_arquivo'], $record['upload_backup_path']);
+        }
+
+        if (!empty($lesson['audio_url'])) {
+            $filename = $this->sanitizeFilename((string)$lesson['audio_url']);
+            $record['audio_backup_path'] = 'files/course_audio/' . ((int)($lesson['course_id'] ?? 0)) . '/' . ((int)($lesson['id'] ?? 0)) . '_' . $filename;
+            $this->appendUploadFile($files, (string)$lesson['audio_url'], $record['audio_backup_path']);
+        }
+
+        if (!empty($lesson['audio_storage_key'])) {
+            try {
+                $storage = new StorageService((string)($lesson['audio_storage_disk'] ?? 'local'));
+                $descriptor = $storage->getDescriptor((string)$lesson['audio_storage_key']);
+                $filename = basename((string)($lesson['audio_url'] ?? 'audio.mp3'));
+                $record['audio_backup_path'] = 'files/course_audio/' . ((int)($lesson['course_id'] ?? 0)) . '/' . ((int)($lesson['id'] ?? 0)) . '_' . $this->sanitizeFilename($filename);
+                $files[] = [
+                    'disk_path' => (string)$descriptor['path'],
+                    'zip_path' => $record['audio_backup_path'],
+                ];
+            } catch (Throwable $exception) {
+                // Mantém o backup funcional mesmo se o storage remoto estiver indisponível.
+            }
         }
 
         return $record;

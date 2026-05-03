@@ -205,3 +205,4 @@ TROUBLESHOOTING: https://pptr.dev/troubleshooting
 [2026-04-27 00:22:55] login_success: email=admin@ead.com ip=::1 ok (user_id=1)
 [2026-04-27 00:24:43] login_success: email=gil@gmail.com ip=::1 ok (user_id=13)
 [2026-05-01 22:29:59] smtp_success: Email enviado via SMTP para gilsoncassende3@gmail.com
+[2026-05-03 19:46:00] lesson_media: FFmpeg indisponível; áudio automático não foi gerado.

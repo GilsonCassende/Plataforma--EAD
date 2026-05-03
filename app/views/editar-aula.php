@@ -10,6 +10,7 @@ $module_options = is_array($module_options ?? null) ? $module_options : [];
 $courseId = (int)($curso['id'] ?? $aula['course_id'] ?? $_GET['course_id'] ?? 0);
 $cancelUrl = '?page=gerenciar-curso&id=' . $courseId;
 $currentYoutubeUrl = !empty($aula['video_id']) ? ('https://www.youtube.com/watch?v=' . $aula['video_id']) : '';
+$currentAudioUrl = lesson_audio_url($aula);
 
 if (isset($_GET['partial']) && $_GET['partial'] == '1'):
 ?>
@@ -61,6 +62,11 @@ if (isset($_GET['partial']) && $_GET['partial'] == '1'):
             </div>
 
             <div class="form-group">
+                <label>Resumo da aula (opcional)</label>
+                <textarea name="resumo" rows="4" placeholder="Resumo rápido para o modo econômico"><?php echo htmlspecialchars($aula['resumo'] ?? '', ENT_QUOTES, 'UTF-8'); ?></textarea>
+            </div>
+
+            <div class="form-group">
                 <label>Substituir arquivo (opcional)</label>
                 <input type="file" name="arquivo">
                 <?php if (!empty($aula['url_arquivo'])): ?>
@@ -72,6 +78,16 @@ if (isset($_GET['partial']) && $_GET['partial'] == '1'):
                 <label>URL do YouTube (opcional)</label>
                 <input type="text" name="youtube_url" value="<?php echo htmlspecialchars($currentYoutubeUrl, ENT_QUOTES, 'UTF-8'); ?>" placeholder="https://youtu.be/... ou https://www.youtube.com/watch?v=...">
                 <small>Se preencher, o vídeo embutido será atualizado nesta aula.</small>
+            </div>
+
+            <div class="form-group">
+                <label>Áudio da aula (opcional)</label>
+                <input type="file" name="audio" accept=".mp3,audio/mpeg">
+                <?php if (!empty($aula['audio_url'])): ?>
+                    <small class="muted">Áudio atual: <a href="<?php echo htmlspecialchars($currentAudioUrl, ENT_QUOTES, 'UTF-8'); ?>" target="_blank" rel="noopener noreferrer"><?php echo htmlspecialchars((string)$aula['audio_url'], ENT_QUOTES, 'UTF-8'); ?></a></small>
+                <?php else: ?>
+                    <small>Envie um MP3 para habilitar o modo econômico nesta aula.</small>
+                <?php endif; ?>
             </div>
 
             <div class="panel-actions">
@@ -134,6 +150,11 @@ endif;
             </div>
 
             <div class="form-group">
+                <label>Resumo da aula (opcional)</label>
+                <textarea name="resumo" rows="4" placeholder="Resumo rápido para o modo econômico"><?php echo htmlspecialchars($aula['resumo'] ?? '', ENT_QUOTES, 'UTF-8'); ?></textarea>
+            </div>
+
+            <div class="form-group">
                 <label>Substituir arquivo (opcional)</label>
                 <input type="file" name="arquivo">
                 <?php if (!empty($aula['url_arquivo'])): ?>
@@ -145,6 +166,16 @@ endif;
                 <label>URL do YouTube (opcional)</label>
                 <input type="text" name="youtube_url" value="<?php echo htmlspecialchars($currentYoutubeUrl, ENT_QUOTES, 'UTF-8'); ?>" placeholder="https://youtu.be/... ou https://www.youtube.com/watch?v=...">
                 <small>Se preencher, o vídeo embutido será atualizado nesta aula.</small>
+            </div>
+
+            <div class="form-group">
+                <label>Áudio da aula (opcional)</label>
+                <input type="file" name="audio" accept=".mp3,audio/mpeg">
+                <?php if (!empty($aula['audio_url'])): ?>
+                    <small class="muted">Áudio atual: <a href="<?php echo htmlspecialchars($currentAudioUrl, ENT_QUOTES, 'UTF-8'); ?>" target="_blank" rel="noopener noreferrer"><?php echo htmlspecialchars((string)$aula['audio_url'], ENT_QUOTES, 'UTF-8'); ?></a></small>
+                <?php else: ?>
+                    <small>Envie um MP3 para habilitar o modo econômico nesta aula.</small>
+                <?php endif; ?>
             </div>
 
             <div class="panel-actions">

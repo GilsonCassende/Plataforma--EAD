@@ -19,14 +19,14 @@ class Lesson
     /**
      * Criar nova aula
      */
-    public function criar($course_id, $titulo, $descricao, $tipo, $conteudo, $url_arquivo = null, $video_id = null, $ordem = 1, $module_id = null)
+    public function criar($course_id, $titulo, $descricao, $tipo, $conteudo, $url_arquivo = null, $video_id = null, $ordem = 1, $module_id = null, $resumo = null, $audio_url = null, $audio_storage_disk = null, $audio_storage_key = null)
     {
         try {
             $stmt = $this->pdo->prepare(
-                'INSERT INTO lessons (course_id, module_id, titulo, descricao, tipo, conteudo, url_arquivo, video_id, ordem) 
-                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)'
+                'INSERT INTO lessons (course_id, module_id, titulo, descricao, tipo, conteudo, resumo, url_arquivo, audio_url, audio_storage_disk, audio_storage_key, video_id, ordem) 
+                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
             );
-            $stmt->execute([$course_id, $module_id ?: null, $titulo, $descricao, $tipo, $conteudo, $url_arquivo, $video_id, $ordem]);
+            $stmt->execute([$course_id, $module_id ?: null, $titulo, $descricao, $tipo, $conteudo, $resumo, $url_arquivo, $audio_url, $audio_storage_disk, $audio_storage_key, $video_id, $ordem]);
             return ['sucesso' => true, 'id' => $this->pdo->lastInsertId()];
         } catch (Exception $e) {
             return ['sucesso' => false, 'mensagem' => $e->getMessage()];
@@ -80,11 +80,11 @@ class Lesson
     /**
      * Atualizar aula
      */
-    public function atualizar($id, $titulo, $descricao, $tipo, $conteudo, $url_arquivo = null, $video_id = null, $ordem = null, $module_id = null)
+    public function atualizar($id, $titulo, $descricao, $tipo, $conteudo, $url_arquivo = null, $video_id = null, $ordem = null, $module_id = null, $resumo = null, $audio_url = null, $audio_storage_disk = null, $audio_storage_key = null)
     {
         try {
-            $sql = 'UPDATE lessons SET titulo = ?, descricao = ?, tipo = ?, conteudo = ?';
-            $params = [$titulo, $descricao, $tipo, $conteudo];
+            $sql = 'UPDATE lessons SET titulo = ?, descricao = ?, tipo = ?, conteudo = ?, resumo = ?, audio_url = ?, audio_storage_disk = ?, audio_storage_key = ?';
+            $params = [$titulo, $descricao, $tipo, $conteudo, $resumo, $audio_url, $audio_storage_disk, $audio_storage_key];
 
             if ($url_arquivo) {
                 $sql .= ', url_arquivo = ?';
@@ -161,6 +161,10 @@ class Lesson
     private function ensureSchema()
     {
         $this->addColumnIfMissing('lessons', 'module_id', 'INT NULL AFTER course_id');
+        $this->addColumnIfMissing('lessons', 'resumo', 'TEXT NULL AFTER conteudo');
+        $this->addColumnIfMissing('lessons', 'audio_url', 'VARCHAR(255) NULL AFTER url_arquivo');
+        $this->addColumnIfMissing('lessons', 'audio_storage_disk', 'VARCHAR(32) NULL AFTER audio_url');
+        $this->addColumnIfMissing('lessons', 'audio_storage_key', 'VARCHAR(255) NULL AFTER audio_storage_disk');
     }
 
     private function addColumnIfMissing($table, $column, $definition)

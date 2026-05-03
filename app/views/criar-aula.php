@@ -48,6 +48,12 @@ if (isset($_GET['partial']) && $_GET['partial'] == '1'):
             </div>
 
             <div class="form-group">
+                <label>Resumo da aula (opcional)</label>
+                <textarea name="resumo" rows="4" placeholder="Resumo curto para o modo econômico e leitura"></textarea>
+                <small>Se preencher, este texto será mostrado como resumo rápido no modo econômico.</small>
+            </div>
+
+            <div class="form-group">
                 <label>Arquivo (opcional)</label>
                 <input type="file" name="arquivo">
             </div>
@@ -56,6 +62,12 @@ if (isset($_GET['partial']) && $_GET['partial'] == '1'):
                 <label>URL do YouTube (opcional)</label>
                 <input type="text" name="youtube_url" placeholder="https://youtu.be/.... ou https://www.youtube.com/watch?v=...">
                 <small>Se preencher a URL do YouTube, o vídeo será embutido na aula. Use 'Unlisted' se preferir não indexar.</small>
+            </div>
+
+            <div class="form-group">
+                <label>Áudio da aula (opcional)</label>
+                <input type="file" name="audio" accept=".mp3,audio/mpeg">
+                <small>Para aulas com YouTube, envie um MP3 para habilitar o modo econômico. Em uploads MP4, o sistema tentará gerar o áudio automaticamente quando possível.</small>
             </div>
 
             <div class="panel-actions">
@@ -120,6 +132,12 @@ endif;
             </div>
 
             <div class="form-group">
+                <label>Resumo da aula (opcional)</label>
+                <textarea name="resumo" rows="4" placeholder="Resumo curto para o modo econômico e leitura"></textarea>
+                <small>Esse resumo é usado no modo econômico quando você quiser destacar os pontos principais.</small>
+            </div>
+
+            <div class="form-group">
                 <label>Arquivo (opcional)</label>
                 <input type="file" name="arquivo">
             </div>
@@ -128,6 +146,12 @@ endif;
                 <label>URL do YouTube (opcional)</label>
                 <input type="text" name="youtube_url" placeholder="https://youtu.be/... ou https://www.youtube.com/watch?v=...">
                 <small>Se preencher a URL do YouTube, o vídeo será embutido na aula.</small>
+            </div>
+
+            <div class="form-group">
+                <label>Áudio da aula (opcional)</label>
+                <input type="file" name="audio" accept=".mp3,audio/mpeg">
+                <small>Ideal para aulas com YouTube. Para arquivos MP4 enviados à plataforma, o sistema tentará gerar o áudio automaticamente quando houver FFmpeg disponível.</small>
             </div>
 
             <div class="panel-actions">

@@ -154,7 +154,7 @@ function gerar_uuid()
 /**
  * Fazer upload de arquivo
  */
-function fazer_upload($arquivo, $pasta_destino, $extensoes_permitidas = [])
+function fazer_upload($arquivo, $pasta_destino, $extensoes_permitidas = [], $max_size = 5242880)
 {
     // Verificações padrão
     if (!isset($arquivo['tmp_name'])) {
@@ -170,9 +170,9 @@ function fazer_upload($arquivo, $pasta_destino, $extensoes_permitidas = [])
     $ext = strtolower(pathinfo($nome_original, PATHINFO_EXTENSION));
 
     // Limite de tamanho (padrão 5MB)
-    $max_size = 5 * 1024 * 1024;
     if (isset($arquivo['size']) && $arquivo['size'] > $max_size) {
-        return ['sucesso' => false, 'mensagem' => 'Arquivo muito grande (máx 5MB)'];
+        $maxMb = max(1, (int)round($max_size / (1024 * 1024)));
+        return ['sucesso' => false, 'mensagem' => 'Arquivo muito grande (máx ' . $maxMb . 'MB)'];
     }
 
     // Validar extensão
@@ -194,11 +194,16 @@ function fazer_upload($arquivo, $pasta_destino, $extensoes_permitidas = [])
             'gif' => 'image/gif',
             'webp' => 'image/webp',
             'pdf' => 'application/pdf',
-            'mp4' => 'video/mp4'
+            'mp4' => 'video/mp4',
+            'mp3' => ['audio/mpeg', 'audio/mp3', 'audio/x-mp3', 'application/octet-stream'],
         ];
 
-        if (!empty($extensoes_permitidas) && isset($mimeMap[$ext]) && $mimeMap[$ext] !== $mime) {
+        $expectedMime = $mimeMap[$ext] ?? null;
+        if (!empty($extensoes_permitidas) && $expectedMime !== null) {
+            $allowedMimes = is_array($expectedMime) ? $expectedMime : [$expectedMime];
+            if (!in_array($mime, $allowedMimes, true)) {
             return ['sucesso' => false, 'mensagem' => 'Tipo de arquivo inconsistente com extensão'];
+            }
         }
     }
 
@@ -475,6 +480,35 @@ function upload_image_url($file, array $params = [])
     $query = http_build_query(array_merge(['src' => $file], array_filter($params, static fn($value) => $value !== null && $value !== '')));
 
     return ($base !== '' ? $base : '') . '/image.php?' . $query;
+}
+
+/**
+ * Construir URL pública para arquivos armazenados em uploads.
+ */
+function upload_file_url($file)
+{
+    if (empty($file)) return '';
+    if (preg_match('#^https?://#i', $file) || strpos($file, '/') === 0) {
+        return $file;
+    }
+
+    $base = defined('BASE_URL') ? rtrim(BASE_URL, '/') : '';
+    return ($base !== '' ? $base : '') . '/uploads/' . rawurlencode(basename((string)$file));
+}
+
+/**
+ * Construir URL pública/protegida para o áudio de uma aula.
+ */
+function lesson_audio_url(array $lesson): string
+{
+    $lessonId = (int)($lesson['id'] ?? 0);
+    $storageKey = trim((string)($lesson['audio_storage_key'] ?? ''));
+    if ($lessonId > 0 && $storageKey !== '') {
+        $base = defined('BASE_URL') ? rtrim(BASE_URL, '/') : '';
+        return ($base !== '' ? $base : '') . '/index.php?page=lesson-audio&lesson_id=' . rawurlencode((string)$lessonId);
+    }
+
+    return upload_file_url((string)($lesson['audio_url'] ?? ''));
 }
 
 /**
