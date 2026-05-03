@@ -11,7 +11,10 @@ class LessonMediaService
     public function __construct(?string $uploadsDir = null)
     {
         $this->uploadsDir = $uploadsDir ?: dirname(__DIR__, 2) . '/public/uploads';
-        $this->tempAudioDir = rtrim(sys_get_temp_dir(), DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . 'plataforma-ead-lesson-audio';
+        $configuredTempDir = function_exists('env_value') ? trim((string)env_value('LESSON_AUDIO_TEMP_DIR', '')) : '';
+        $this->tempAudioDir = $configuredTempDir !== ''
+            ? rtrim($configuredTempDir, DIRECTORY_SEPARATOR)
+            : rtrim(sys_get_temp_dir(), DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . 'plataforma-ead-lesson-audio';
         $this->storage = new StorageService();
     }
 

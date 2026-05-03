@@ -10,17 +10,25 @@ class StorageService
         $configuredDisk = $disk ?: (function_exists('env_value') ? (string)env_value('STORAGE_DISK', 'local') : 'local');
         $this->disk = in_array($configuredDisk, ['local', 's3', 'gdrive'], true) ? $configuredDisk : 'local';
         $base = dirname(__DIR__, 2) . '/storage';
+        $configuredLocalRoot = function_exists('env_value') ? trim((string)env_value('STORAGE_LOCAL_ROOT', '')) : '';
+        $configuredRemoteRoot = function_exists('env_value') ? trim((string)env_value('STORAGE_REMOTE_ROOT', '')) : '';
 
         if ($this->disk === 'local') {
-            $this->rootPath = $this->resolveWritableRootPath([
-                $base . '/backups',
-                rtrim(sys_get_temp_dir(), DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . 'plataforma-ead-storage-backups',
-            ]);
+            $candidates = [];
+            if ($configuredLocalRoot !== '') {
+                $candidates[] = rtrim($configuredLocalRoot, DIRECTORY_SEPARATOR);
+            }
+            $candidates[] = $base . '/backups';
+            $candidates[] = rtrim(sys_get_temp_dir(), DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . 'plataforma-ead-storage-backups';
+            $this->rootPath = $this->resolveWritableRootPath($candidates);
         } else {
-            $this->rootPath = $this->resolveWritableRootPath([
-                $base . '/remote/' . $this->disk,
-                rtrim(sys_get_temp_dir(), DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . 'plataforma-ead-storage-' . $this->disk,
-            ]);
+            $candidates = [];
+            if ($configuredRemoteRoot !== '') {
+                $candidates[] = rtrim($configuredRemoteRoot, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . $this->disk;
+            }
+            $candidates[] = $base . '/remote/' . $this->disk;
+            $candidates[] = rtrim(sys_get_temp_dir(), DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . 'plataforma-ead-storage-' . $this->disk;
+            $this->rootPath = $this->resolveWritableRootPath($candidates);
         }
 
         $this->ensureDirectory($this->rootPath);

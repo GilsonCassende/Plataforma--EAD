@@ -24,6 +24,7 @@ WORKDIR /app
 RUN apt-get update && apt-get install -y \
     chromium \
     nodejs \
+    ffmpeg \
     libfreetype6-dev \
     libjpeg62-turbo-dev \
     libpng-dev \
@@ -39,12 +40,15 @@ COPY . /app
 COPY --from=composer_deps /app/vendor /app/vendor
 COPY --from=node_deps /app/node_modules /app/node_modules
 
-RUN mkdir -p /app/bootstrap_uploads /app/public/uploads /app/storage /app/logs \
+RUN mkdir -p /app/bootstrap_uploads /app/public/uploads /app/storage /app/storage/backups /app/logs /tmp/plataforma-ead-lesson-audio \
     && cp -a /app/public/uploads/. /app/bootstrap_uploads/ 2>/dev/null || true \
-    && chmod -R 775 /app/public/uploads /app/storage /app/logs
+    && chmod -R 775 /app/public/uploads /app/storage /app/logs /tmp/plataforma-ead-lesson-audio
 
 ENV CHROME_BIN=/usr/bin/chromium
 ENV NODE_BIN=/usr/bin/node
+ENV STORAGE_DISK=local
+ENV STORAGE_LOCAL_ROOT=/app/storage/backups
+ENV LESSON_AUDIO_TEMP_DIR=/tmp/plataforma-ead-lesson-audio
 
 EXPOSE 8080
 
