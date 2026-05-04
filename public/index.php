@@ -37,6 +37,9 @@ if (!isset($_GET['page']) && preg_match('#^certificado/([A-Za-z0-9]+)$#', $prett
     $_GET['codigo'] = $matches[1];
     $_GET['public'] = '1';
 }
+if (!isset($_GET['page']) && $prettyUrl === 'perguntar-ia') {
+    $_GET['page'] = 'perguntar-ia';
+}
 
 // Obter página
 $page = $_GET['page'] ?? 'home';
@@ -568,6 +571,15 @@ try {
                 'stats' => $stats
             ]);
             break;
+
+        case 'perguntar-ia':
+            http_response_code(405);
+            header('Content-Type: application/json; charset=utf-8');
+            echo json_encode([
+                'sucesso' => false,
+                'mensagem' => 'Use POST para consultar o tutor da aula.'
+            ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+            exit;
 
         case 'admin-quizzes':
             AuthController::exigirAutenticacao();
@@ -1607,6 +1619,8 @@ function processarAcao($post, $pdo)
         'criar_aula',
         'atualizar_aula',
         'deletar_aula',
+        'gerar_transcricao_aula',
+        'perguntar_ia',
         'criar_quiz',
         'deletar_quiz',
         'adicionar_questao',
@@ -2081,12 +2095,14 @@ function processarAcao($post, $pdo)
         case 'criar_aula':
             AuthController::exigirAutenticacao();
             AuthController::exigirPermissao(['professor']);
+            $usuarioAtual = AuthController::obterUsuarioAtual();
             $course_id = $_POST['course_id'] ?? 0;
             $module_id = (int)($_POST['module_id'] ?? 0);
             $titulo_a = trim($_POST['titulo'] ?? '');
             $descricao_a = trim($_POST['descricao'] ?? '');
             $conteudo_a = trim($_POST['conteudo'] ?? '');
             $resumo_a = trim($_POST['resumo'] ?? '');
+            $lesson_transcript = trim((string)($_POST['lesson_transcript'] ?? ''));
             $tipo = $_POST['tipo'] ?? 'texto';
             $url_arquivo = null;
             $audio_url = null;
@@ -2156,6 +2172,27 @@ function processarAcao($post, $pdo)
 
             $lessonController = new LessonController($pdo);
             $result = $lessonController->criar($course_id, $titulo_a, $descricao_a, $tipo, $conteudo_a, $url_arquivo, $video_id, $module_id, $resumo_a !== '' ? $resumo_a : null, $audio_url, $audio_storage_disk, $audio_storage_key);
+            $transcriptNotice = null;
+
+            if (!empty($result['sucesso']) && !empty($result['id'])) {
+                $transcriptService = new LessonTranscriptService($pdo);
+                if ($lesson_transcript !== '') {
+                    $transcriptService->saveManualTranscript((int)$result['id'], $lesson_transcript, (int)($usuarioAtual['id'] ?? 0));
+                    $transcriptNotice = 'Transcrição manual salva.';
+                } elseif (!empty($video_id)) {
+                    $transcriptResult = $transcriptService->generateAndStoreForLesson((int)$result['id'], (int)($usuarioAtual['id'] ?? 0));
+                    if (!empty($transcriptResult['sucesso'])) {
+                        $transcriptNotice = 'Transcrição da aula gerada automaticamente.';
+                    } else {
+                        $transcriptNotice = 'A aula foi criada, mas a transcrição automática não pôde ser gerada agora.';
+                    }
+                }
+
+                if ($transcriptNotice) {
+                    $result['mensagem'] = trim(($result['mensagem'] ?? 'Aula criada com sucesso.') . ' ' . $transcriptNotice);
+                }
+            }
+
             if ($isAjax) {
                 if (!empty($result['sucesso'])) {
                     $result['redirect'] = BASE_URL . '/index.php?page=gerenciar-curso&id=' . (int)$course_id;
@@ -2186,6 +2223,7 @@ function processarAcao($post, $pdo)
         case 'atualizar_aula':
             AuthController::exigirAutenticacao();
             AuthController::exigirPermissao(['professor']);
+            $usuarioAtual = AuthController::obterUsuarioAtual();
             $lesson_id = (int)($_POST['lesson_id'] ?? 0);
             $course_id = (int)($_POST['course_id'] ?? 0);
             $module_id = (int)($_POST['module_id'] ?? 0);
@@ -2193,12 +2231,15 @@ function processarAcao($post, $pdo)
             $descricao_a = trim($_POST['descricao'] ?? '');
             $conteudo_a = trim($_POST['conteudo'] ?? '');
             $resumo_a = trim($_POST['resumo'] ?? '');
+            $lesson_transcript = trim((string)($_POST['lesson_transcript'] ?? ''));
             $tipo = $_POST['tipo'] ?? 'texto';
             $url_arquivo = null;
             $audio_url = null;
             $audio_storage_disk = null;
             $audio_storage_key = null;
             $lessonMediaService = new LessonMediaService(__DIR__ . '/uploads');
+            $lessonModel = new Lesson($pdo);
+            $lessonBeforeUpdate = $lessonModel->obterPorId($lesson_id);
 
             if (!empty($_FILES['arquivo']) && $_FILES['arquivo']['error'] === UPLOAD_ERR_OK) {
                 $allowed = ['pdf', 'mp4', 'jpg', 'jpeg', 'png'];
@@ -2262,6 +2303,42 @@ function processarAcao($post, $pdo)
 
             $lessonController = new LessonController($pdo);
             $result = $lessonController->atualizar($lesson_id, $titulo_a, $descricao_a, $tipo, $conteudo_a, $url_arquivo, $video_id, $module_id, $resumo_a !== '' ? $resumo_a : null, $audio_url, $audio_storage_disk, $audio_storage_key);
+            if (!empty($result['sucesso'])) {
+                $transcriptService = new LessonTranscriptService($pdo);
+                $lessonAfterUpdate = $lessonModel->obterPorId($lesson_id) ?: [];
+                $previousVideoId = trim((string)($lessonBeforeUpdate['video_id'] ?? ''));
+                $previousTranscript = trim((string)($lessonBeforeUpdate['lesson_transcript'] ?? ''));
+                $currentVideoId = trim((string)($lessonAfterUpdate['video_id'] ?? ''));
+                $videoChanged = $previousVideoId !== $currentVideoId;
+                $transcriptNotice = null;
+
+                if ($videoChanged && ($lesson_transcript === '' || $lesson_transcript === $previousTranscript)) {
+                    $transcriptService->clearTranscript($lesson_id, (int)($usuarioAtual['id'] ?? 0));
+                    if ($currentVideoId !== '') {
+                        $transcriptResult = $transcriptService->generateAndStoreForLesson($lesson_id, (int)($usuarioAtual['id'] ?? 0));
+                        $transcriptNotice = !empty($transcriptResult['sucesso'])
+                            ? 'Transcrição atualizada automaticamente para o novo vídeo.'
+                            : 'A aula foi atualizada, mas a nova transcrição automática não pôde ser gerada agora.';
+                    } else {
+                        $transcriptNotice = 'A transcrição anterior foi removida porque o vídeo da aula mudou.';
+                    }
+                } elseif ($lesson_transcript !== '') {
+                    $transcriptService->saveManualTranscript($lesson_id, $lesson_transcript, (int)($usuarioAtual['id'] ?? 0));
+                    $transcriptNotice = 'Transcrição manual atualizada.';
+                } elseif ($previousTranscript !== '') {
+                    $transcriptService->clearTranscript($lesson_id, (int)($usuarioAtual['id'] ?? 0));
+                    $transcriptNotice = 'Transcrição removida.';
+                } elseif ($currentVideoId !== '') {
+                    $transcriptResult = $transcriptService->generateAndStoreForLesson($lesson_id, (int)($usuarioAtual['id'] ?? 0));
+                    $transcriptNotice = !empty($transcriptResult['sucesso'])
+                        ? 'Transcrição gerada automaticamente.'
+                        : 'A aula foi atualizada, mas a transcrição automática não pôde ser gerada agora.';
+                }
+
+                if ($transcriptNotice) {
+                    $result['mensagem'] = trim(($result['mensagem'] ?? 'Aula atualizada com sucesso.') . ' ' . $transcriptNotice);
+                }
+            }
             if ($isAjax) {
                 if (!empty($result['sucesso'])) {
                     $result['redirect'] = BASE_URL . '/index.php?page=gerenciar-curso&id=' . (int)$course_id;
@@ -2272,6 +2349,52 @@ function processarAcao($post, $pdo)
                 $_SESSION[$result['sucesso'] ? 'mensagem' : 'erro'] = $result['mensagem'];
                 header('Location: ' . BASE_URL . '/index.php?page=gerenciar-curso&id=' . $course_id);
             }
+            exit;
+
+        case 'gerar_transcricao_aula':
+            AuthController::exigirAutenticacao();
+            AuthController::exigirPermissao(['professor']);
+            $usuarioAtual = AuthController::obterUsuarioAtual();
+            $lessonId = (int)($post['lesson_id'] ?? 0);
+            if (function_exists('registrar_log')) {
+                registrar_log('lesson_transcript_request', 'Solicitação manual de transcrição para aula ' . $lessonId, (int)($usuarioAtual['id'] ?? 0));
+            }
+            $lessonController = new LessonController($pdo);
+            $lessonResult = $lessonController->obter($lessonId);
+
+            if (empty($lessonResult['sucesso']) || empty($lessonResult['aula'])) {
+                http_response_code(404);
+                echo json_encode(['sucesso' => false, 'mensagem' => 'Aula não encontrada.']);
+                exit;
+            }
+
+            $courseController = new CourseController($pdo);
+            $cursoResult = $courseController->obter((int)($lessonResult['aula']['course_id'] ?? 0));
+            $curso = $cursoResult['curso'] ?? null;
+            if (!$curso || (int)($curso['teacher_id'] ?? 0) !== (int)($usuarioAtual['id'] ?? 0)) {
+                http_response_code(403);
+                echo json_encode(['sucesso' => false, 'mensagem' => 'Você não tem permissão para gerar a transcrição desta aula.']);
+                exit;
+            }
+
+            $transcriptService = new LessonTranscriptService($pdo);
+            $transcriptResult = $transcriptService->generateAndStoreForLesson($lessonId, (int)($usuarioAtual['id'] ?? 0));
+            if (empty($transcriptResult['sucesso']) && function_exists('registrar_log')) {
+                registrar_log('lesson_transcript_error', 'Falha manual na aula ' . $lessonId . ': ' . ($transcriptResult['mensagem'] ?? 'erro desconhecido'), (int)($usuarioAtual['id'] ?? 0));
+            }
+            http_response_code(!empty($transcriptResult['sucesso']) ? 200 : 422);
+            echo json_encode($transcriptResult);
+            exit;
+
+        case 'perguntar_ia':
+            AuthController::exigirAutenticacao();
+            $usuarioAtual = AuthController::obterUsuarioAtual();
+            $lessonId = (int)($post['lesson_id'] ?? 0);
+            $pergunta = (string)($post['pergunta'] ?? '');
+            $lessonAiTutor = new LessonAiTutorService($pdo);
+            $answerResult = $lessonAiTutor->answerQuestion($usuarioAtual, $lessonId, $pergunta);
+            http_response_code((int)($answerResult['status_code'] ?? (!empty($answerResult['sucesso']) ? 200 : 422)));
+            echo json_encode($answerResult, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
             exit;
 
         case 'reordenar_aulas':

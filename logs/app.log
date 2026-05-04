@@ -206,3 +206,16 @@ TROUBLESHOOTING: https://pptr.dev/troubleshooting
 [2026-04-27 00:24:43] login_success: email=gil@gmail.com ip=::1 ok (user_id=13)
 [2026-05-01 22:29:59] smtp_success: Email enviado via SMTP para gilsoncassende3@gmail.com
 [2026-05-03 19:46:00] lesson_media: FFmpeg indisponível; áudio automático não foi gerado.
+[2026-05-04 23:30:38] lesson_ai_test: seed 0 (user_id=13)
+[2026-05-04 23:30:38] lesson_ai_test: seed 1 (user_id=13)
+[2026-05-04 23:30:38] lesson_ai_test: seed 2 (user_id=13)
+[2026-05-04 23:30:39] lesson_ai_test: seed 3 (user_id=13)
+[2026-05-04 23:30:39] lesson_ai_test: seed 4 (user_id=13)
+[2026-05-04 23:30:40] lesson_ai: Tutor IA aula=6 status=rate_limited tempo_ms=1843 erro=Aguarde alguns segundos antes de perguntar novamente. (user_id=13)
+[2026-05-04 23:30:40] lesson_ai: Tutor IA aula=6 status=rate_limited tempo_ms=1865 erro=Aguarde alguns segundos antes de perguntar novamente. (user_id=13)
+[2026-05-04 23:30:57] lesson_ai: Tutor IA aula=6 status=api_error tempo_ms=131 erro=GEMINI_API_KEY não configurada. (user_id=1)
+[2026-05-05 00:06:27] lesson_transcript_generated: Transcrição gerada para a aula 1 via script local (1578 chars) (user_id=1)
+[2026-05-05 00:17:28] lesson_transcript_generated: Transcrição gerada para a aula 1 via script local (1578 chars, 5369 ms) (user_id=1)
+[2026-05-05 00:17:47] lesson_transcript_generated: Transcrição gerada para a aula 6 via script local (1578 chars, 2866 ms) (user_id=7)
+[2026-05-05 00:18:32] lesson_transcript_generated: Transcrição gerada para a aula 6 via script local (1578 chars, 2396 ms) (user_id=7)
+[2026-05-05 00:21:50] lesson_transcript_generated: Transcrição gerada para a aula 6 via script local (1578 chars, 5897 ms) (user_id=7)

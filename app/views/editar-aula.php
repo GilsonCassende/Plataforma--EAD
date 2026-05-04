@@ -67,6 +67,12 @@ if (isset($_GET['partial']) && $_GET['partial'] == '1'):
             </div>
 
             <div class="form-group">
+                <label>Transcrição da aula (opcional)</label>
+                <textarea name="lesson_transcript" rows="7" placeholder="Cole ou ajuste a transcrição usada pelo tutor inteligente"><?php echo htmlspecialchars($aula['lesson_transcript'] ?? '', ENT_QUOTES, 'UTF-8'); ?></textarea>
+                <small>Se alterar o vídeo do YouTube e mantiver este campo vazio, a plataforma tentará gerar uma nova transcrição automaticamente.</small>
+            </div>
+
+            <div class="form-group">
                 <label>Substituir arquivo (opcional)</label>
                 <input type="file" name="arquivo">
                 <?php if (!empty($aula['url_arquivo'])): ?>
@@ -152,6 +158,12 @@ endif;
             <div class="form-group">
                 <label>Resumo da aula (opcional)</label>
                 <textarea name="resumo" rows="4" placeholder="Resumo rápido para o modo econômico"><?php echo htmlspecialchars($aula['resumo'] ?? '', ENT_QUOTES, 'UTF-8'); ?></textarea>
+            </div>
+
+            <div class="form-group">
+                <label>Transcrição da aula (opcional)</label>
+                <textarea name="lesson_transcript" rows="8" placeholder="Cole ou ajuste a transcrição usada pelo tutor inteligente"><?php echo htmlspecialchars($aula['lesson_transcript'] ?? '', ENT_QUOTES, 'UTF-8'); ?></textarea>
+                <small>Se o vídeo do YouTube mudar e este campo ficar vazio, a plataforma tentará gerar uma nova transcrição automaticamente.</small>
             </div>
 
             <div class="form-group">

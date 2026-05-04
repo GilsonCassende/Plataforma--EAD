@@ -37,10 +37,34 @@ if (!defined('CHROME_BIN')) {
 if (!defined('NODE_BIN')) {
     $projectNodeBin = dirname(__DIR__) . '/bin/node';
     $configuredNodeBin = trim((string)env_value('NODE_BIN', ''));
+    $candidates = [];
+
     if ($configuredNodeBin !== '') {
-        define('NODE_BIN', $configuredNodeBin);
-    } else {
-        define('NODE_BIN', is_file($projectNodeBin) ? $projectNodeBin : 'node');
+        $candidates[] = $configuredNodeBin;
     }
+
+    $candidates[] = $projectNodeBin;
+    $candidates[] = '/usr/bin/node';
+    $candidates[] = 'node';
+
+    $resolvedNodeBin = 'node';
+    foreach ($candidates as $candidate) {
+        $candidate = trim((string)$candidate);
+        if ($candidate === '') {
+            continue;
+        }
+
+        if ($candidate === 'node') {
+            $resolvedNodeBin = 'node';
+            break;
+        }
+
+        if (is_file($candidate) && is_executable($candidate)) {
+            $resolvedNodeBin = $candidate;
+            break;
+        }
+    }
+
+    define('NODE_BIN', $resolvedNodeBin);
 }
 ?>

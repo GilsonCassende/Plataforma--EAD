@@ -113,6 +113,21 @@ class Lesson
         }
     }
 
+    public function atualizarTranscript(int $id, ?string $transcript, ?string $generatedAt = null): bool
+    {
+        $stmt = $this->pdo->prepare(
+            'UPDATE lessons
+             SET lesson_transcript = ?, transcript_generated_at = ?
+             WHERE id = ?'
+        );
+
+        return $stmt->execute([
+            $transcript,
+            $generatedAt,
+            $id
+        ]);
+    }
+
     /**
      * Deletar aula
      */
@@ -162,6 +177,8 @@ class Lesson
     {
         $this->addColumnIfMissing('lessons', 'module_id', 'INT NULL AFTER course_id');
         $this->addColumnIfMissing('lessons', 'resumo', 'TEXT NULL AFTER conteudo');
+        $this->addColumnIfMissing('lessons', 'lesson_transcript', 'LONGTEXT NULL AFTER conteudo');
+        $this->addColumnIfMissing('lessons', 'transcript_generated_at', 'DATETIME NULL AFTER lesson_transcript');
         $this->addColumnIfMissing('lessons', 'audio_url', 'VARCHAR(255) NULL AFTER url_arquivo');
         $this->addColumnIfMissing('lessons', 'audio_storage_disk', 'VARCHAR(32) NULL AFTER audio_url');
         $this->addColumnIfMissing('lessons', 'audio_storage_key', 'VARCHAR(255) NULL AFTER audio_storage_disk');
@@ -176,11 +193,23 @@ class Lesson
         try {
             $this->pdo->exec("ALTER TABLE `$table` ADD COLUMN `$column` $definition");
         } catch (Throwable $exception) {
+            if ($this->isDuplicateColumnError($exception)) {
+                $this->columnCache[$table][$column] = true;
+                return;
+            }
             $fallback = preg_replace('/\s+AFTER\s+`?[a-z0-9_]+`?$/i', '', trim($definition));
             if ($fallback === trim($definition)) {
                 throw $exception;
             }
-            $this->pdo->exec("ALTER TABLE `$table` ADD COLUMN `$column` $fallback");
+            try {
+                $this->pdo->exec("ALTER TABLE `$table` ADD COLUMN `$column` $fallback");
+            } catch (Throwable $fallbackException) {
+                if ($this->isDuplicateColumnError($fallbackException)) {
+                    $this->columnCache[$table][$column] = true;
+                    return;
+                }
+                throw $fallbackException;
+            }
         }
 
         $this->columnCache[$table][$column] = true;
@@ -204,5 +233,13 @@ class Lesson
         $exists = (bool)$stmt->fetchColumn();
         $this->columnCache[$table][$column] = $exists;
         return $exists;
+    }
+
+    private function isDuplicateColumnError(Throwable $exception): bool
+    {
+        $message = strtolower((string)$exception->getMessage());
+        return str_contains($message, 'duplicate column name')
+            || str_contains($message, 'duplicate column')
+            || str_contains($message, '1060');
     }
 }

@@ -22,6 +22,7 @@
 .page-aula .aula-header,
 .page-aula .lesson-player-card,
 .page-aula .lesson-reading-card,
+.page-aula .lesson-ai-card,
 .page-aula .quizzes-section,
 .page-aula .aulas-related {
     background: rgba(255, 255, 255, 0.96);
@@ -258,6 +259,117 @@
 
 .page-aula .aula-actions-copy h2,
 .page-aula .lesson-section-heading h2,
+.page-aula .lesson-ai-card h2 {
+    margin: 0;
+    color: var(--color-text);
+}
+
+.page-aula .lesson-reading-card,
+.page-aula .lesson-ai-card {
+    display: grid;
+    gap: 1rem;
+    padding: 1.4rem 1.5rem 1.5rem;
+}
+
+.page-aula .lesson-ai-card {
+    background:
+        radial-gradient(circle at top right, rgba(49, 89, 215, 0.08), transparent 24%),
+        linear-gradient(135deg, rgba(255, 255, 255, 0.98) 0%, rgba(245, 249, 255, 0.96) 100%);
+}
+
+.page-aula .lesson-ai-alert {
+    padding: 0.9rem 1rem;
+    border: 1px solid rgba(245, 158, 11, 0.28);
+    border-radius: 16px;
+    background: rgba(255, 247, 237, 0.92);
+    color: #9a5a00;
+    line-height: 1.6;
+}
+
+.page-aula .lesson-ai-form {
+    display: grid;
+    gap: 0.85rem;
+}
+
+.page-aula .lesson-ai-label {
+    font-weight: 700;
+    color: var(--color-text);
+}
+
+.page-aula .lesson-ai-form textarea {
+    width: 100%;
+    min-height: 120px;
+    padding: 1rem 1.05rem;
+    border: 1px solid rgba(188, 201, 218, 0.95);
+    border-radius: 18px;
+    resize: vertical;
+    background: rgba(255, 255, 255, 0.94);
+    color: var(--color-text);
+    line-height: 1.6;
+}
+
+.page-aula .lesson-ai-form textarea:focus {
+    outline: none;
+    border-color: rgba(49, 89, 215, 0.58);
+    box-shadow: 0 0 0 3px rgba(49, 89, 215, 0.12);
+}
+
+.page-aula .lesson-ai-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.85rem;
+}
+
+.page-aula .lesson-ai-status {
+    color: var(--color-text-muted);
+    font-size: 0.95rem;
+}
+
+.page-aula .lesson-ai-response {
+    min-height: 130px;
+    padding: 1rem 1.1rem;
+    border: 1px solid rgba(214, 223, 235, 0.96);
+    border-radius: 18px;
+    background: rgba(255, 255, 255, 0.92);
+    color: var(--color-text);
+    line-height: 1.75;
+}
+
+.page-aula .lesson-ai-response.is-empty {
+    display: grid;
+    place-items: center;
+}
+
+.page-aula .lesson-ai-response-placeholder,
+.page-aula .lesson-ai-loading,
+.page-aula .lesson-ai-error,
+.page-aula .lesson-ai-warning {
+    margin: 0;
+}
+
+.page-aula .lesson-ai-response-placeholder,
+.page-aula .lesson-ai-loading {
+    color: var(--color-text-muted);
+}
+
+.page-aula .lesson-ai-error {
+    color: #b42318;
+}
+
+.page-aula .lesson-ai-warning {
+    margin-bottom: 0.85rem;
+    color: #9a5a00;
+    font-weight: 600;
+}
+
+.page-aula .lesson-ai-answer p {
+    margin: 0 0 0.95rem;
+}
+
+.page-aula .lesson-ai-answer p:last-child {
+    margin-bottom: 0;
+}
 .page-aula .lesson-sidebar-head h2 {
     margin: 0;
     font-size: 1.18rem;

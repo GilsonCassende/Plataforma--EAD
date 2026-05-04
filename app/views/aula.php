@@ -39,6 +39,10 @@
             $summaryMarkdown = trim((string)($aula['resumo'] ?? ''));
             $summaryFallback = 'Resumo não disponível para esta aula';
             $readingIntro = trim((string)($aula['descricao'] ?? ''));
+            $lessonTranscript = trim((string)($aula['lesson_transcript'] ?? ''));
+            $hasTranscript = $lessonTranscript !== '';
+            $aiEndpoint = BASE_URL . '/perguntar-ia';
+            $lessonActionEndpoint = BASE_URL . '/index.php?page=aula&lesson_id=' . (int)$aula['id'] . '&course_id=' . (int)$curso['id'];
             $renderLessonMarkdown = static function (string $markdown): string {
                 $markdown = trim(str_replace(["\r\n", "\r"], "\n", $markdown));
                 if ($markdown === '') {
@@ -126,6 +130,14 @@
                                     <input type="hidden" name="lesson_id" value="<?php echo $aula['id']; ?>">
                                     <button type="submit" class="btn btn-danger btn-sm">Deletar Aula</button>
                                 </form>
+                                <button
+                                    type="button"
+                                    class="btn btn-outline btn-sm"
+                                    data-generate-transcript
+                                    data-lesson-id="<?php echo (int)$aula['id']; ?>"
+                                    data-endpoint="<?php echo htmlspecialchars($lessonActionEndpoint, ENT_QUOTES, 'UTF-8'); ?>">
+                                    Gerar Transcrição
+                                </button>
                                 <a href="?page=criar-quiz&lesson_id=<?php echo (int)($aula['id'] ?? 0); ?>&course_id=<?php echo (int)($curso['id'] ?? 0); ?>" class="btn btn-outline btn-sm" data-fragment="?page=criar-quiz&partial=1&lesson_id=<?php echo (int)($aula['id'] ?? 0); ?>&course_id=<?php echo (int)($curso['id'] ?? 0); ?>" data-fragment-title="Criar Quiz da Aula">Quiz da Aula</a>
                                 <?php if (($curso['course_structure'] ?? 'single_module') === 'multi_module' && !empty($currentModule['id'])): ?>
                                     <a href="?page=criar-quiz&module_id=<?php echo (int)($currentModule['id'] ?? 0); ?>&course_id=<?php echo (int)($curso['id'] ?? 0); ?>" class="btn btn-outline btn-sm" data-fragment="?page=criar-quiz&partial=1&module_id=<?php echo (int)$currentModule['id']; ?>&course_id=<?php echo $curso['id']; ?>" data-fragment-title="Criar Quiz de Módulo">Quiz do Módulo</a>
@@ -316,6 +328,44 @@
                                 </div>
                             <?php endif; ?>
                         </article>
+
+                        <section
+                            class="lesson-ai-card"
+                            data-lesson-ai
+                            data-endpoint="<?php echo htmlspecialchars($aiEndpoint, ENT_QUOTES, 'UTF-8'); ?>"
+                            data-lesson-id="<?php echo (int)$aula['id']; ?>">
+                            <div class="lesson-section-heading">
+                                <span class="lesson-section-eyebrow">Tutor com IA</span>
+                                <h2>Assistente de dúvidas da aula</h2>
+                            </div>
+
+                            <?php if (!$hasTranscript): ?>
+                                <div class="lesson-ai-alert" data-ai-limited-message>
+                                    Modo inteligente limitado: esta aula não possui transcrição completa.
+                                </div>
+                            <?php endif; ?>
+
+                            <form class="lesson-ai-form" data-ai-form>
+                                <?php echo csrf_input(); ?>
+                                <input type="hidden" name="acao" value="perguntar_ia">
+                                <input type="hidden" name="lesson_id" value="<?php echo (int)$aula['id']; ?>">
+                                <label for="lesson-ai-question-<?php echo (int)$aula['id']; ?>" class="lesson-ai-label">Faça uma pergunta sobre esta aula</label>
+                                <textarea
+                                    id="lesson-ai-question-<?php echo (int)$aula['id']; ?>"
+                                    name="pergunta"
+                                    rows="4"
+                                    maxlength="1000"
+                                    placeholder="Ex.: Pode explicar este conceito de forma mais simples?"></textarea>
+                                <div class="lesson-ai-actions">
+                                    <button type="submit" class="btn btn-primary" data-ai-submit>Perguntar ao Tutor</button>
+                                    <span class="lesson-ai-status" data-ai-status aria-live="polite"></span>
+                                </div>
+                            </form>
+
+                            <div class="lesson-ai-response is-empty" data-ai-response>
+                                <p class="lesson-ai-response-placeholder">A resposta da IA aparecerá aqui com base no conteúdo real desta aula.</p>
+                            </div>
+                        </section>
 
                         <?php if (isset($quizzes) && count($quizzes) > 0): ?>
                             <section class="quizzes-section">

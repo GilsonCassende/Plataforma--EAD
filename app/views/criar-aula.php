@@ -54,6 +54,12 @@ if (isset($_GET['partial']) && $_GET['partial'] == '1'):
             </div>
 
             <div class="form-group">
+                <label>Transcrição da aula (opcional)</label>
+                <textarea name="lesson_transcript" rows="6" placeholder="Cole aqui a transcrição manual da aula, se já tiver o texto pronto"></textarea>
+                <small>Se deixar em branco e informar um vídeo do YouTube, o sistema tentará gerar a transcrição automaticamente sem bloquear o cadastro.</small>
+            </div>
+
+            <div class="form-group">
                 <label>Arquivo (opcional)</label>
                 <input type="file" name="arquivo">
             </div>
@@ -135,6 +141,12 @@ endif;
                 <label>Resumo da aula (opcional)</label>
                 <textarea name="resumo" rows="4" placeholder="Resumo curto para o modo econômico e leitura"></textarea>
                 <small>Esse resumo é usado no modo econômico quando você quiser destacar os pontos principais.</small>
+            </div>
+
+            <div class="form-group">
+                <label>Transcrição da aula (opcional)</label>
+                <textarea name="lesson_transcript" rows="7" placeholder="Cole aqui a transcrição manual da aula, se já tiver o texto pronto"></textarea>
+                <small>Se ficar vazio e a aula tiver um vídeo do YouTube, a plataforma tentará gerar a transcrição automaticamente depois de salvar.</small>
             </div>
 
             <div class="form-group">
