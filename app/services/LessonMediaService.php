@@ -10,7 +10,7 @@ class LessonMediaService
 
     public function __construct(?string $uploadsDir = null)
     {
-        $this->uploadsDir = $uploadsDir ?: dirname(__DIR__, 2) . '/public/uploads';
+        $this->uploadsDir = $uploadsDir ?: (defined('UPLOADS_DIR') ? UPLOADS_DIR : dirname(__DIR__, 2) . '/public/uploads');
         $configuredTempDir = function_exists('env_value') ? trim((string)env_value('LESSON_AUDIO_TEMP_DIR', '')) : '';
         $this->tempAudioDir = $configuredTempDir !== ''
             ? rtrim($configuredTempDir, DIRECTORY_SEPARATOR)

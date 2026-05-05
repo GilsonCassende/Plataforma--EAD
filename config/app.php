@@ -8,9 +8,13 @@ load_project_env(__DIR__ . '/../.env');
 // Ajuste BASE_URL conforme o caminho onde o projeto está servido
 // Ex: '/Plataforma-EAD/public'
 if (!defined('BASE_URL')) {
-    $configuredBaseUrl = trim((string)env_value('BASE_URL', '/Plataforma-EAD/public'));
-    if ($configuredBaseUrl === '' || preg_match('#^https?://#i', $configuredBaseUrl)) {
-        $configuredBaseUrl = parse_url($configuredBaseUrl, PHP_URL_PATH) ?: '/Plataforma-EAD/public';
+    $configuredBaseUrl = trim((string)env_value('BASE_URL', ''));
+    if ($configuredBaseUrl === '') {
+        $scriptName = (string)($_SERVER['SCRIPT_NAME'] ?? '');
+        $baseDir = str_replace('\\', '/', dirname($scriptName));
+        $configuredBaseUrl = $baseDir === '/' || $baseDir === '.' ? '' : rtrim($baseDir, '/');
+    } elseif (preg_match('#^https?://#i', $configuredBaseUrl)) {
+        $configuredBaseUrl = parse_url($configuredBaseUrl, PHP_URL_PATH) ?: '';
     }
     define('BASE_URL', rtrim($configuredBaseUrl, '/'));
 }
@@ -18,11 +22,49 @@ if (!defined('BASE_URL')) {
 if (!defined('APP_URL')) {
     $appUrl = trim((string)env_value('APP_URL', ''));
     if ($appUrl === '') {
-        $scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
+        $forwardedProto = trim((string)($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? ''));
+        $scheme = $forwardedProto !== ''
+            ? explode(',', $forwardedProto)[0]
+            : ((!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http');
         $host = $_SERVER['HTTP_HOST'] ?? '127.0.0.1';
         $appUrl = $scheme . '://' . $host . BASE_URL;
     }
     define('APP_URL', rtrim($appUrl, '/'));
+}
+
+if (!defined('UPLOADS_DIR')) {
+    $configuredUploadsDir = trim((string)env_value('UPLOADS_DIR', ''));
+    $candidates = [];
+
+    if ($configuredUploadsDir !== '') {
+        $candidates[] = $configuredUploadsDir;
+    }
+
+    $candidates[] = dirname(__DIR__) . '/public/uploads';
+    $candidates[] = rtrim(sys_get_temp_dir(), DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . 'plataforma-ead-public-uploads';
+
+    $resolvedUploadsDir = $candidates[0];
+    foreach ($candidates as $candidate) {
+        $candidate = rtrim((string)$candidate, DIRECTORY_SEPARATOR);
+        if ($candidate === '') {
+            continue;
+        }
+
+        if (!is_dir($candidate) && !@mkdir($candidate, 0777, true) && !is_dir($candidate)) {
+            continue;
+        }
+
+        if (!is_writable($candidate)) {
+            @chmod($candidate, 0777);
+        }
+
+        if (is_writable($candidate)) {
+            $resolvedUploadsDir = $candidate;
+            break;
+        }
+    }
+
+    define('UPLOADS_DIR', $resolvedUploadsDir);
 }
 
 if (!defined('CERTIFICATE_PDF_SECRET')) {

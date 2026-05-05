@@ -180,7 +180,8 @@ class LessonTranscriptService
 
     private function fetchTranscriptFromLocalVideo(string $videoFilename): array
     {
-        $videoPath = $this->projectRoot . '/public/uploads/' . $videoFilename;
+        $uploadsDir = defined('UPLOADS_DIR') ? UPLOADS_DIR : ($this->projectRoot . '/public/uploads');
+        $videoPath = rtrim($uploadsDir, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . $videoFilename;
         if (!is_file($videoPath)) {
             return ['sucesso' => false, 'mensagem' => 'Arquivo de vídeo da aula não foi encontrado no servidor.'];
         }

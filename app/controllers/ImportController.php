@@ -1352,7 +1352,7 @@ class ImportController
             return null;
         }
 
-        $uploadsDir = dirname(__DIR__, 2) . '/public/uploads';
+        $uploadsDir = defined('UPLOADS_DIR') ? UPLOADS_DIR : (dirname(__DIR__, 2) . '/public/uploads');
         if (!is_dir($uploadsDir) && !@mkdir($uploadsDir, 0775, true) && !is_dir($uploadsDir)) {
             throw new RuntimeException('Não foi possível preparar o diretório de uploads para restauração.');
         }

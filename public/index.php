@@ -1680,7 +1680,7 @@ function processarAcao($post, $pdo)
 
             $thumbnail_name = null;
             if (!empty($_FILES['thumbnail']) && $_FILES['thumbnail']['error'] === UPLOAD_ERR_OK) {
-                $upload = fazer_upload($_FILES['thumbnail'], __DIR__ . '/uploads', ['jpg', 'jpeg', 'png', 'gif', 'webp']);
+                $upload = fazer_upload($_FILES['thumbnail'], defined('UPLOADS_DIR') ? UPLOADS_DIR : (__DIR__ . '/uploads'), ['jpg', 'jpeg', 'png', 'gif', 'webp']);
                 if ($upload['sucesso']) {
                     $thumbnail_name = basename($upload['nome']);
                 }
@@ -1717,7 +1717,7 @@ function processarAcao($post, $pdo)
 
             $thumbnail_name = null;
             if (!empty($_FILES['thumbnail']) && $_FILES['thumbnail']['error'] === UPLOAD_ERR_OK) {
-                $upload = fazer_upload($_FILES['thumbnail'], __DIR__ . '/uploads', ['jpg', 'jpeg', 'png', 'gif', 'webp']);
+                $upload = fazer_upload($_FILES['thumbnail'], defined('UPLOADS_DIR') ? UPLOADS_DIR : (__DIR__ . '/uploads'), ['jpg', 'jpeg', 'png', 'gif', 'webp']);
                 if ($upload['sucesso']) {
                     $thumbnail_name = basename($upload['nome']);
                 }
@@ -2021,7 +2021,7 @@ function processarAcao($post, $pdo)
             $fotografia = null;
             if (!empty($_FILES['fotografia']) && ($_FILES['fotografia']['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_NO_FILE) {
                 if ($_FILES['fotografia']['error'] === UPLOAD_ERR_OK) {
-                    $upload = fazer_upload($_FILES['fotografia'], __DIR__ . '/uploads', ['jpg', 'jpeg', 'png', 'gif', 'webp']);
+                    $upload = fazer_upload($_FILES['fotografia'], defined('UPLOADS_DIR') ? UPLOADS_DIR : (__DIR__ . '/uploads'), ['jpg', 'jpeg', 'png', 'gif', 'webp']);
                     if (!($upload['sucesso'] ?? false)) {
                         $_SESSION['erro'] = $upload['mensagem'] ?? 'Erro ao enviar a foto de perfil.';
                         header('Location: ' . BASE_URL . '/index.php?page=perfil');
@@ -2123,12 +2123,12 @@ function processarAcao($post, $pdo)
             $audio_url = null;
             $audio_storage_disk = null;
             $audio_storage_key = null;
-            $lessonMediaService = new LessonMediaService(__DIR__ . '/uploads');
+            $lessonMediaService = new LessonMediaService(defined('UPLOADS_DIR') ? UPLOADS_DIR : (__DIR__ . '/uploads'));
             if (!empty($_FILES['arquivo']) && $_FILES['arquivo']['error'] === UPLOAD_ERR_OK) {
                     $allowed = ['pdf', 'mp4', 'jpg', 'jpeg', 'png'];
                     $allowed[] = 'gif';
                     $allowed[] = 'webp';
-                    $upload = fazer_upload($_FILES['arquivo'], __DIR__ . '/uploads', $allowed, 104857600);
+                    $upload = fazer_upload($_FILES['arquivo'], defined('UPLOADS_DIR') ? UPLOADS_DIR : (__DIR__ . '/uploads'), $allowed, 104857600);
                 if ($upload['sucesso']) {
                     $url_arquivo = basename($upload['nome']);
                 } else {
@@ -2252,7 +2252,7 @@ function processarAcao($post, $pdo)
             $audio_url = null;
             $audio_storage_disk = null;
             $audio_storage_key = null;
-            $lessonMediaService = new LessonMediaService(__DIR__ . '/uploads');
+            $lessonMediaService = new LessonMediaService(defined('UPLOADS_DIR') ? UPLOADS_DIR : (__DIR__ . '/uploads'));
             $lessonModel = new Lesson($pdo);
             $lessonBeforeUpdate = $lessonModel->obterPorId($lesson_id);
 
@@ -2260,7 +2260,7 @@ function processarAcao($post, $pdo)
                 $allowed = ['pdf', 'mp4', 'jpg', 'jpeg', 'png'];
                 $allowed[] = 'gif';
                 $allowed[] = 'webp';
-                $upload = fazer_upload($_FILES['arquivo'], __DIR__ . '/uploads', $allowed, 104857600);
+                $upload = fazer_upload($_FILES['arquivo'], defined('UPLOADS_DIR') ? UPLOADS_DIR : (__DIR__ . '/uploads'), $allowed, 104857600);
                 if ($upload['sucesso']) {
                     $url_arquivo = basename($upload['nome']);
                 } else {

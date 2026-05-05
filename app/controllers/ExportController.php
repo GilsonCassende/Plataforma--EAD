@@ -1344,7 +1344,8 @@ class ExportController
             return null;
         }
 
-        $path = dirname(__DIR__, 2) . '/public/uploads/' . $filename;
+        $uploadsDir = defined('UPLOADS_DIR') ? UPLOADS_DIR : (dirname(__DIR__, 2) . '/public/uploads');
+        $path = rtrim($uploadsDir, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . $filename;
         return is_file($path) ? $path : null;
     }
 
