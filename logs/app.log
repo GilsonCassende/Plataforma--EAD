@@ -219,3 +219,63 @@ TROUBLESHOOTING: https://pptr.dev/troubleshooting
 [2026-05-05 00:17:47] lesson_transcript_generated: Transcrição gerada para a aula 6 via script local (1578 chars, 2866 ms) (user_id=7)
 [2026-05-05 00:18:32] lesson_transcript_generated: Transcrição gerada para a aula 6 via script local (1578 chars, 2396 ms) (user_id=7)
 [2026-05-05 00:21:50] lesson_transcript_generated: Transcrição gerada para a aula 6 via script local (1578 chars, 5897 ms) (user_id=7)
+[2026-05-05 15:47:38] lesson_transcript_generated: Transcrição gerada para a aula 6 via script local (1578 chars, 8016 ms) (user_id=7)
+[2026-05-05 15:50:44] lesson_transcript_error: proc_open falhou, tentando exec: A geração da transcrição excedeu o tempo limite configurado.
+[2026-05-05 15:50:52] lesson_transcript_generated: Transcrição gerada para a aula 6 via script local (1578 chars, 17639 ms) (user_id=7)
+[2026-05-05 15:55:57] lesson_ai_api_error: models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+[2026-05-05 15:55:57] lesson_ai: Tutor IA aula=7 status=api_error tempo_ms=5386 erro=models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods. (user_id=13)
+[2026-05-05 15:56:13] lesson_ai_api_error: models/gemini-1.5-flash is not found for API version v1beta, or is not supported for generateContent. Call ListModels to see the list of available models and their supported methods.
+[2026-05-05 15:57:14] lesson_ai_api_error: You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. 
+* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_input_token_count, limit: 0, model: gemini-2.0-flash
+* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_requests, limit: 0, model: gemini-2.0-flash
+* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_requests, limit: 0, model: gemini-2.0-flash
+Please retry in 45.84329469s.
+[2026-05-05 15:57:14] lesson_ai: Tutor IA aula=7 status=api_error tempo_ms=4771 erro=You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. 
+* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_input_token_count, limit: 0, model: gemini-2.0-flash
+* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_requests, limit: 0, model: gemini-2.0-flash
+* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_requests, limit: 0, model: gemini-2.0-flash
+Please retry in 45.84329469s. (user_id=13)
+[2026-05-05 15:57:33] lesson_ai_api_error: You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. 
+* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_requests, limit: 0, model: gemini-2.0-flash
+* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_requests, limit: 0, model: gemini-2.0-flash
+* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_input_token_count, limit: 0, model: gemini-2.0-flash
+Please retry in 27.030254692s.
+[2026-05-05 15:57:33] lesson_ai: Tutor IA aula=7 status=api_error tempo_ms=4252 erro=You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. 
+* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_requests, limit: 0, model: gemini-2.0-flash
+* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_requests, limit: 0, model: gemini-2.0-flash
+* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_input_token_count, limit: 0, model: gemini-2.0-flash
+Please retry in 27.030254692s. (user_id=7)
+[2026-05-05 15:58:01] lesson_ai_api_error: You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. 
+* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_input_token_count, limit: 0, model: gemini-2.0-flash
+* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_requests, limit: 0, model: gemini-2.0-flash
+* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_requests, limit: 0, model: gemini-2.0-flash
+Please retry in 58.596150922s.
+[2026-05-05 15:58:01] lesson_ai: Tutor IA aula=7 status=api_error tempo_ms=4536 erro=You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. 
+* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_input_token_count, limit: 0, model: gemini-2.0-flash
+* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_requests, limit: 0, model: gemini-2.0-flash
+* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_requests, limit: 0, model: gemini-2.0-flash
+Please retry in 58.596150922s. (user_id=7)
+[2026-05-05 16:53:46] lesson_ai_api_error: Failover Gemini para próxima chave após erro na chave #1 e modelo gemini-2.0-flash-lite: You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. 
+* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_requests, limit: 0, model: gemini-2.0-flash-lite
+* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_requests, limit: 0, model: gemini-2.0-flash-lite
+* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_input_token_count, limit: 0, model: gemini-2.0-flash-lite
+Please retry in 13.568677366s.
+[2026-05-05 16:53:48] lesson_ai_api_error: You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. 
+* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_input_token_count, limit: 0, model: gemini-2.0-flash-lite
+* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_requests, limit: 0, model: gemini-2.0-flash-lite
+* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_requests, limit: 0, model: gemini-2.0-flash-lite
+Please retry in 11.791100628s.
+[2026-05-05 16:53:48] lesson_ai: Tutor IA aula=7 status=api_error tempo_ms=4011 erro=You exceeded your current quota, please check your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits. To monitor your current usage, head to: https://ai.dev/rate-limit. 
+* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_input_token_count, limit: 0, model: gemini-2.0-flash-lite
+* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_requests, limit: 0, model: gemini-2.0-flash-lite
+* Quota exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_requests, limit: 0, model: gemini-2.0-flash-lite
+Please retry in 11.791100628s. (user_id=7)
+[2026-05-05 20:37:03] lesson_ai: Tutor IA aula=7 status=success tempo_ms=2052 (user_id=7)
+[2026-05-05 20:50:00] lesson_ai: Tutor IA aula=7 status=cached_hit tempo_ms=51 (user_id=7)
+[2026-05-05 20:50:14] lesson_ai: Tutor IA aula=7 status=success tempo_ms=1696 (user_id=7)
+[2026-05-05 20:50:39] lesson_ai: Tutor IA aula=7 status=success tempo_ms=1589 (user_id=7)
+[2026-05-05 20:52:36] lesson_ai: Tutor IA aula=7 status=success tempo_ms=1589 (user_id=7)
+[2026-05-05 20:53:04] lesson_ai: Tutor IA aula=7 status=cached_hit tempo_ms=18 (user_id=7)
+[2026-05-05 20:53:13] lesson_ai: Tutor IA aula=7 status=success tempo_ms=1464 (user_id=7)
+[2026-05-05 20:53:56] lesson_ai: Tutor IA aula=7 status=success tempo_ms=2594 (user_id=7)
+[2026-05-05 20:54:27] lesson_ai: Tutor IA aula=7 status=success tempo_ms=1435 (user_id=7)

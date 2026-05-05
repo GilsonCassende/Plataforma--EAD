@@ -56,7 +56,7 @@ if (isset($_GET['partial']) && $_GET['partial'] == '1'):
             <div class="form-group">
                 <label>Transcrição da aula (opcional)</label>
                 <textarea name="lesson_transcript" rows="6" placeholder="Cole aqui a transcrição manual da aula, se já tiver o texto pronto"></textarea>
-                <small>Se deixar em branco e informar um vídeo do YouTube, o sistema tentará gerar a transcrição automaticamente sem bloquear o cadastro.</small>
+                <small>Se deixar em branco, a plataforma tentará gerar a transcrição automaticamente para vídeos do YouTube e para uploads MP4 compatíveis, sem bloquear o cadastro.</small>
             </div>
 
             <div class="form-group">

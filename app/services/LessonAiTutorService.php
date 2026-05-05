@@ -5,9 +5,22 @@ class LessonAiTutorService
     private PDO $pdo;
     private Lesson $lessonModel;
     private Enrollment $enrollmentModel;
-    private const FALLBACK_MESSAGE = 'O tutor está temporariamente indisponível. Tente novamente em instantes.';
+    private const FALLBACK_MESSAGE = 'O assistente está temporariamente indisponível. Tente novamente em instantes.';
     private const RATE_LIMIT_MESSAGE = 'Aguarde alguns segundos antes de perguntar novamente.';
+    private const API_QUOTA_MESSAGE = 'O assistente de IA atingiu o limite temporário de uso da API. Aguarde cerca de 1 minuto e tente novamente.';
     private const MAX_QUESTION_LENGTH = 500;
+    private const TRANSCRIPT_SNIPPET_LIMIT = 2800;
+    private const CONTENT_SNIPPET_LIMIT = 1400;
+    private const DESCRIPTION_LIMIT = 500;
+    private const TITLE_LIMIT = 160;
+    private const MAX_OUTPUT_TOKENS = 280;
+    private const CACHE_TTL_SECONDS = 21600;
+    private const DUPLICATE_QUESTION_WINDOW_SECONDS = 45;
+    private const DUPLICATE_QUESTION_MESSAGE = 'Você acabou de enviar essa mesma pergunta. Aguarde alguns segundos ou reformule a dúvida.';
+    private const GROQ_FAILOVER_STATUSES = [408, 429, 500, 502, 503, 504];
+    private const EMPTY_ANSWER_MESSAGE = 'Não consegui gerar uma resposta clara. Tente reformular sua pergunta.';
+    private const HISTORY_MESSAGE_LIMIT = 6;
+    private const HISTORY_MESSAGE_MAX_LENGTH = 400;
 
     public function __construct(PDO $pdo)
     {
@@ -17,14 +30,15 @@ class LessonAiTutorService
         $this->ensureSchema();
     }
 
-    public function answerQuestion(array $user, int $lessonId, string $question): array
+    public function answerQuestion(array $user, int $lessonId, string $question, array $history = []): array
     {
         $userId = (int)($user['id'] ?? 0);
         $startedAt = microtime(true);
         $question = $this->sanitizeQuestion($question);
+        $history = $this->sanitizeHistory($history);
 
         if ($userId <= 0) {
-            return ['sucesso' => false, 'mensagem' => 'Faça login para usar o tutor da aula.', 'status_code' => 401];
+            return ['sucesso' => false, 'mensagem' => 'Faça login para usar o assistente da aula.', 'status_code' => 401];
         }
 
         if ($lessonId <= 0) {
@@ -45,36 +59,78 @@ class LessonAiTutorService
             return $access;
         }
 
-        $rateLimit = $this->checkRateLimit($userId);
-        if (empty($rateLimit['sucesso'])) {
-            $this->logInteraction($userId, $lessonId, $question, null, 'rate_limited', $rateLimit['mensagem'], $startedAt);
-            return $rateLimit;
-        }
-
         $context = $this->buildContext($lesson, $question);
-        if (trim((string)($context['context'] ?? '')) === '') {
-            $message = 'Esta aula ainda não possui conteúdo suficiente para o tutor responder.';
-            $this->logInteraction($userId, $lessonId, $question, null, 'no_context', $message, $startedAt);
-            return ['sucesso' => false, 'mensagem' => $message, 'status_code' => 422];
-        }
+        $historyContext = $this->buildHistoryContext($history);
 
-        $gemini = $this->callGemini($context['context'], $question);
-        if (empty($gemini['sucesso'])) {
-            $this->logInteraction($userId, $lessonId, $question, null, 'api_error', $gemini['mensagem'] ?? 'Falha Gemini', $startedAt);
+        $cacheKey = $this->buildCacheKey(
+            $lessonId,
+            $question,
+            (string)($context['context'] ?? ''),
+            $historyContext
+        );
+
+        $recentDuplicate = $this->findRecentDuplicateQuestion($userId, $lessonId, $question);
+        if (is_array($recentDuplicate)) {
+            $cachedAnswer = trim((string)($recentDuplicate['answer_text'] ?? ''));
+            if ((string)($recentDuplicate['status'] ?? '') === 'success' && $cachedAnswer !== '') {
+                $this->logInteraction($userId, $lessonId, $question, $cachedAnswer, 'cached_hit', null, $startedAt, $cacheKey);
+                return [
+                    'sucesso' => true,
+                    'resposta' => $cachedAnswer,
+                    'modo_limitado' => !empty($context['limited_mode']),
+                    'fontes' => $context['sources'],
+                    'cache' => true,
+                ];
+            }
+
+            $this->logInteraction($userId, $lessonId, $question, null, 'duplicate_question', self::DUPLICATE_QUESTION_MESSAGE, $startedAt, $cacheKey);
             return [
                 'sucesso' => false,
-                'mensagem' => self::FALLBACK_MESSAGE,
-                'status_code' => (int)($gemini['status_code'] ?? 503),
+                'mensagem' => self::DUPLICATE_QUESTION_MESSAGE,
+                'status_code' => 429,
                 'modo_limitado' => !empty($context['limited_mode']),
             ];
         }
 
-        $answer = trim((string)($gemini['answer'] ?? ''));
-        if ($answer === '') {
-            $answer = 'Não foi possível gerar uma resposta com base no conteúdo desta aula.';
+        $cachedResult = $this->findCachedAnswer($lessonId, $cacheKey);
+        if (is_array($cachedResult)) {
+            $cachedAnswer = trim((string)($cachedResult['answer_text'] ?? ''));
+            if ($cachedAnswer !== '') {
+                $this->logInteraction($userId, $lessonId, $question, $cachedAnswer, 'cached_hit', null, $startedAt, $cacheKey);
+                return [
+                    'sucesso' => true,
+                    'resposta' => $cachedAnswer,
+                    'modo_limitado' => !empty($context['limited_mode']),
+                    'fontes' => $context['sources'],
+                    'cache' => true,
+                ];
+            }
         }
 
-        $this->logInteraction($userId, $lessonId, $question, $answer, 'success', null, $startedAt);
+        $rateLimit = $this->checkRateLimit($userId);
+        if (empty($rateLimit['sucesso'])) {
+            $this->logInteraction($userId, $lessonId, $question, null, 'rate_limited', $rateLimit['mensagem'], $startedAt, $cacheKey);
+            return $rateLimit;
+        }
+
+        $providerResult = $this->callPreferredProvider($context['context'], $question, $historyContext);
+        if (empty($providerResult['sucesso'])) {
+            $this->logInteraction($userId, $lessonId, $question, null, 'api_error', $providerResult['mensagem'] ?? 'Falha IA', $startedAt, $cacheKey);
+            $statusCode = (int)($providerResult['status_code'] ?? 503);
+            return [
+                'sucesso' => false,
+                'mensagem' => $this->mapTutorErrorMessage($providerResult['mensagem'] ?? '', $statusCode),
+                'status_code' => $statusCode,
+                'modo_limitado' => !empty($context['limited_mode']),
+            ];
+        }
+
+        $answer = $this->formatTutorAnswer((string)($providerResult['answer'] ?? ''));
+        if ($answer === '') {
+            $answer = self::EMPTY_ANSWER_MESSAGE;
+        }
+
+        $this->logInteraction($userId, $lessonId, $question, $answer, 'success', null, $startedAt, $cacheKey);
 
         return [
             'sucesso' => true,
@@ -82,6 +138,11 @@ class LessonAiTutorService
             'modo_limitado' => !empty($context['limited_mode']),
             'fontes' => $context['sources'],
         ];
+    }
+
+    private function callPreferredProvider(string $context, string $question, string $historyContext = ''): array
+    {
+        return $this->callGroq($context, $question, $historyContext);
     }
 
     private function validateLessonAccess(array $user, array $lesson): array
@@ -143,19 +204,19 @@ class LessonAiTutorService
         $title = $this->normalizeContent((string)($lesson['titulo'] ?? ''));
 
         if ($transcript !== '') {
-            $sections[] = "Transcrição da aula:\n" . $this->extractRelevantSnippet($transcript, $question, 7000);
+            $sections[] = "Transcrição da aula:\n" . $this->extractRelevantSnippet($transcript, $question, self::TRANSCRIPT_SNIPPET_LIMIT);
             $sources[] = 'lesson_transcript';
         }
         if ($content !== '') {
-            $sections[] = "Conteúdo textual da aula:\n" . $this->extractRelevantSnippet($content, $question, 3500);
+            $sections[] = "Conteúdo textual da aula:\n" . $this->extractRelevantSnippet($content, $question, self::CONTENT_SNIPPET_LIMIT);
             $sources[] = 'conteudo_texto';
         }
         if ($description !== '') {
-            $sections[] = "Descrição da aula:\n" . $description;
+            $sections[] = "Descrição da aula:\n" . mb_substr($description, 0, self::DESCRIPTION_LIMIT);
             $sources[] = 'description';
         }
         if ($title !== '') {
-            $sections[] = "Título da aula:\n" . $title;
+            $sections[] = "Título da aula:\n" . mb_substr($title, 0, self::TITLE_LIMIT);
             $sources[] = 'titulo';
         }
 
@@ -166,83 +227,111 @@ class LessonAiTutorService
         ];
     }
 
-    private function callGemini(string $context, string $question): array
+    private function callGroq(string $context, string $question, string $historyContext = ''): array
     {
-        $apiKey = trim((string)env_value('GEMINI_API_KEY', ''));
-        if ($apiKey === '') {
-            return ['sucesso' => false, 'mensagem' => 'GEMINI_API_KEY não configurada.', 'status_code' => 503];
+        $apiKeys = $this->resolveGroqApiKeys();
+        if ($apiKeys === []) {
+            return ['sucesso' => false, 'mensagem' => 'GROQ_API_KEY não configurada.', 'status_code' => 503];
         }
 
-        $model = trim((string)env_value('GEMINI_MODEL', 'gemini-1.5-flash'));
-        $timeoutSeconds = 10;
-        $prompt = "Você é um tutor profissional da plataforma EAD em Angola.\n\n"
-            . "Responda APENAS com base no conteúdo abaixo.\n\n"
-            . "Se a resposta não estiver no conteúdo, diga claramente:\n"
-            . "'Essa informação não foi abordada nesta aula.'\n\n"
-            . "NÃO invente informações.\n\n"
-            . "Explique de forma simples, clara e didática.\n\n"
-            . "Use exemplos práticos do dia a dia angolano.\n\n"
-            . "Conteúdo da aula:\n"
-            . $context
-            . "\n\nPergunta do aluno:\n"
-            . $question;
+        $model = trim((string)env_value('GROQ_MODEL', 'llama-3.1-8b-instant'));
+        $timeoutSeconds = max(5, env_int('GROQ_TIMEOUT', 10));
+        $systemPrompt = $this->buildTutorSystemPrompt();
 
         $payload = json_encode([
-            'contents' => [
+            'model' => $model !== '' ? $model : 'llama-3.1-8b-instant',
+            'temperature' => 0.2,
+            'max_tokens' => self::MAX_OUTPUT_TOKENS,
+            'messages' => [
                 [
-                    'parts' => [
-                        ['text' => $prompt],
-                    ],
+                    'role' => 'system',
+                    'content' => $systemPrompt,
                 ],
-            ],
-            'generationConfig' => [
-                'temperature' => 0.2,
-                'maxOutputTokens' => 700,
+                [
+                    'role' => 'user',
+                    'content' => $this->buildTutorUserPrompt($context, $question, $historyContext),
+                ],
             ],
         ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
 
         if ($payload === false) {
-            return ['sucesso' => false, 'mensagem' => 'Falha ao preparar requisição Gemini.', 'status_code' => 500];
+            return ['sucesso' => false, 'mensagem' => 'Falha ao preparar requisição Groq.', 'status_code' => 500];
         }
 
-        $url = 'https://generativelanguage.googleapis.com/v1beta/models/' . rawurlencode($model) . ':generateContent?key=' . rawurlencode($apiKey);
-
-        try {
-            $response = $this->performGeminiRequest($url, $payload, $timeoutSeconds);
-            $decoded = json_decode((string)($response['body'] ?? ''), true);
-            if (!is_array($decoded)) {
-                return ['sucesso' => false, 'mensagem' => 'Resposta inválida do Gemini.', 'status_code' => 502];
-            }
-
-            $statusCode = (int)($response['status_code'] ?? 0);
-            if ($statusCode >= 400) {
-                $errorMessage = (string)($decoded['error']['message'] ?? ('Erro HTTP ' . $statusCode . ' ao consultar Gemini.'));
-                if (function_exists('registrar_log')) {
-                    registrar_log('lesson_ai_api_error', $errorMessage);
+        $lastError = null;
+        foreach ($apiKeys as $keyIndex => $apiKey) {
+            try {
+                $response = $this->performJsonRequest(
+                    'https://api.groq.com/openai/v1/chat/completions',
+                    $payload,
+                    [
+                        'Content-Type: application/json',
+                        'Accept: application/json',
+                        'Authorization: Bearer ' . $apiKey,
+                    ],
+                    $timeoutSeconds
+                );
+                $decoded = json_decode((string)($response['body'] ?? ''), true);
+                if (!is_array($decoded)) {
+                    return ['sucesso' => false, 'mensagem' => 'Resposta inválida da Groq.', 'status_code' => 502];
                 }
-                return ['sucesso' => false, 'mensagem' => $errorMessage, 'status_code' => $statusCode];
-            }
 
-            if (!isset($decoded['candidates'][0]['content']['parts'][0]['text']) || !is_string($decoded['candidates'][0]['content']['parts'][0]['text'])) {
-                return ['sucesso' => false, 'mensagem' => 'Não foi possível gerar resposta no momento. Tente novamente.', 'status_code' => 502];
-            }
+                $statusCode = (int)($response['status_code'] ?? 0);
+                if ($statusCode >= 400) {
+                    $errorMessage = (string)($decoded['error']['message'] ?? ('Erro HTTP ' . $statusCode . ' ao consultar Groq.'));
+                    $lastError = [
+                        'sucesso' => false,
+                        'mensagem' => $errorMessage,
+                        'status_code' => $statusCode,
+                        'model' => $model,
+                        'key_index' => $keyIndex,
+                        'provider' => 'groq',
+                    ];
 
-            $answer = trim((string)$decoded['candidates'][0]['content']['parts'][0]['text']);
-            if ($answer === '') {
-                return ['sucesso' => false, 'mensagem' => 'Não foi possível gerar resposta no momento. Tente novamente.', 'status_code' => 502];
-            }
+                    if ($this->shouldFailoverGroqKey($statusCode, $errorMessage) && isset($apiKeys[$keyIndex + 1])) {
+                        $this->logApiError('Failover Groq para próxima chave após erro na chave #' . ($keyIndex + 1) . ' e modelo ' . $model . ': ' . $errorMessage);
+                        continue;
+                    }
 
-            return ['sucesso' => true, 'answer' => $answer];
-        } catch (Throwable $e) {
-            $this->logApiError($e->getMessage());
-            return ['sucesso' => false, 'mensagem' => 'Erro temporário no tutor. Tente novamente.', 'status_code' => 503];
+                    if (function_exists('registrar_log')) {
+                        registrar_log('lesson_ai_api_error', $errorMessage);
+                    }
+                    return $lastError;
+                }
+
+                $answer = $this->formatTutorAnswer((string)($decoded['choices'][0]['message']['content'] ?? ''));
+                if ($answer === '') {
+                    return ['sucesso' => false, 'mensagem' => self::EMPTY_ANSWER_MESSAGE, 'status_code' => 502];
+                }
+
+                return ['sucesso' => true, 'answer' => $answer, 'model' => $model, 'key_index' => $keyIndex, 'provider' => 'groq'];
+            } catch (Throwable $e) {
+                $lastError = [
+                    'sucesso' => false,
+                    'mensagem' => 'Erro temporário no assistente. Tente novamente.',
+                    'status_code' => 503,
+                    'model' => $model,
+                    'key_index' => $keyIndex,
+                    'provider' => 'groq',
+                ];
+                $shouldFailover = $this->shouldFailoverGroqKey(503, $e->getMessage());
+                $this->logApiError('Exceção Groq na chave #' . ($keyIndex + 1) . ' e modelo ' . $model . ': ' . $e->getMessage());
+                if ($shouldFailover && isset($apiKeys[$keyIndex + 1])) {
+                    continue;
+                }
+                return $lastError;
+            }
         }
+
+        return is_array($lastError)
+            ? $lastError
+            : ['sucesso' => false, 'mensagem' => 'Não foi possível gerar resposta no momento. Tente novamente.', 'status_code' => 502];
     }
 
-    private function performGeminiRequest(string $url, string $payload, int $timeoutSeconds): array
+    private function performJsonRequest(string $url, string $payload, array $headers, int $timeoutSeconds): array
     {
         if (!function_exists('curl_init')) {
-            throw new RuntimeException('cURL indisponível para consulta ao Gemini.');
+            throw new RuntimeException('cURL indisponível para consulta ao provedor de IA.');
         }
 
         $ch = curl_init($url);
@@ -252,10 +341,7 @@ class LessonAiTutorService
 
         curl_setopt_array($ch, [
             CURLOPT_POST => true,
-            CURLOPT_HTTPHEADER => [
-                'Content-Type: application/json',
-                'Accept: application/json',
-            ],
+            CURLOPT_HTTPHEADER => $headers,
             CURLOPT_POSTFIELDS => $payload,
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_TIMEOUT => $timeoutSeconds,
@@ -270,13 +356,13 @@ class LessonAiTutorService
 
         if ($body === false) {
             if ($curlErrno === CURLE_OPERATION_TIMEDOUT) {
-                throw new RuntimeException('Timeout ao consultar Gemini.');
+                throw new RuntimeException('Timeout ao consultar Groq.');
             }
-            throw new RuntimeException('Falha ao consultar Gemini via cURL: ' . $curlError);
+            throw new RuntimeException('Falha ao consultar Groq via cURL: ' . $curlError);
         }
 
         if ($statusCode === 0) {
-            throw new RuntimeException('Resposta vazia ou sem status ao consultar Gemini.');
+            throw new RuntimeException('Resposta vazia ou sem status ao consultar Groq.');
         }
 
         return [
@@ -292,13 +378,14 @@ class LessonAiTutorService
         ?string $answer,
         string $status,
         ?string $errorMessage,
-        float $startedAt
+        float $startedAt,
+        ?string $cacheKey = null
     ): void {
         $durationMs = (int)round((microtime(true) - $startedAt) * 1000);
         $stmt = $this->pdo->prepare(
             'INSERT INTO lesson_ai_logs
-             (user_id, lesson_id, question_text, answer_text, status, error_message, response_time_ms, created_at)
-             VALUES (?, ?, ?, ?, ?, ?, ?, NOW())'
+             (user_id, lesson_id, question_text, answer_text, status, error_message, cache_key, response_time_ms, created_at)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW())'
         );
         $stmt->execute([
             $userId,
@@ -307,11 +394,12 @@ class LessonAiTutorService
             $answer !== null ? mb_substr($answer, 0, 8000) : null,
             $status,
             $errorMessage !== null ? mb_substr($errorMessage, 0, 1000) : null,
+            $cacheKey !== null ? mb_substr($cacheKey, 0, 64) : null,
             $durationMs,
         ]);
 
         if (function_exists('registrar_log')) {
-            $message = 'Tutor IA aula=' . $lessonId . ' status=' . $status . ' tempo_ms=' . $durationMs;
+            $message = 'Assistente IA aula=' . $lessonId . ' status=' . $status . ' tempo_ms=' . $durationMs;
             if ($errorMessage) {
                 $message .= ' erro=' . $errorMessage;
             }
@@ -332,6 +420,105 @@ class LessonAiTutorService
         $content = preg_replace('/\R+/u', "\n", $content);
         $content = preg_replace('/[ \t]+/u', ' ', $content);
         return trim((string)$content);
+    }
+
+    private function formatTutorAnswer(string $answer): string
+    {
+        $answer = html_entity_decode(strip_tags($answer), ENT_QUOTES, 'UTF-8');
+        $answer = preg_replace("/\r\n?/", "\n", $answer);
+        $answer = preg_replace('/^\s*#{1,6}\s*/mu', '', $answer);
+        $answer = str_replace(['**', '__'], '', $answer);
+        $answer = preg_replace('/^\s*[*-]\s*[*-]\s*/mu', "- ", $answer);
+        $answer = preg_replace("/[ \t]+\n/u", "\n", $answer);
+        $answer = preg_replace("/\n{3,}/u", "\n\n", $answer);
+        $answer = preg_replace("/(?<!\n)([-*])\s+/u", "\n$1 ", $answer);
+        $answer = preg_replace("/(?<!\n)(\d+\.)\s+/u", "\n$1 ", $answer);
+        $answer = preg_replace('/^\s*\*\s+/mu', "- ", $answer);
+        $answer = preg_replace('/[ \t]{2,}/u', ' ', $answer);
+        return $this->normalizeTutorSections(trim((string)$answer));
+    }
+
+    private function buildTutorSystemPrompt(): string
+    {
+        return "Você é um assistente educacional profissional de uma plataforma de ensino em Angola.\n\n"
+            . "Seu objetivo é ajudar o aluno a entender melhor a aula e também orientar em dúvidas gerais de estudo, aprendizagem, organização e desenvolvimento académico.\n\n"
+            . "REGRAS IMPORTANTES:\n"
+            . "- Use o conteúdo da aula como base principal quando ele for relevante para a pergunta\n"
+            . "- Se a pergunta for geral e não depender do conteúdo da aula, você PODE responder com orientação educacional útil, prática e segura\n"
+            . "- Quando estiver indo além do conteúdo da aula, deixe isso claro com uma frase curta como: 'Isto é uma orientação geral de estudo.'\n"
+            . "- Não invente fatos específicos sobre a aula quando eles não estiverem no contexto\n"
+            . "- Se faltar contexto da aula para uma pergunta muito específica, diga isso claramente e depois ofereça a melhor orientação geral possível\n\n"
+            . "ESTILO DE RESPOSTA:\n"
+            . "- Seja didático (como um professor explicando)\n"
+            . "- Use linguagem simples\n"
+            . "- Evite respostas curtas, vagas ou genéricas demais\n"
+            . "- Use exemplos práticos (preferencialmente do dia a dia)\n"
+            . "- Se possível, explique passo a passo\n"
+            . "- Em perguntas sobre estudo, inclua técnicas acionáveis, rotina, revisão, prática, descanso e foco quando fizer sentido\n\n"
+            . "CONVERSA:\n"
+            . "- Considere o histórico recente para manter continuidade\n"
+            . "- Evite repetir toda a resposta anterior sem necessidade\n"
+            . "- Se o aluno fizer uma continuação, responda levando em conta o que já foi dito\n\n"
+            . "FORMATO:\n"
+            . "- Use exatamente estes títulos quando fizer sentido:\n"
+            . "  Explicação\n"
+            . "  Exemplo\n"
+            . "  Resumo\n"
+            . "- Comece com Explicação\n"
+            . "- Depois dê um Exemplo simples\n"
+            . "- Finalize com Resumo curto, se necessário\n"
+            . "- Não use Markdown com ** ou #";
+    }
+
+    private function buildTutorUserPrompt(string $context, string $question, string $historyContext = ''): string
+    {
+        $prompt = "CONTEXTO DA AULA:\n"
+            . ($context !== '' ? $context : 'Nenhum conteúdo detalhado da aula foi fornecido.');
+
+        if ($historyContext !== '') {
+            $prompt .= "\n\n----------------------------------------\n\n"
+                . "HISTÓRICO RECENTE DA CONVERSA:\n"
+                . $historyContext;
+        }
+
+        return $prompt
+            . "\n\n----------------------------------------\n\n"
+            . "PERGUNTA DO ALUNO:\n"
+            . $question;
+    }
+
+    private function normalizeTutorSections(string $answer): string
+    {
+        if ($answer === '') {
+            return '';
+        }
+
+        $answer = preg_replace('/^\s*(explicação direta|explicacao direta)\s*:?/imu', "Explicação", $answer);
+        $answer = preg_replace('/^\s*(o que vamos aprender|explicação|explicacao)\s*:?/imu', "Explicação", $answer);
+        $answer = preg_replace('/^\s*(exemplo prático|exemplo pratico|exemplo)\s*:?/imu', "Exemplo", $answer);
+        $answer = preg_replace('/^\s*(resumo curto|resumo)\s*:?/imu', "Resumo", $answer);
+        $answer = preg_replace('/(Explicação)\s*\1+/u', '$1', $answer);
+        $answer = preg_replace('/(Exemplo)\s*\1+/u', '$1', $answer);
+        $answer = preg_replace('/(Resumo)\s*\1+/u', '$1', $answer);
+        $answer = preg_replace('/^Explicação\s*\n+\s*Explicação\b/u', "Explicação", $answer);
+        $answer = preg_replace('/^Explicação\s*Explicação\b/u', "Explicação", $answer);
+        $answer = preg_replace('/\n\s*Exemplo\s*Exemplo\b/u', "\n\nExemplo", $answer);
+        $answer = preg_replace('/\n\s*Resumo\s*Resumo\b/u', "\n\nResumo", $answer);
+        $answer = preg_replace('/^Explicação(?=\S)/u', "Explicação\n\n", $answer);
+        $answer = preg_replace('/(?<!\n)Exemplo(?=\S)/u', "\n\nExemplo\n\n", $answer);
+        $answer = preg_replace('/(?<!\n)Resumo(?=\S)/u', "\n\nResumo\n\n", $answer);
+        $answer = preg_replace('/(Explicação)(Exemplo|Resumo)/u', "$1\n\n$2", $answer);
+        $answer = preg_replace('/(Exemplo)(Resumo)/u', "$1\n\n$2", $answer);
+        $answer = preg_replace("/(?<!\n)(Explicação|Exemplo|Resumo)\b/u", "\n\n$1", $answer);
+        $answer = preg_replace("/\n{3,}/u", "\n\n", $answer);
+        $answer = preg_replace('/^(Explicação)\s*\n+\1\b/u', '$1', $answer);
+
+        $hasExplanation = preg_match('/(^|\n)Explicação(\n|$)/u', $answer) === 1;
+        if (!$hasExplanation) {
+            $answer = "Explicação\n\n" . ltrim($answer);
+        }
+
+        return trim($answer);
     }
 
     private function extractRelevantSnippet(string $content, string $question, int $maxChars): string
@@ -420,6 +607,16 @@ class LessonAiTutorService
                 INDEX idx_lesson_ai_logs_lesson_created (lesson_id, created_at)
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4'
         );
+
+        try {
+            $this->pdo->exec('ALTER TABLE lesson_ai_logs ADD COLUMN cache_key VARCHAR(64) NULL AFTER error_message');
+        } catch (Throwable $e) {
+        }
+
+        try {
+            $this->pdo->exec('CREATE INDEX idx_lesson_ai_logs_cache_key ON lesson_ai_logs (lesson_id, cache_key, created_at)');
+        } catch (Throwable $e) {
+        }
     }
 
     private function logApiError(string $message): void
@@ -427,5 +624,151 @@ class LessonAiTutorService
         if (function_exists('registrar_log')) {
             registrar_log('lesson_ai_api_error', $message);
         }
+    }
+
+    private function mapTutorErrorMessage(string $message, int $statusCode): string
+    {
+        if ($statusCode === 429 || $this->isQuotaExceededError($message)) {
+            return self::API_QUOTA_MESSAGE;
+        }
+
+        return self::FALLBACK_MESSAGE;
+    }
+
+    private function isQuotaExceededError(string $message): bool
+    {
+        $message = mb_strtolower(trim($message), 'UTF-8');
+        return $message !== ''
+            && (strpos($message, 'quota exceeded') !== false || strpos($message, 'rate limit') !== false);
+    }
+
+    private function shouldFailoverGroqKey(int $statusCode, string $message): bool
+    {
+        if (in_array($statusCode, self::GROQ_FAILOVER_STATUSES, true)) {
+            return true;
+        }
+
+        $normalized = mb_strtolower(trim($message), 'UTF-8');
+        return $normalized !== ''
+            && (
+                strpos($normalized, 'rate limit') !== false
+                || strpos($normalized, 'quota') !== false
+                || strpos($normalized, 'timeout') !== false
+                || strpos($normalized, 'tempor') !== false
+                || strpos($normalized, 'overloaded') !== false
+            );
+    }
+
+    private function resolveGroqApiKeys(): array
+    {
+        $rawList = trim((string)env_value('GROQ_API_KEYS', ''));
+        $keys = [];
+
+        if ($rawList !== '') {
+            $parts = preg_split('/[\s,;]+/u', $rawList) ?: [];
+            foreach ($parts as $part) {
+                $part = trim((string)$part);
+                if ($part !== '') {
+                    $keys[] = $part;
+                }
+            }
+        }
+
+        $singleKey = trim((string)env_value('GROQ_API_KEY', ''));
+        if ($singleKey !== '') {
+            $keys[] = $singleKey;
+        }
+
+        return array_values(array_unique($keys));
+    }
+
+    private function buildCacheKey(int $lessonId, string $question, string $context, string $historyContext = ''): string
+    {
+        return hash('sha256', $lessonId . '|' . $question . '|' . $context . '|' . $historyContext);
+    }
+
+    private function sanitizeHistory(array $history): array
+    {
+        $normalized = [];
+
+        foreach ($history as $item) {
+            if (!is_array($item)) {
+                continue;
+            }
+
+            $role = mb_strtolower(trim((string)($item['role'] ?? '')), 'UTF-8');
+            $text = $this->normalizeContent((string)($item['text'] ?? ''));
+            if ($text === '') {
+                continue;
+            }
+
+            if (!in_array($role, ['user', 'ai', 'assistant'], true)) {
+                continue;
+            }
+
+            $normalized[] = [
+                'role' => $role === 'assistant' ? 'ai' : $role,
+                'text' => mb_substr($text, 0, self::HISTORY_MESSAGE_MAX_LENGTH),
+            ];
+        }
+
+        if (count($normalized) > self::HISTORY_MESSAGE_LIMIT) {
+            $normalized = array_slice($normalized, -self::HISTORY_MESSAGE_LIMIT);
+        }
+
+        return array_values($normalized);
+    }
+
+    private function buildHistoryContext(array $history): string
+    {
+        if ($history === []) {
+            return '';
+        }
+
+        $lines = [];
+        foreach ($history as $item) {
+            $label = ($item['role'] ?? '') === 'user' ? 'Aluno' : 'Assistente';
+            $lines[] = $label . ': ' . (string)($item['text'] ?? '');
+        }
+
+        return implode("\n", $lines);
+    }
+
+    private function findRecentDuplicateQuestion(int $userId, int $lessonId, string $question): ?array
+    {
+        $stmt = $this->pdo->prepare(
+            'SELECT status, answer_text, created_at
+             FROM lesson_ai_logs
+             WHERE user_id = ?
+               AND lesson_id = ?
+               AND question_text = ?
+               AND created_at >= (NOW() - INTERVAL ? SECOND)
+             ORDER BY id DESC
+             LIMIT 1'
+        );
+        $stmt->execute([$userId, $lessonId, $question, self::DUPLICATE_QUESTION_WINDOW_SECONDS]);
+        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        return is_array($result) ? $result : null;
+    }
+
+    private function findCachedAnswer(int $lessonId, string $cacheKey): ?array
+    {
+        $stmt = $this->pdo->prepare(
+            'SELECT answer_text, created_at
+             FROM lesson_ai_logs
+             WHERE lesson_id = ?
+               AND cache_key = ?
+               AND status IN ("success", "cached_hit")
+               AND answer_text IS NOT NULL
+               AND answer_text <> ""
+               AND created_at >= (NOW() - INTERVAL ? SECOND)
+             ORDER BY id DESC
+             LIMIT 1'
+        );
+        $stmt->execute([$lessonId, $cacheKey, self::CACHE_TTL_SECONDS]);
+        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        return is_array($result) ? $result : null;
     }
 }

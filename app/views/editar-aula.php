@@ -68,8 +68,8 @@ if (isset($_GET['partial']) && $_GET['partial'] == '1'):
 
             <div class="form-group">
                 <label>Transcrição da aula (opcional)</label>
-                <textarea name="lesson_transcript" rows="7" placeholder="Cole ou ajuste a transcrição usada pelo tutor inteligente"><?php echo htmlspecialchars($aula['lesson_transcript'] ?? '', ENT_QUOTES, 'UTF-8'); ?></textarea>
-                <small>Se alterar o vídeo do YouTube e mantiver este campo vazio, a plataforma tentará gerar uma nova transcrição automaticamente.</small>
+                <textarea name="lesson_transcript" rows="7" placeholder="Cole ou ajuste a transcrição usada pelo assistente inteligente"><?php echo htmlspecialchars($aula['lesson_transcript'] ?? '', ENT_QUOTES, 'UTF-8'); ?></textarea>
+                <small>Se este campo ficar vazio, a plataforma tentará gerar uma nova transcrição automaticamente quando a aula usar YouTube ou um vídeo MP4 compatível.</small>
             </div>
 
             <div class="form-group">
@@ -162,8 +162,8 @@ endif;
 
             <div class="form-group">
                 <label>Transcrição da aula (opcional)</label>
-                <textarea name="lesson_transcript" rows="8" placeholder="Cole ou ajuste a transcrição usada pelo tutor inteligente"><?php echo htmlspecialchars($aula['lesson_transcript'] ?? '', ENT_QUOTES, 'UTF-8'); ?></textarea>
-                <small>Se o vídeo do YouTube mudar e este campo ficar vazio, a plataforma tentará gerar uma nova transcrição automaticamente.</small>
+                <textarea name="lesson_transcript" rows="8" placeholder="Cole ou ajuste a transcrição usada pelo assistente inteligente"><?php echo htmlspecialchars($aula['lesson_transcript'] ?? '', ENT_QUOTES, 'UTF-8'); ?></textarea>
+                <small>Se este campo ficar vazio, a plataforma tentará gerar uma nova transcrição automaticamente quando a aula usar YouTube ou um vídeo MP4 compatível.</small>
             </div>
 
             <div class="form-group">

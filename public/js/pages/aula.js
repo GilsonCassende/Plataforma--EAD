@@ -210,8 +210,8 @@ function initLessonTutor() {
         }
 
         submit.disabled = true;
-        status.textContent = 'Analisando aula...';
-        responseBox.innerHTML = '<p class="lesson-ai-loading">Analisando aula...</p>';
+        status.textContent = 'Analisando sua pergunta...';
+        responseBox.innerHTML = '<p class="lesson-ai-loading">Analisando sua pergunta...</p>';
         responseBox.classList.remove('is-empty');
 
         try {
@@ -237,13 +237,13 @@ function initLessonTutor() {
             if (result?.modo_limitado) {
                 const warning = document.createElement('p');
                 warning.className = 'lesson-ai-warning';
-                warning.textContent = 'Modo inteligente limitado: esta aula não possui transcrição completa.';
+                warning.textContent = 'Base da aula limitada: a transcrição completa ainda não está disponível, mas a orientação geral de estudo continua ativa.';
                 responseBox.prepend(warning);
             }
         } catch (error) {
-            status.textContent = 'Falha ao consultar o tutor.';
+            status.textContent = 'Falha ao consultar o assistente.';
             responseBox.innerHTML = `<p class="lesson-ai-error">${escapeHtml(error.message || 'Não foi possível responder agora.')}</p>`;
-            showNotification(error.message || 'Erro ao consultar o tutor da aula', 'error');
+            showNotification(error.message || 'Erro ao consultar o assistente da aula', 'error');
         } finally {
             submit.disabled = false;
         }
@@ -295,10 +295,57 @@ function initTranscriptGeneration() {
 }
 
 function formatAiText(text) {
-    const html = escapeHtml(String(text || ''))
-        .replace(/\n{2,}/g, '</p><p>')
-        .replace(/\n/g, '<br>');
-    return `<p>${html}</p>`;
+    const normalized = String(text || '')
+        .replace(/\r\n?/g, '\n')
+        .replace(/Explicação(?=\S)/g, 'Explicação\n\n')
+        .replace(/Exemplo(?=\S)/g, '\n\nExemplo\n\n')
+        .replace(/Resumo(?=\S)/g, '\n\nResumo\n\n')
+        .replace(/\n{3,}/g, '\n\n')
+        .trim();
+
+    const sectionLabels = ['Explicação', 'Exemplo', 'Resumo'];
+    const lines = normalized.split('\n');
+    const sections = [];
+    let current = null;
+
+    lines.forEach((rawLine) => {
+        const line = rawLine.trim();
+        if (!line) {
+            if (current && current.content.length > 0) {
+                current.content.push('');
+            }
+            return;
+        }
+
+        if (sectionLabels.includes(line)) {
+            current = { label: line, content: [] };
+            sections.push(current);
+            return;
+        }
+
+        if (!current) {
+            current = { label: 'Explicação', content: [] };
+            sections.push(current);
+        }
+
+        current.content.push(line);
+    });
+
+    if (sections.length === 0) {
+        const html = escapeHtml(normalized)
+            .replace(/\n{2,}/g, '</p><p>')
+            .replace(/\n/g, '<br>');
+        return `<p>${html}</p>`;
+    }
+
+    return sections
+        .map((section) => {
+            const body = escapeHtml(section.content.join('\n').trim())
+                .replace(/\n{2,}/g, '</p><p>')
+                .replace(/\n/g, '<br>');
+            return `<section class="lesson-ai-answer-section"><h3>${escapeHtml(section.label)}</h3><p>${body}</p></section>`;
+        })
+        .join('');
 }
 
 function escapeHtml(value) {

@@ -38,6 +38,7 @@
     background:
         radial-gradient(circle at top right, rgba(79, 70, 229, 0.08), transparent 24%),
         linear-gradient(135deg, rgba(255, 255, 255, 0.98) 0%, rgba(244, 248, 252, 0.96) 100%);
+    box-shadow: 0 18px 40px rgba(15, 23, 42, 0.05);
 }
 
 .page-aula .aula-header-top,
@@ -140,10 +141,23 @@
 
 .page-aula .lesson-player-card {
     overflow: hidden;
+    background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(246, 249, 255, 0.96));
+    box-shadow: 0 20px 44px rgba(15, 23, 42, 0.08);
 }
 
 .page-aula .aula-player {
     background: #04070f;
+    position: relative;
+}
+
+.page-aula .aula-player::after {
+    content: "";
+    position: absolute;
+    inset: auto 0 0 0;
+    height: 120px;
+    pointer-events: none;
+    background: linear-gradient(180deg, rgba(4, 7, 15, 0) 0%, rgba(4, 7, 15, 0.22) 100%);
 }
 
 .page-aula .video-player,
@@ -164,6 +178,17 @@
     place-items: center;
     overflow: hidden;
     background: #000;
+}
+
+.page-aula .video-wrapper::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background:
+        radial-gradient(circle at top left, rgba(255, 255, 255, 0.14), transparent 30%),
+        radial-gradient(circle at bottom right, rgba(21, 112, 239, 0.16), transparent 28%);
+    z-index: 0;
 }
 
 .page-aula .placeholder {
@@ -209,6 +234,7 @@
     backdrop-filter: blur(10px);
     box-shadow: 0 18px 38px rgba(0, 0, 0, 0.28);
     transition: transform 180ms ease, background 180ms ease;
+    border: 1px solid rgba(255, 255, 255, 0.18);
 }
 
 .page-aula .placeholder:hover .play-btn {
@@ -370,6 +396,34 @@
 .page-aula .lesson-ai-answer p:last-child {
     margin-bottom: 0;
 }
+
+.page-aula .lesson-ai-answer {
+    display: grid;
+    gap: 0.9rem;
+}
+
+.page-aula .lesson-ai-answer-section {
+    display: grid;
+    gap: 0.55rem;
+    padding: 0.95rem 1rem;
+    border: 1px solid rgba(214, 223, 235, 0.96);
+    border-radius: 16px;
+    background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(246, 249, 255, 0.94));
+}
+
+.page-aula .lesson-ai-answer-section h3 {
+    margin: 0;
+    font-size: 0.92rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #3159d7;
+}
+
+.page-aula .lesson-ai-answer-section p {
+    margin: 0;
+    line-height: 1.78;
+}
 .page-aula .lesson-sidebar-head h2 {
     margin: 0;
     font-size: 1.18rem;
@@ -392,6 +446,41 @@
     display: grid;
     gap: 1rem;
     padding: 1.35rem 1.4rem;
+}
+
+.page-aula .lesson-reading-card {
+    background:
+        radial-gradient(circle at top right, rgba(32, 91, 214, 0.06), transparent 28%),
+        linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(248, 251, 255, 0.96));
+    box-shadow: 0 18px 38px rgba(15, 23, 42, 0.05);
+}
+
+.page-aula .lesson-reading-overview {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 0.85rem;
+}
+
+.page-aula .lesson-reading-pill {
+    display: grid;
+    gap: 0.3rem;
+    padding: 0.95rem 1rem;
+    border: 1px solid rgba(214, 223, 235, 0.96);
+    border-radius: 18px;
+    background: rgba(255, 255, 255, 0.88);
+    box-shadow: 0 10px 20px rgba(15, 23, 42, 0.04);
+}
+
+.page-aula .lesson-reading-pill span {
+    font-size: 0.78rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #5f6f86;
+}
+
+.page-aula .lesson-reading-pill strong {
+    font-size: 1rem;
+    color: var(--color-text);
 }
 
 .page-aula .lesson-section-heading {
@@ -731,6 +820,10 @@
         grid-template-columns: 1fr;
     }
 
+    .page-aula .lesson-reading-overview {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
     .page-aula .lesson-overview-item {
         width: 100%;
     }
@@ -739,6 +832,10 @@
     .page-aula .aula-card-status-row {
         flex-direction: column;
         align-items: flex-start;
+    }
+
+    .page-aula .lesson-reading-overview {
+        grid-template-columns: 1fr;
     }
 
     .page-aula .pdf-frame {

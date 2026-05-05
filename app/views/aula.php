@@ -11,6 +11,8 @@
             <?php
             $lessonModeCssVersion = @filemtime(__DIR__ . '/../../public/css/pages/aula-modos.css') ?: time();
             $lessonModeJsVersion = @filemtime(__DIR__ . '/../../public/js/pages/aula-modos.js') ?: time();
+            $aiChatCssVersion = @filemtime(__DIR__ . '/../../public/css/pages/ai-chat.css') ?: time();
+            $aiChatJsVersion = @filemtime(__DIR__ . '/../../public/js/pages/ai-chat.js') ?: time();
             $usuario = usuario_atual();
             $isOwner = is_course_owner($curso);
             $totalAulasCurso = count($aulas_curso ?? []);
@@ -41,6 +43,29 @@
             $readingIntro = trim((string)($aula['descricao'] ?? ''));
             $lessonTranscript = trim((string)($aula['lesson_transcript'] ?? ''));
             $hasTranscript = $lessonTranscript !== '';
+            $teacherName = trim((string)($curso['professor_nome'] ?? ''));
+            $assistantDisplayName = $teacherName !== '' ? ('Assistente do Prof. ' . $teacherName) : 'Assistente IA';
+            $assistantGreeting = $teacherName !== ''
+                ? ('Sou o assistente do Prof. ' . $teacherName . '. Posso ajudar com esta aula ou com estratégias para estudar melhor.')
+                : 'Posso ajudar com esta aula ou com estratégias para estudar melhor. O que você quer saber?';
+            $assistantAvatar = 'AI';
+            if ($teacherName !== '') {
+                $teacherParts = preg_split('/\s+/u', $teacherName, -1, PREG_SPLIT_NO_EMPTY) ?: [];
+                $initials = '';
+                foreach (array_slice($teacherParts, 0, 2) as $part) {
+                    $initials .= mb_strtoupper(mb_substr((string)$part, 0, 1, 'UTF-8'), 'UTF-8');
+                }
+                if ($initials !== '') {
+                    $assistantAvatar = $initials;
+                }
+            }
+            $assistantThemeSeed = $teacherName !== '' ? $teacherName : ((string)($curso['titulo'] ?? 'assistente'));
+            $assistantThemeHash = abs(crc32($assistantThemeSeed . '|' . (string)($curso['id'] ?? 0)));
+            $assistantHue = $assistantThemeHash % 360;
+            $assistantAccent = 'hsl(' . $assistantHue . ' 78% 50%)';
+            $assistantAccentDark = 'hsl(' . $assistantHue . ' 78% 38%)';
+            $assistantAccentSoft = 'hsl(' . $assistantHue . ' 85% 92%)';
+            $assistantAccentSoftAlt = 'hsl(' . $assistantHue . ' 82% 86%)';
             $aiEndpoint = BASE_URL . '/perguntar-ia';
             $lessonActionEndpoint = BASE_URL . '/index.php?page=aula&lesson_id=' . (int)$aula['id'] . '&course_id=' . (int)$curso['id'];
             $renderLessonMarkdown = static function (string $markdown): string {
@@ -97,6 +122,7 @@
             };
             ?>
             <link rel="stylesheet" href="<?php echo htmlspecialchars(BASE_URL . '/css/pages/aula-modos.css?v=' . rawurlencode((string)$lessonModeCssVersion), ENT_QUOTES, 'UTF-8'); ?>">
+            <link rel="stylesheet" href="<?php echo htmlspecialchars(BASE_URL . '/css/pages/ai-chat.css?v=' . rawurlencode((string)$aiChatCssVersion), ENT_QUOTES, 'UTF-8'); ?>">
             <div class="lesson-shell">
                 <main class="lesson-main">
                     <header class="aula-header">
@@ -319,6 +345,24 @@
                                 <span class="lesson-section-eyebrow">Conteúdo da aula</span>
                                 <h2>Resumo e material de apoio</h2>
                             </div>
+                            <div class="lesson-reading-overview">
+                                <article class="lesson-reading-pill">
+                                    <span>Formato</span>
+                                    <strong><?php echo htmlspecialchars(strtoupper((string)($aula['tipo'] ?? 'AULA')), ENT_QUOTES, 'UTF-8'); ?></strong>
+                                </article>
+                                <article class="lesson-reading-pill">
+                                    <span>Transcrição</span>
+                                    <strong><?php echo $hasTranscript ? 'Disponível' : 'Parcial'; ?></strong>
+                                </article>
+                                <article class="lesson-reading-pill">
+                                    <span>Apoio extra</span>
+                                    <strong><?php echo $hasEconomicAudio ? 'Áudio ativo' : 'Leitura guiada'; ?></strong>
+                                </article>
+                                <article class="lesson-reading-pill">
+                                    <span>Avaliação</span>
+                                    <strong><?php echo !empty($quizzes) ? count($quizzes) . ' quiz(es)' : 'Sem quiz'; ?></strong>
+                                </article>
+                            </div>
                             <div class="aula-descricao">
                                 <p><?php echo htmlspecialchars($aula['descricao'] ?? ''); ?></p>
                             </div>
@@ -328,44 +372,6 @@
                                 </div>
                             <?php endif; ?>
                         </article>
-
-                        <section
-                            class="lesson-ai-card"
-                            data-lesson-ai
-                            data-endpoint="<?php echo htmlspecialchars($aiEndpoint, ENT_QUOTES, 'UTF-8'); ?>"
-                            data-lesson-id="<?php echo (int)$aula['id']; ?>">
-                            <div class="lesson-section-heading">
-                                <span class="lesson-section-eyebrow">Tutor com IA</span>
-                                <h2>Assistente de dúvidas da aula</h2>
-                            </div>
-
-                            <?php if (!$hasTranscript): ?>
-                                <div class="lesson-ai-alert" data-ai-limited-message>
-                                    Modo inteligente limitado: esta aula não possui transcrição completa.
-                                </div>
-                            <?php endif; ?>
-
-                            <form class="lesson-ai-form" data-ai-form>
-                                <?php echo csrf_input(); ?>
-                                <input type="hidden" name="acao" value="perguntar_ia">
-                                <input type="hidden" name="lesson_id" value="<?php echo (int)$aula['id']; ?>">
-                                <label for="lesson-ai-question-<?php echo (int)$aula['id']; ?>" class="lesson-ai-label">Faça uma pergunta sobre esta aula</label>
-                                <textarea
-                                    id="lesson-ai-question-<?php echo (int)$aula['id']; ?>"
-                                    name="pergunta"
-                                    rows="4"
-                                    maxlength="1000"
-                                    placeholder="Ex.: Pode explicar este conceito de forma mais simples?"></textarea>
-                                <div class="lesson-ai-actions">
-                                    <button type="submit" class="btn btn-primary" data-ai-submit>Perguntar ao Tutor</button>
-                                    <span class="lesson-ai-status" data-ai-status aria-live="polite"></span>
-                                </div>
-                            </form>
-
-                            <div class="lesson-ai-response is-empty" data-ai-response>
-                                <p class="lesson-ai-response-placeholder">A resposta da IA aparecerá aqui com base no conteúdo real desta aula.</p>
-                            </div>
-                        </section>
 
                         <?php if (isset($quizzes) && count($quizzes) > 0): ?>
                             <section class="quizzes-section">
@@ -552,6 +558,51 @@
         <?php endif; ?>
     </div>
 </section>
+<?php if (isset($aula) && $aula): ?>
+    <div
+        class="ai-chat-widget"
+        data-ai-chat-widget
+        data-lesson-id="<?php echo (int)($aula['id'] ?? 0); ?>"
+        data-endpoint="<?php echo htmlspecialchars(BASE_URL . '/index.php?page=perguntar-ia', ENT_QUOTES, 'UTF-8'); ?>"
+        data-assistant-name="<?php echo htmlspecialchars($assistantDisplayName, ENT_QUOTES, 'UTF-8'); ?>"
+        data-assistant-avatar="<?php echo htmlspecialchars($assistantAvatar, ENT_QUOTES, 'UTF-8'); ?>"
+        data-assistant-greeting="<?php echo htmlspecialchars($assistantGreeting, ENT_QUOTES, 'UTF-8'); ?>"
+        style="--ai-chat-accent: <?php echo htmlspecialchars($assistantAccent, ENT_QUOTES, 'UTF-8'); ?>; --ai-chat-accent-dark: <?php echo htmlspecialchars($assistantAccentDark, ENT_QUOTES, 'UTF-8'); ?>; --ai-chat-accent-soft: <?php echo htmlspecialchars($assistantAccentSoft, ENT_QUOTES, 'UTF-8'); ?>; --ai-chat-accent-soft-alt: <?php echo htmlspecialchars($assistantAccentSoftAlt, ENT_QUOTES, 'UTF-8'); ?>;">
+        <button type="button" class="ai-chat-toggle" data-ai-chat-toggle aria-label="Abrir <?php echo htmlspecialchars($assistantDisplayName, ENT_QUOTES, 'UTF-8'); ?>">💬</button>
+
+        <div class="ai-chat-box" aria-live="polite">
+            <div class="ai-chat-header">
+                <div class="ai-chat-header-copy">
+                    <strong><?php echo htmlspecialchars($assistantDisplayName, ENT_QUOTES, 'UTF-8'); ?></strong>
+                    <small>Dúvidas da aula e apoio ao estudo</small>
+                </div>
+                <div class="ai-chat-header-actions">
+                    <button type="button" class="ai-chat-clear" data-ai-chat-clear aria-label="Limpar conversa">Limpar</button>
+                    <button type="button" class="ai-chat-close" data-ai-chat-close aria-label="Fechar chat">×</button>
+                </div>
+            </div>
+
+            <div class="ai-chat-messages" data-ai-chat-messages>
+                <div class="ai-chat-message ai-chat-assistant">
+                    <div class="ai-chat-bubble"><?php echo htmlspecialchars($assistantGreeting, ENT_QUOTES, 'UTF-8'); ?></div>
+                </div>
+            </div>
+
+            <form class="ai-chat-input" data-ai-chat-form>
+                <input
+                    type="text"
+                    class="ai-chat-input-field"
+                    data-ai-chat-input
+                    placeholder="Faça sua pergunta..."
+                    maxlength="1000">
+                <button type="submit" class="ai-chat-send" data-ai-chat-submit>Enviar</button>
+            </form>
+        </div>
+    </div>
+<?php endif; ?>
 <?php if (isset($aula) && $aula && ($aula['tipo'] ?? '') === 'video'): ?>
     <script src="<?php echo htmlspecialchars(BASE_URL . '/js/pages/aula-modos.js?v=' . rawurlencode((string)$lessonModeJsVersion), ENT_QUOTES, 'UTF-8'); ?>"></script>
+<?php endif; ?>
+<?php if (isset($aula) && $aula): ?>
+    <script src="<?php echo htmlspecialchars(BASE_URL . '/js/pages/ai-chat.js?v=' . rawurlencode((string)$aiChatJsVersion), ENT_QUOTES, 'UTF-8'); ?>"></script>
 <?php endif; ?>

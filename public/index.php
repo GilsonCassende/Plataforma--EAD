@@ -49,7 +49,22 @@ $pdfExport = false;
 
 // Processar ações POST
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    processarAcao($_POST, $pdo);
+    $requestPost = $_POST;
+    $contentType = strtolower(trim((string)($_SERVER['CONTENT_TYPE'] ?? $_SERVER['HTTP_CONTENT_TYPE'] ?? '')));
+
+    if (str_contains($contentType, 'application/json')) {
+        $rawBody = file_get_contents('php://input');
+        $decodedBody = json_decode((string)$rawBody, true);
+        if (is_array($decodedBody)) {
+            $requestPost = array_merge($requestPost, $decodedBody);
+        }
+    }
+
+    if (!isset($requestPost['acao']) && (string)($_GET['page'] ?? '') === 'perguntar-ia') {
+        $requestPost['acao'] = 'perguntar_ia';
+    }
+
+    processarAcao($requestPost, $pdo);
 }
 
 /**
@@ -577,7 +592,7 @@ try {
             header('Content-Type: application/json; charset=utf-8');
             echo json_encode([
                 'sucesso' => false,
-                'mensagem' => 'Use POST para consultar o tutor da aula.'
+                'mensagem' => 'Use POST para consultar o assistente da aula.'
             ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
             exit;
 
@@ -2391,8 +2406,9 @@ function processarAcao($post, $pdo)
             $usuarioAtual = AuthController::obterUsuarioAtual();
             $lessonId = (int)($post['lesson_id'] ?? 0);
             $pergunta = (string)($post['pergunta'] ?? '');
+            $historico = is_array($post['historico'] ?? null) ? $post['historico'] : [];
             $lessonAiTutor = new LessonAiTutorService($pdo);
-            $answerResult = $lessonAiTutor->answerQuestion($usuarioAtual, $lessonId, $pergunta);
+            $answerResult = $lessonAiTutor->answerQuestion($usuarioAtual, $lessonId, $pergunta, $historico);
             http_response_code((int)($answerResult['status_code'] ?? (!empty($answerResult['sucesso']) ? 200 : 422)));
             echo json_encode($answerResult, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
             exit;

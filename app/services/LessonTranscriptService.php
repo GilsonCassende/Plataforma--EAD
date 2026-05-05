@@ -5,6 +5,8 @@ class LessonTranscriptService
     private PDO $pdo;
     private Lesson $lessonModel;
     private string $projectRoot;
+    private ?string $ffmpegBinary = null;
+    private bool $ffmpegChecked = false;
 
     public function __construct(PDO $pdo)
     {
@@ -49,12 +51,7 @@ class LessonTranscriptService
             return ['sucesso' => false, 'mensagem' => 'Aula não encontrada para gerar transcrição.'];
         }
 
-        $videoId = trim((string)($lesson['video_id'] ?? ''));
-        if ($videoId === '') {
-            return ['sucesso' => false, 'mensagem' => 'Esta aula não possui vídeo do YouTube configurado.'];
-        }
-
-        $result = $this->fetchTranscriptLocally($videoId);
+        $result = $this->generateTranscriptForLessonSource($lesson);
         if (empty($result['sucesso'])) {
             if (function_exists('registrar_log')) {
                 registrar_log(
@@ -82,7 +79,7 @@ class LessonTranscriptService
             $durationMs = (int)round((microtime(true) - $startedAt) * 1000);
             registrar_log(
                 'lesson_transcript_generated',
-                'Transcrição gerada para a aula ' . $lessonId . ' via script local (' . mb_strlen($transcript) . ' chars, ' . $durationMs . ' ms)',
+                'Transcrição gerada para a aula ' . $lessonId . ' via ' . ($result['source'] ?? 'fonte desconhecida') . ' (' . mb_strlen($transcript) . ' chars, ' . $durationMs . ' ms)',
                 $userId
             );
         }
@@ -95,7 +92,30 @@ class LessonTranscriptService
         ];
     }
 
-    private function fetchTranscriptLocally(string $videoId): array
+    private function generateTranscriptForLessonSource(array $lesson): array
+    {
+        $videoId = trim((string)($lesson['video_id'] ?? ''));
+        if ($videoId !== '') {
+            $result = $this->fetchTranscriptFromYouTube($videoId);
+            if (!empty($result['sucesso'])) {
+                $result['source'] = 'YouTube';
+            }
+            return $result;
+        }
+
+        $videoFilename = basename(trim((string)($lesson['url_arquivo'] ?? '')));
+        if ($videoFilename !== '' && strtolower(pathinfo($videoFilename, PATHINFO_EXTENSION)) === 'mp4') {
+            $result = $this->fetchTranscriptFromLocalVideo($videoFilename);
+            if (!empty($result['sucesso'])) {
+                $result['source'] = 'MP4 local';
+            }
+            return $result;
+        }
+
+        return ['sucesso' => false, 'mensagem' => 'Esta aula não possui uma fonte de vídeo compatível para transcrição automática.'];
+    }
+
+    private function fetchTranscriptFromYouTube(string $videoId): array
     {
         $scriptPath = $this->projectRoot . '/scripts/fetch-youtube-transcript.js';
         if (!is_file($scriptPath)) {
@@ -107,6 +127,9 @@ class LessonTranscriptService
         $nodeBinary = defined('NODE_BIN') && NODE_BIN !== '' ? NODE_BIN : 'node';
 
         $execution = $this->runProcess([
+            '/usr/bin/env',
+            '-u',
+            'LD_LIBRARY_PATH',
             $nodeBinary,
             $scriptPath,
             '--video-id',
@@ -122,7 +145,17 @@ class LessonTranscriptService
             ];
         }
 
-        $decoded = json_decode((string)($execution['stdout'] ?? ''), true);
+        $stdout = trim((string)($execution['stdout'] ?? ''));
+        $jsonPayload = $stdout;
+        if ($stdout !== '' && strpos($stdout, "\n") !== false) {
+            $lines = preg_split('/\R/u', $stdout) ?: [];
+            $lastLine = trim((string)end($lines));
+            if ($lastLine !== '' && ($lastLine[0] ?? '') === '{') {
+                $jsonPayload = $lastLine;
+            }
+        }
+
+        $decoded = json_decode($jsonPayload, true);
         if (!is_array($decoded)) {
             if (function_exists('registrar_log') && !empty($execution['stdout'])) {
                 registrar_log('lesson_transcript_error', 'stdout inválido na transcrição: ' . mb_substr((string)$execution['stdout'], 0, 500));
@@ -143,6 +176,140 @@ class LessonTranscriptService
         }
 
         return ['sucesso' => true, 'transcript' => $transcript];
+    }
+
+    private function fetchTranscriptFromLocalVideo(string $videoFilename): array
+    {
+        $videoPath = $this->projectRoot . '/public/uploads/' . $videoFilename;
+        if (!is_file($videoPath)) {
+            return ['sucesso' => false, 'mensagem' => 'Arquivo de vídeo da aula não foi encontrado no servidor.'];
+        }
+
+        $ffmpeg = $this->resolveFfmpegBinary();
+        if ($ffmpeg === null) {
+            return ['sucesso' => false, 'mensagem' => 'FFmpeg indisponível para extrair o áudio do vídeo.'];
+        }
+
+        $tempAudioPath = rtrim(sys_get_temp_dir(), DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . 'lesson-transcript-' . bin2hex(random_bytes(12)) . '.mp3';
+
+        try {
+            $extractResult = $this->extractAudioForTranscript($ffmpeg, $videoPath, $tempAudioPath);
+            if (empty($extractResult['sucesso'])) {
+                return $extractResult;
+            }
+
+            return $this->transcribeAudioWithGroq($tempAudioPath, 'audio/mpeg');
+        } finally {
+            if (is_file($tempAudioPath)) {
+                @unlink($tempAudioPath);
+            }
+        }
+    }
+
+    private function extractAudioForTranscript(string $ffmpeg, string $videoPath, string $tempAudioPath): array
+    {
+        $command = [
+            $ffmpeg,
+            '-y',
+            '-i',
+            $videoPath,
+            '-vn',
+            '-ac',
+            '1',
+            '-ar',
+            '16000',
+            '-b:a',
+            '48k',
+            '-map',
+            'a',
+            $tempAudioPath,
+        ];
+
+        $timeoutSeconds = max(5, env_int('LESSON_TRANSCRIPT_TIMEOUT', 10));
+        $execution = $this->runProcess($command, $timeoutSeconds);
+        if (empty($execution['sucesso'])) {
+            return [
+                'sucesso' => false,
+                'mensagem' => (string)($execution['mensagem'] ?? 'Não foi possível extrair o áudio do vídeo para transcrição.'),
+            ];
+        }
+
+        if (!is_file($tempAudioPath) || filesize($tempAudioPath) === 0) {
+            return ['sucesso' => false, 'mensagem' => 'O áudio extraído do vídeo ficou vazio.'];
+        }
+
+        return ['sucesso' => true];
+    }
+
+    private function transcribeAudioWithGroq(string $audioPath, string $mimeType): array
+    {
+        if (!is_file($audioPath)) {
+            return ['sucesso' => false, 'mensagem' => 'Áudio temporário não encontrado para transcrição.'];
+        }
+
+        $apiKeys = $this->resolveGroqApiKeys();
+        if ($apiKeys === []) {
+            return ['sucesso' => false, 'mensagem' => 'GROQ_API_KEY não configurada para transcrever vídeos MP4.'];
+        }
+
+        $configuredModel = trim((string)env_value('GROQ_TRANSCRIPTION_MODEL', 'whisper-large-v3-turbo'));
+        $timeoutSeconds = max(10, env_int('GROQ_TIMEOUT', env_int('LESSON_TRANSCRIPT_TIMEOUT', 10)));
+        $language = trim((string)env_value('LESSON_TRANSCRIPT_LANGUAGE', 'pt'));
+        $prompt = 'Transcreva fielmente este áudio da aula. Não resuma, não explique e não adicione observações.';
+        $models = [
+            $configuredModel !== '' ? $configuredModel : 'whisper-large-v3-turbo',
+            'whisper-large-v3-turbo',
+            'whisper-large-v3',
+        ];
+        $models = array_values(array_unique(array_filter($models)));
+        $lastMessage = 'Não foi possível transcrever o vídeo MP4 no momento pela Groq.';
+
+        foreach ($apiKeys as $apiKey) {
+            foreach ($models as $model) {
+                try {
+                    $response = $this->performMultipartRequest(
+                        'https://api.groq.com/openai/v1/audio/transcriptions',
+                        [
+                            'model' => $model,
+                            'language' => $language !== '' ? $language : 'pt',
+                            'prompt' => $prompt,
+                            'response_format' => 'json',
+                            'temperature' => '0',
+                            'file' => curl_file_create($audioPath, $mimeType, basename($audioPath)),
+                        ],
+                        [
+                            'Accept: application/json',
+                            'Authorization: Bearer ' . $apiKey,
+                        ],
+                        $timeoutSeconds
+                    );
+                } catch (Throwable $exception) {
+                    $lastMessage = $exception->getMessage();
+                    continue;
+                }
+
+                $decoded = json_decode((string)($response['body'] ?? ''), true);
+                if (!is_array($decoded)) {
+                    $lastMessage = 'Resposta inválida da Groq ao transcrever o vídeo.';
+                    continue;
+                }
+
+                $statusCode = (int)($response['status_code'] ?? 0);
+                if ($statusCode >= 400) {
+                    $lastMessage = (string)($decoded['error']['message'] ?? ('Erro HTTP ' . $statusCode . ' ao transcrever o vídeo.'));
+                    continue;
+                }
+
+                $transcript = trim((string)($decoded['text'] ?? ''));
+                if (trim($transcript) !== '') {
+                    return ['sucesso' => true, 'transcript' => $transcript];
+                }
+
+                $lastMessage = 'A Groq não retornou texto de transcrição para este vídeo.';
+            }
+        }
+
+        return ['sucesso' => false, 'mensagem' => $lastMessage];
     }
 
     private function normalizeTranscript(?string $transcript): ?string
@@ -272,6 +439,145 @@ class LessonTranscriptService
             'stdout' => $stdout,
             'stderr' => '',
             'exit_code' => $exitCode,
+        ];
+    }
+
+    private function resolveFfmpegBinary(): ?string
+    {
+        if ($this->ffmpegChecked) {
+            return $this->ffmpegBinary;
+        }
+
+        $this->ffmpegChecked = true;
+        $candidates = ['ffmpeg', '/usr/bin/ffmpeg', '/usr/local/bin/ffmpeg'];
+
+        foreach ($candidates as $candidate) {
+            if ($candidate !== 'ffmpeg' && is_file($candidate) && is_executable($candidate)) {
+                $this->ffmpegBinary = $candidate;
+                return $this->ffmpegBinary;
+            }
+
+            if ($candidate === 'ffmpeg') {
+                $result = [];
+                $exitCode = 1;
+                @exec('command -v ffmpeg 2>/dev/null', $result, $exitCode);
+                $resolved = trim((string)($result[0] ?? ''));
+                if ($exitCode === 0 && $resolved !== '') {
+                    $this->ffmpegBinary = $resolved;
+                    return $this->ffmpegBinary;
+                }
+            }
+        }
+
+        return null;
+    }
+
+    private function resolveGroqApiKeys(): array
+    {
+        $rawList = trim((string)env_value('GROQ_API_KEYS', ''));
+        $keys = [];
+
+        if ($rawList !== '') {
+            $parts = preg_split('/[\s,;]+/u', $rawList) ?: [];
+            foreach ($parts as $part) {
+                $part = trim((string)$part);
+                if ($part !== '') {
+                    $keys[] = $part;
+                }
+            }
+        }
+
+        $singleKey = trim((string)env_value('GROQ_API_KEY', ''));
+        if ($singleKey !== '') {
+            $keys[] = $singleKey;
+        }
+
+        return array_values(array_unique($keys));
+    }
+
+    private function performJsonRequest(string $url, string $payload, array $headers, int $timeoutSeconds): array
+    {
+        if (!function_exists('curl_init')) {
+            throw new RuntimeException('cURL indisponível para consulta ao provedor de IA.');
+        }
+
+        $ch = curl_init($url);
+        if ($ch === false) {
+            throw new RuntimeException('Não foi possível inicializar cURL.');
+        }
+
+        curl_setopt_array($ch, [
+            CURLOPT_POST => true,
+            CURLOPT_HTTPHEADER => $headers,
+            CURLOPT_POSTFIELDS => $payload,
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_TIMEOUT => $timeoutSeconds,
+            CURLOPT_CONNECTTIMEOUT => min(5, $timeoutSeconds),
+        ]);
+
+        $body = curl_exec($ch);
+        $curlError = curl_error($ch);
+        $curlErrno = curl_errno($ch);
+        $statusCode = (int)curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+
+        if ($body === false) {
+            if ($curlErrno === CURLE_OPERATION_TIMEDOUT) {
+                throw new RuntimeException('Timeout ao consultar Groq para transcrição.');
+            }
+            throw new RuntimeException('Falha ao consultar Groq via cURL: ' . $curlError);
+        }
+
+        if ($statusCode === 0) {
+            throw new RuntimeException('Resposta vazia ou sem status ao consultar Groq para transcrição.');
+        }
+
+        return [
+            'body' => (string)$body,
+            'status_code' => $statusCode,
+        ];
+    }
+
+    private function performMultipartRequest(string $url, array $fields, array $headers, int $timeoutSeconds): array
+    {
+        if (!function_exists('curl_init')) {
+            throw new RuntimeException('cURL indisponível para consulta ao provedor de IA.');
+        }
+
+        $ch = curl_init($url);
+        if ($ch === false) {
+            throw new RuntimeException('Não foi possível inicializar cURL.');
+        }
+
+        curl_setopt_array($ch, [
+            CURLOPT_POST => true,
+            CURLOPT_HTTPHEADER => $headers,
+            CURLOPT_POSTFIELDS => $fields,
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_TIMEOUT => $timeoutSeconds,
+            CURLOPT_CONNECTTIMEOUT => min(5, $timeoutSeconds),
+        ]);
+
+        $body = curl_exec($ch);
+        $curlError = curl_error($ch);
+        $curlErrno = curl_errno($ch);
+        $statusCode = (int)curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+
+        if ($body === false) {
+            if ($curlErrno === CURLE_OPERATION_TIMEDOUT) {
+                throw new RuntimeException('Timeout ao consultar Groq para transcrição.');
+            }
+            throw new RuntimeException('Falha ao consultar Groq via cURL: ' . $curlError);
+        }
+
+        if ($statusCode === 0) {
+            throw new RuntimeException('Resposta vazia ou sem status ao consultar Groq para transcrição.');
+        }
+
+        return [
+            'body' => (string)$body,
+            'status_code' => $statusCode,
         ];
     }
 }
