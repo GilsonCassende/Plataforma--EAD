@@ -486,6 +486,27 @@ try {
                 $progresso_curso = (int)floor(($aulas_concluidas_total / count($aulas_curso)) * 100);
             }
 
+            $lessonAiContent = '';
+            $lessonAiGeneratedAt = null;
+            $lessonAiError = null;
+            try {
+                $lessonContentResult = $lessonController->obterConteudoLeituraInteligente($usuarioAtual, (int)$aula['id'], false);
+                if (!empty($lessonContentResult['sucesso'])) {
+                    $lessonAiContent = (string)($lessonContentResult['conteudo'] ?? '');
+                    $lessonAiGeneratedAt = $lessonContentResult['generated_at'] ?? null;
+                    if (!empty($lessonContentResult['aula']) && is_array($lessonContentResult['aula'])) {
+                        $aula = array_merge($aula, $lessonContentResult['aula']);
+                    }
+                } else {
+                    $lessonAiError = (string)($lessonContentResult['mensagem'] ?? '');
+                }
+            } catch (Throwable $exception) {
+                $lessonAiError = 'Não foi possível carregar o conteúdo inteligente desta aula no momento.';
+                if (function_exists('registrar_log')) {
+                    registrar_log('warning', 'lesson_ai_content_load_failed lesson=' . (int)$aula['id'] . ' erro=' . $exception->getMessage(), (int)($usuarioAtual['id'] ?? 0));
+                }
+            }
+
             $titulo = $aula['titulo'] . ' - Plataforma EAD';
             $conteudo = renderizar('aula', [
                 'aula' => $aula,
@@ -498,7 +519,11 @@ try {
                 'course_id' => $course_id,
                 'concluida' => $concluida,
                 'progresso_curso' => $progresso_curso,
-                'aulas_concluidas_total' => $aulas_concluidas_total
+                'aulas_concluidas_total' => $aulas_concluidas_total,
+                'lesson_ai_content' => $lessonAiContent,
+                'lesson_ai_generated_at' => $lessonAiGeneratedAt,
+                'lesson_ai_error' => $lessonAiError,
+                'initial_lesson_mode' => (string)($_GET['mode'] ?? '')
             ]);
             break;
 
@@ -1635,6 +1660,7 @@ function processarAcao($post, $pdo)
         'atualizar_aula',
         'deletar_aula',
         'gerar_transcricao_aula',
+        'gerar_conteudo_inteligente_aula',
         'perguntar_ia',
         'criar_quiz',
         'deletar_quiz',
@@ -2399,6 +2425,37 @@ function processarAcao($post, $pdo)
             }
             http_response_code(!empty($transcriptResult['sucesso']) ? 200 : 422);
             echo json_encode($transcriptResult);
+            exit;
+
+        case 'gerar_conteudo_inteligente_aula':
+            AuthController::exigirAutenticacao();
+            $usuarioAtual = AuthController::obterUsuarioAtual();
+            $lessonId = (int)($post['lesson_id'] ?? 0);
+            $courseId = (int)($post['course_id'] ?? 0);
+            $lessonController = new LessonController($pdo);
+            $contentResult = $lessonController->obterConteudoLeituraInteligente($usuarioAtual, $lessonId, true);
+
+            if ($isAjax) {
+                http_response_code((int)($contentResult['status_code'] ?? (!empty($contentResult['sucesso']) ? 200 : 422)));
+                echo json_encode($contentResult, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+                exit;
+            }
+
+            if (!empty($contentResult['sucesso'])) {
+                $_SESSION['mensagem'] = !empty($contentResult['generated'])
+                    ? 'Conteúdo inteligente gerado com sucesso.'
+                    : 'Conteúdo inteligente carregado com sucesso.';
+            } else {
+                $_SESSION['erro'] = $contentResult['mensagem'] ?? 'Não foi possível gerar o conteúdo inteligente desta aula no momento.';
+            }
+
+            $redirectCourseId = $courseId > 0 ? $courseId : (int)($contentResult['aula']['course_id'] ?? 0);
+            $redirect = BASE_URL . '/index.php?page=aula&lesson_id=' . $lessonId;
+            if ($redirectCourseId > 0) {
+                $redirect .= '&course_id=' . $redirectCourseId;
+            }
+            $redirect .= '&mode=leitura';
+            header('Location: ' . $redirect);
             exit;
 
         case 'perguntar_ia':

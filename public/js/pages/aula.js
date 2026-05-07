@@ -3,6 +3,8 @@ document.addEventListener('DOMContentLoaded', () => {
     initLessonCompletion();
     initLessonTutor();
     initTranscriptGeneration();
+    initReadingPremium();
+    initPremiumAiChat();
 });
 
 function initLessonVideoEmbed() {
@@ -355,4 +357,322 @@ function escapeHtml(value) {
         .replace(/>/g, '&gt;')
         .replace(/"/g, '&quot;')
         .replace(/'/g, '&#039;');
+}
+
+function initReadingPremium() {
+    const premiumCard = document.querySelector('[data-reading-premium]');
+    const readingPanel = document.querySelector('.lesson-mode-panel--leitura[data-mode-panel="leitura"]');
+    if (!premiumCard || !readingPanel) return;
+
+    const reveal = () => {
+        const isVisible = readingPanel.getAttribute('aria-hidden') === 'false' && !readingPanel.classList.contains('is-hidden');
+        premiumCard.classList.toggle('is-visible', isVisible);
+    };
+
+    reveal();
+
+    const observer = new MutationObserver(reveal);
+    observer.observe(readingPanel, {
+        attributes: true,
+        attributeFilter: ['aria-hidden', 'class']
+    });
+
+    document.querySelectorAll('[data-mode-target]').forEach((button) => {
+        button.addEventListener('click', () => {
+            window.requestAnimationFrame(reveal);
+        });
+    });
+}
+
+function initPremiumAiChat() {
+    const widget = document.querySelector('[data-ai-chat-widget]');
+    if (!widget) return;
+
+    const input = widget.querySelector('[data-ai-chat-input]');
+    const form = widget.querySelector('[data-ai-chat-form]');
+    const messages = widget.querySelector('[data-ai-chat-messages]');
+    const toggle = widget.querySelector('[data-ai-chat-toggle]');
+    const hint = widget.querySelector('[data-ai-chat-input-hint]');
+    if (!input || !form || !messages || !toggle) return;
+
+    convertAiChatValidationToInlineHint(form, input, hint, messages);
+    enhanceAiChatTextarea(input, form);
+    enhanceAiChatMessages(messages);
+
+    toggle.addEventListener('click', () => {
+        window.requestAnimationFrame(() => {
+            enhanceAiChatMessages(messages);
+            scrollChatToBottom(messages);
+            input.focus();
+        });
+    });
+}
+
+function enhanceAiChatTextarea(input, form) {
+    const resize = () => {
+        input.style.height = 'auto';
+        input.style.height = `${Math.min(input.scrollHeight, 144)}px`;
+    };
+
+    resize();
+    input.addEventListener('input', resize);
+
+    input.addEventListener('keydown', (event) => {
+        if (event.repeat) {
+            return;
+        }
+
+        if (event.key === 'Enter' && !event.shiftKey) {
+            event.preventDefault();
+            form.requestSubmit();
+        }
+    });
+}
+
+function convertAiChatValidationToInlineHint(form, input, hint, messages) {
+    const syncHint = () => {
+        const normalized = String(input.value || '').replace(/\s+/g, ' ').trim();
+        const showHint = normalized.length > 0 && normalized.length < 3;
+        if (hint) {
+            hint.hidden = !showHint;
+        }
+    };
+
+    input.addEventListener('input', syncHint);
+
+    form.addEventListener('submit', (event) => {
+        const normalized = String(input.value || '').replace(/\s+/g, ' ').trim();
+        if (normalized.length >= 3) {
+            if (hint) {
+                hint.hidden = true;
+            }
+            return;
+        }
+
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        if (hint) {
+            hint.hidden = false;
+        }
+        input.focus();
+
+        window.setTimeout(() => {
+            dedupeInvalidAiChatMessages(messages);
+        }, 60);
+    }, true);
+}
+
+function enhanceAiChatMessages(container) {
+    const renderAll = () => {
+        container.querySelectorAll('.ai-chat-bubble').forEach((bubble) => {
+            scheduleAiBubbleRender(bubble);
+        });
+        scrollChatToBottom(container);
+    };
+
+    renderAll();
+
+    const observer = new MutationObserver(() => {
+        renderAll();
+    });
+
+    observer.observe(container, {
+        childList: true,
+        subtree: true,
+        characterData: true
+    });
+}
+
+const aiBubbleRenderTimers = new WeakMap();
+
+function scheduleAiBubbleRender(bubble) {
+    if (!(bubble instanceof HTMLElement)) return;
+    if (bubble.classList.contains('ai-chat-typing')) return;
+
+    const role = bubble.parentElement?.classList.contains('ai-chat-user') ? 'user' : 'ai';
+    const text = bubble.textContent || '';
+    const normalized = text.replace(/\r\n?/g, '\n').trim();
+    if (!normalized) return;
+
+    if (bubble.dataset.renderedSource === normalized) return;
+
+    const pending = aiBubbleRenderTimers.get(bubble);
+    if (pending) {
+        window.clearTimeout(pending);
+    }
+
+    const timer = window.setTimeout(() => {
+        if (!bubble.isConnected || bubble.classList.contains('ai-chat-typing')) return;
+        const latest = (bubble.textContent || '').replace(/\r\n?/g, '\n').trim();
+        if (!latest) return;
+
+        bubble.innerHTML = role === 'user'
+            ? renderUserChatText(latest)
+            : renderAiChatMarkdown(latest);
+        bubble.dataset.renderedSource = latest;
+    }, 220);
+
+    aiBubbleRenderTimers.set(bubble, timer);
+}
+
+function renderUserChatText(text) {
+    return `<p>${escapeHtml(text).replace(/\n/g, '<br>')}</p>`;
+}
+
+function renderAiChatMarkdown(text) {
+    const source = normalizeAiChatResponse(text);
+    if (!source) return '';
+
+    const fencedBlocks = [];
+    const withPlaceholders = source.replace(/```(?:([^\n`]+))?\n([\s\S]*?)```/g, (_, language, code) => {
+        const token = `__AI_CHAT_CODE_${fencedBlocks.length}__`;
+        fencedBlocks.push({
+            language: String(language || '').trim(),
+            code: String(code || '').replace(/\n$/, '')
+        });
+        return token;
+    });
+
+    const blocks = withPlaceholders.split(/\n{2,}/).map((block) => block.trim()).filter(Boolean);
+    const html = [];
+    let blockCount = 0;
+    let listCount = 0;
+    let headingCount = 0;
+
+    blocks.forEach((block) => {
+        const codeIndex = resolveAiChatCodeIndex(block);
+        if (codeIndex >= 0) {
+            const item = fencedBlocks[codeIndex];
+            html.push(`<pre><code>${escapeHtml(item.code)}</code></pre>`);
+            blockCount += 1;
+            return;
+        }
+
+        const lines = block.split('\n').map((line) => line.trim()).filter(Boolean);
+        if (!lines.length) return;
+
+        if (lines.every((line) => /^[-*]\s+/.test(line))) {
+            html.push(`<ul>${lines.map((line) => `<li>${formatAiChatInline(line.replace(/^[-*]\s+/, ''))}</li>`).join('')}</ul>`);
+            blockCount += 1;
+            listCount += 1;
+            return;
+        }
+
+        if (lines.every((line) => /^\d+\.\s+/.test(line))) {
+            html.push(`<ol>${lines.map((line) => `<li>${formatAiChatInline(line.replace(/^\d+\.\s+/, ''))}</li>`).join('')}</ol>`);
+            blockCount += 1;
+            listCount += 1;
+            return;
+        }
+
+        const heading = lines[0];
+        if (/^#{1,3}\s+/.test(heading)) {
+            const level = Math.min((heading.match(/^#{1,3}/) || ['#'])[0].length + 3, 5);
+            const title = formatAiChatInline(heading.replace(/^#{1,3}\s+/, ''));
+            html.push(`<h${level}>${title}</h${level}>`);
+            blockCount += 1;
+            headingCount += 1;
+            const rest = lines.slice(1);
+            if (rest.length) {
+                html.push(`<p>${formatAiChatInline(rest.join('\n')).replace(/\n/g, '<br>')}</p>`);
+                blockCount += 1;
+            }
+            return;
+        }
+
+        if (/^(Explicação|Exemplo|Resumo|O que você vai aprender|Explicação completa|Exemplos práticos|Pontos importantes|Resumo final|Possíveis dúvidas)\s*:?\s*$/i.test(heading)) {
+            html.push(`<h5>${formatAiChatInline(heading.replace(/:$/, ''))}</h5>`);
+            blockCount += 1;
+            headingCount += 1;
+            const rest = lines.slice(1);
+            if (rest.length) {
+                html.push(`<p>${formatAiChatInline(rest.join('\n')).replace(/\n/g, '<br>')}</p>`);
+                blockCount += 1;
+            }
+            return;
+        }
+
+        html.push(`<p>${formatAiChatInline(lines.join('\n')).replace(/\n/g, '<br>')}</p>`);
+        blockCount += 1;
+    });
+
+    const variant = classifyAiChatResponse({
+        source,
+        blockCount,
+        listCount,
+        headingCount
+    });
+
+    return `<div class="ai-chat-rich ai-chat-rich--${variant}">${html.join('')}</div>`;
+}
+
+function resolveAiChatCodeIndex(token) {
+    const match = token.match(/^__AI_CHAT_CODE_(\d+)__$/);
+    return match ? Number(match[1]) : -1;
+}
+
+function normalizeAiChatResponse(text) {
+    let source = String(text || '').replace(/\r\n?/g, '\n').trim();
+    if (!source) return '';
+
+    const sectionLabels = '(?:Explicação|Exemplo|Resumo|O que você vai aprender|Explicação completa|Exemplos práticos|Pontos importantes|Resumo final|Possíveis dúvidas)';
+    source = source.replace(new RegExp(`([.!?])\\s*(${sectionLabels})(?=[:A-ZÁÀÂÃÉÊÍÓÔÕÚÇ])`, 'giu'), '$1\n\n$2');
+    source = source.replace(new RegExp(`([a-záàâãéêíóôõúç])(${sectionLabels})(?=[:A-ZÁÀÂÃÉÊÍÓÔÕÚÇ])`, 'gu'), '$1\n\n$2');
+    source = source.replace(new RegExp(`(^|\\n)(${sectionLabels})(\\s*:?)\\s*`, 'giu'), '$1$2$3\n');
+    source = source.replace(new RegExp(`(${sectionLabels})(?=[A-ZÁÀÂÃÉÊÍÓÔÕÚÇa-záàâãéêíóôõúç])`, 'giu'), '$1\n');
+    source = source.replace(/([.!?])\s+([-*]\s+)/g, '$1\n$2');
+    source = source.replace(/([.!?])\s+(\d+\.\s+)/g, '$1\n$2');
+    source = source.replace(/:\s*-\s+/g, ':\n- ');
+    source = source.replace(/\n{3,}/g, '\n\n');
+
+    return source.trim();
+}
+
+function formatAiChatInline(text) {
+    let value = escapeHtml(text);
+    value = value.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+    value = value.replace(/`([^`]+)`/g, '<code>$1</code>');
+    return value;
+}
+
+function classifyAiChatResponse(meta) {
+    const source = String(meta?.source || '').trim();
+    const blockCount = Number(meta?.blockCount || 0);
+    const listCount = Number(meta?.listCount || 0);
+    const headingCount = Number(meta?.headingCount || 0);
+    const charCount = source.length;
+
+    if (charCount <= 220 && blockCount <= 2 && listCount === 0 && headingCount === 0) {
+        return 'compact';
+    }
+
+    if (listCount > 0 || /(?:passo a passo|etapas|como fazer|passos)/i.test(source)) {
+        return 'steps';
+    }
+
+    if (headingCount > 0 || blockCount >= 4 || charCount > 520) {
+        return 'study';
+    }
+
+    return 'default';
+}
+
+function scrollChatToBottom(container) {
+    container.scrollTop = container.scrollHeight;
+}
+
+function dedupeInvalidAiChatMessages(container) {
+    const items = Array.from(container.querySelectorAll('.ai-chat-message.ai-chat-assistant'));
+    const invalidMessages = items.filter((item) => {
+        const text = item.querySelector('.ai-chat-bubble')?.textContent?.replace(/\s+/g, ' ').trim() || '';
+        return text === 'Escreva uma pergunta com pelo menos 3 caracteres.';
+    });
+
+    if (invalidMessages.length <= 1) {
+        return;
+    }
+
+    invalidMessages.slice(0, -1).forEach((item) => {
+        item.remove();
+    });
 }

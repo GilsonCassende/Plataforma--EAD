@@ -71,6 +71,12 @@ class LessonController
         return ['sucesso' => true, 'aula' => $aula];
     }
 
+    public function obterConteudoLeituraInteligente(array $user, int $lessonId, bool $generateIfMissing = false): array
+    {
+        $service = new LessonContentService($this->pdo);
+        return $service->getLessonContent($user, $lessonId, $generateIfMissing);
+    }
+
     /**
      * Listar aulas de um curso
      */

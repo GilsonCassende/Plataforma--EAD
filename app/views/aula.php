@@ -9,6 +9,8 @@
     <div class="container">
         <?php if (isset($aula) && $aula && isset($curso) && $curso): ?>
             <?php
+            $lessonCssVersion = @filemtime(__DIR__ . '/../../public/css/pages/aula.css') ?: time();
+            $lessonJsVersion = @filemtime(__DIR__ . '/../../public/js/pages/aula.js') ?: time();
             $lessonModeCssVersion = @filemtime(__DIR__ . '/../../public/css/pages/aula-modos.css') ?: time();
             $lessonModeJsVersion = @filemtime(__DIR__ . '/../../public/js/pages/aula-modos.js') ?: time();
             $aiChatCssVersion = @filemtime(__DIR__ . '/../../public/css/pages/ai-chat.css') ?: time();
@@ -43,6 +45,18 @@
             $readingIntro = trim((string)($aula['descricao'] ?? ''));
             $lessonTranscript = trim((string)($aula['lesson_transcript'] ?? ''));
             $hasTranscript = $lessonTranscript !== '';
+            $lessonAiContent = trim((string)($lesson_ai_content ?? ''));
+            $hasLessonAiContent = $lessonAiContent !== '';
+            $lessonAiError = trim((string)($lesson_ai_error ?? ''));
+            $lessonAiGeneratedAt = trim((string)($lesson_ai_generated_at ?? ''));
+            $formattedLessonAiGeneratedAt = '';
+            if ($lessonAiGeneratedAt !== '') {
+                $generatedTimestamp = strtotime($lessonAiGeneratedAt);
+                if ($generatedTimestamp !== false) {
+                    $formattedLessonAiGeneratedAt = date('d/m/Y H:i', $generatedTimestamp);
+                }
+            }
+            $initialLessonMode = trim((string)($initial_lesson_mode ?? ''));
             $teacherName = trim((string)($curso['professor_nome'] ?? ''));
             $assistantDisplayName = $teacherName !== '' ? ('Assistente do Prof. ' . $teacherName) : 'Assistente IA';
             $assistantGreeting = $teacherName !== ''
@@ -67,6 +81,11 @@
             $assistantAccentSoft = 'hsl(' . $assistantHue . ' 85% 92%)';
             $assistantAccentSoftAlt = 'hsl(' . $assistantHue . ' 82% 86%)';
             $aiEndpoint = BASE_URL . '/perguntar-ia';
+            $chatAssistantName = $teacherName !== '' ? $teacherName : 'Tutor IA';
+            $chatAssistantAvatar = $teacherName !== '' ? $assistantAvatar : 'IA';
+            $chatAssistantGreeting = $teacherName !== ''
+                ? ("Olá 👋\nSou o assistente do Prof. " . $teacherName . ".\nPosso explicar conteúdos, resumir conceitos e tirar dúvidas sobre esta aula.")
+                : "Olá 👋\nSou seu Tutor IA desta aula.\nPosso explicar conteúdos, resumir conceitos e tirar dúvidas sobre esta aula.";
             $lessonActionEndpoint = BASE_URL . '/index.php?page=aula&lesson_id=' . (int)$aula['id'] . '&course_id=' . (int)$curso['id'];
             $renderLessonMarkdown = static function (string $markdown): string {
                 $markdown = trim(str_replace(["\r\n", "\r"], "\n", $markdown));
@@ -74,10 +93,25 @@
                     return '';
                 }
 
+                $markdown = preg_replace_callback('/```(?:[^\n`]*)\n([\s\S]*?)```/u', static function (array $matches): string {
+                    $code = rtrim((string)($matches[1] ?? ''), "\n");
+                    return "\n\n<pre><code>" . htmlspecialchars($code, ENT_QUOTES, 'UTF-8') . "</code></pre>\n\n";
+                }, $markdown);
+
                 $blocks = preg_split("/\n{2,}/", $markdown) ?: [];
                 $html = [];
 
                 foreach ($blocks as $block) {
+                    $block = trim($block);
+                    if ($block === '') {
+                        continue;
+                    }
+
+                    if (preg_match('/^<pre><code>[\s\S]*<\/code><\/pre>$/u', $block) === 1) {
+                        $html[] = $block;
+                        continue;
+                    }
+
                     $lines = array_values(array_filter(array_map('trim', explode("\n", trim($block))), static function ($line) {
                         return $line !== '';
                     }));
@@ -87,10 +121,13 @@
                     }
 
                     $isList = true;
+                    $isOrderedList = true;
                     foreach ($lines as $line) {
                         if (!preg_match('/^[-*]\s+/', $line)) {
                             $isList = false;
-                            break;
+                        }
+                        if (!preg_match('/^\d+\.\s+/', $line)) {
+                            $isOrderedList = false;
                         }
                     }
 
@@ -100,6 +137,15 @@
                             $items[] = '<li>' . htmlspecialchars(preg_replace('/^[-*]\s+/', '', $line), ENT_QUOTES, 'UTF-8') . '</li>';
                         }
                         $html[] = '<ul>' . implode('', $items) . '</ul>';
+                        continue;
+                    }
+
+                    if ($isOrderedList) {
+                        $items = [];
+                        foreach ($lines as $line) {
+                            $items[] = '<li>' . htmlspecialchars(preg_replace('/^\d+\.\s+/', '', $line), ENT_QUOTES, 'UTF-8') . '</li>';
+                        }
+                        $html[] = '<ol>' . implode('', $items) . '</ol>';
                         continue;
                     }
 
@@ -115,6 +161,11 @@
                         continue;
                     }
 
+                    if (preg_match('/^\s*`{1,3}.+`{1,3}\s*$/u', $headingLine)) {
+                        $html[] = '<p><code>' . htmlspecialchars(trim($headingLine, "` \t"), ENT_QUOTES, 'UTF-8') . '</code></p>';
+                        continue;
+                    }
+
                     $html[] = '<p>' . nl2br(htmlspecialchars(implode("\n", $lines), ENT_QUOTES, 'UTF-8')) . '</p>';
                 }
 
@@ -123,6 +174,7 @@
             ?>
             <link rel="stylesheet" href="<?php echo htmlspecialchars(BASE_URL . '/css/pages/aula-modos.css?v=' . rawurlencode((string)$lessonModeCssVersion), ENT_QUOTES, 'UTF-8'); ?>">
             <link rel="stylesheet" href="<?php echo htmlspecialchars(BASE_URL . '/css/pages/ai-chat.css?v=' . rawurlencode((string)$aiChatCssVersion), ENT_QUOTES, 'UTF-8'); ?>">
+            <link rel="stylesheet" href="<?php echo htmlspecialchars(BASE_URL . '/css/pages/aula.css?v=' . rawurlencode((string)$lessonCssVersion), ENT_QUOTES, 'UTF-8'); ?>">
             <div class="lesson-shell">
                 <main class="lesson-main">
                     <header class="aula-header">
@@ -176,7 +228,7 @@
                     <section class="lesson-stage">
                         <article class="lesson-player-card">
                             <?php if ($showLessonModes): ?>
-                                <div class="lesson-mode-switch" data-lesson-mode-switch>
+                                <div class="lesson-mode-switch" data-lesson-mode-switch data-initial-mode="<?php echo htmlspecialchars($initialLessonMode, ENT_QUOTES, 'UTF-8'); ?>">
                                     <button type="button" class="mode-btn is-active" data-mode-target="video" aria-pressed="true">
                                         <span class="lesson-mode-icon" aria-hidden="true">🎥</span>
                                         <span>Vídeo</span>
@@ -282,25 +334,45 @@
                                     </div>
                                     <div class="lesson-mode-panel lesson-mode-panel--leitura is-hidden" data-mode-panel="leitura" aria-hidden="true">
                                         <div class="lesson-mode-reading">
-                                            <div class="lesson-mode-section-head">
-                                                <span class="lesson-mode-kicker">Modo foco</span>
-                                                <h2>Leitura da aula</h2>
-                                            </div>
-                                            <?php if ($readingIntro !== ''): ?>
-                                                <div class="aula-descricao lesson-mode-reading-intro">
-                                                    <p><?php echo htmlspecialchars($readingIntro, ENT_QUOTES, 'UTF-8'); ?></p>
+                                            <div class="lesson-intelligent-reading lesson-reading-premium" data-reading-premium>
+                                                <div class="lesson-intelligent-reading__header lesson-reading-premium__header">
+                                                    <div class="lesson-reading-premium__intro">
+                                                        <span class="lesson-mode-kicker lesson-reading-premium__eyebrow">Leitura inteligente com IA</span>
+                                                        <h3>Material de estudo estruturado</h3>
+                                                        <p>Uma experiência de leitura organizada para estudar com mais conforto, foco e clareza.</p>
+                                                    </div>
+                                                    <?php if ($formattedLessonAiGeneratedAt !== ''): ?>
+                                                        <span class="lesson-intelligent-reading__stamp lesson-reading-premium__stamp">Atualizado em <?php echo htmlspecialchars($formattedLessonAiGeneratedAt, ENT_QUOTES, 'UTF-8'); ?></span>
+                                                    <?php endif; ?>
                                                 </div>
-                                            <?php endif; ?>
-                                            <div class="aula-texto lesson-rich-text">
-                                                <?php
-                                                if (!empty($aula['conteudo'])) {
-                                                    echo sanitize_html($aula['conteudo']);
-                                                } elseif ($summaryMarkdown !== '') {
-                                                    echo $renderLessonMarkdown($summaryMarkdown);
-                                                } else {
-                                                    echo '<p>' . htmlspecialchars($summaryFallback, ENT_QUOTES, 'UTF-8') . '</p>';
-                                                }
-                                                ?>
+
+                                                <?php if ($hasLessonAiContent): ?>
+                                                    <div class="lesson-intelligent-reading__content lesson-reading-premium__body lesson-rich-text" data-reading-prose>
+                                                        <?php echo $renderLessonMarkdown($lessonAiContent); ?>
+                                                    </div>
+                                                <?php else: ?>
+                                                    <div class="lesson-intelligent-reading__empty lesson-reading-premium__empty">
+                                                        <p>Gere uma versão didática desta aula para estudar com mais clareza, organização e foco.</p>
+                                                        <?php if (!$hasTranscript): ?>
+                                                            <p class="lesson-intelligent-reading__hint">Esta aula ainda não possui transcrição disponível, por isso o conteúdo inteligente não pode ser gerado agora.</p>
+                                                        <?php endif; ?>
+                                                        <?php if ($lessonAiError !== ''): ?>
+                                                            <p class="lesson-intelligent-reading__error"><?php echo htmlspecialchars($lessonAiError, ENT_QUOTES, 'UTF-8'); ?></p>
+                                                        <?php endif; ?>
+                                                        <form method="POST" class="lesson-ai-generate-form" data-lesson-ai-generate-form>
+                                                            <?php echo csrf_input(); ?>
+                                                            <input type="hidden" name="acao" value="gerar_conteudo_inteligente_aula">
+                                                            <input type="hidden" name="lesson_id" value="<?php echo (int)$aula['id']; ?>">
+                                                            <input type="hidden" name="course_id" value="<?php echo (int)$curso['id']; ?>">
+                                                            <button type="submit" class="btn btn-primary" <?php echo $hasTranscript ? '' : 'disabled aria-disabled="true"'; ?> data-lesson-ai-generate-button>
+                                                                Gerar conteúdo inteligente
+                                                            </button>
+                                                            <p class="lesson-ai-generate-form__loading is-hidden" data-lesson-ai-loading>
+                                                                Gerando conteúdo inteligente da aula...
+                                                            </p>
+                                                        </form>
+                                                    </div>
+                                                <?php endif; ?>
                                             </div>
                                         </div>
                                     </div>
@@ -564,17 +636,24 @@
         data-ai-chat-widget
         data-lesson-id="<?php echo (int)($aula['id'] ?? 0); ?>"
         data-endpoint="<?php echo htmlspecialchars(BASE_URL . '/index.php?page=perguntar-ia', ENT_QUOTES, 'UTF-8'); ?>"
-        data-assistant-name="<?php echo htmlspecialchars($assistantDisplayName, ENT_QUOTES, 'UTF-8'); ?>"
-        data-assistant-avatar="<?php echo htmlspecialchars($assistantAvatar, ENT_QUOTES, 'UTF-8'); ?>"
-        data-assistant-greeting="<?php echo htmlspecialchars($assistantGreeting, ENT_QUOTES, 'UTF-8'); ?>"
+        data-assistant-name="<?php echo htmlspecialchars($chatAssistantName, ENT_QUOTES, 'UTF-8'); ?>"
+        data-assistant-avatar="<?php echo htmlspecialchars($chatAssistantAvatar, ENT_QUOTES, 'UTF-8'); ?>"
+        data-assistant-greeting="<?php echo htmlspecialchars($chatAssistantGreeting, ENT_QUOTES, 'UTF-8'); ?>"
         style="--ai-chat-accent: <?php echo htmlspecialchars($assistantAccent, ENT_QUOTES, 'UTF-8'); ?>; --ai-chat-accent-dark: <?php echo htmlspecialchars($assistantAccentDark, ENT_QUOTES, 'UTF-8'); ?>; --ai-chat-accent-soft: <?php echo htmlspecialchars($assistantAccentSoft, ENT_QUOTES, 'UTF-8'); ?>; --ai-chat-accent-soft-alt: <?php echo htmlspecialchars($assistantAccentSoftAlt, ENT_QUOTES, 'UTF-8'); ?>;">
-        <button type="button" class="ai-chat-toggle" data-ai-chat-toggle aria-label="Abrir <?php echo htmlspecialchars($assistantDisplayName, ENT_QUOTES, 'UTF-8'); ?>">💬</button>
+        <button type="button" class="ai-chat-toggle" data-ai-chat-toggle aria-label="Abrir <?php echo htmlspecialchars($chatAssistantName, ENT_QUOTES, 'UTF-8'); ?>">
+            <span class="ai-chat-toggle-icon" aria-hidden="true">✦</span>
+            <span class="ai-chat-toggle-ping" aria-hidden="true"></span>
+        </button>
 
         <div class="ai-chat-box" aria-live="polite">
             <div class="ai-chat-header">
-                <div class="ai-chat-header-copy">
-                    <strong><?php echo htmlspecialchars($assistantDisplayName, ENT_QUOTES, 'UTF-8'); ?></strong>
-                    <small>Dúvidas da aula e apoio ao estudo</small>
+                <div class="ai-chat-header-main">
+                    <span class="ai-chat-header-avatar" aria-hidden="true"><?php echo htmlspecialchars($chatAssistantAvatar, ENT_QUOTES, 'UTF-8'); ?></span>
+                    <div class="ai-chat-header-copy">
+                        <strong><?php echo htmlspecialchars($chatAssistantName, ENT_QUOTES, 'UTF-8'); ?></strong>
+                        <small>Especialista nesta aula</small>
+                        <span class="ai-chat-header-status">Online agora</span>
+                    </div>
                 </div>
                 <div class="ai-chat-header-actions">
                     <button type="button" class="ai-chat-clear" data-ai-chat-clear aria-label="Limpar conversa">Limpar</button>
@@ -584,17 +663,21 @@
 
             <div class="ai-chat-messages" data-ai-chat-messages>
                 <div class="ai-chat-message ai-chat-assistant">
-                    <div class="ai-chat-bubble"><?php echo htmlspecialchars($assistantGreeting, ENT_QUOTES, 'UTF-8'); ?></div>
+                    <span class="ai-chat-avatar" aria-hidden="true"><?php echo htmlspecialchars($chatAssistantAvatar, ENT_QUOTES, 'UTF-8'); ?></span>
+                    <div class="ai-chat-bubble"><?php echo htmlspecialchars($chatAssistantGreeting, ENT_QUOTES, 'UTF-8'); ?></div>
                 </div>
             </div>
 
             <form class="ai-chat-input" data-ai-chat-form>
-                <input
-                    type="text"
-                    class="ai-chat-input-field"
-                    data-ai-chat-input
-                    placeholder="Faça sua pergunta..."
-                    maxlength="1000">
+                <div class="ai-chat-input-main">
+                    <textarea
+                        class="ai-chat-input-field"
+                        data-ai-chat-input
+                        placeholder="Pergunte qualquer dúvida sobre esta aula…"
+                        rows="1"
+                        maxlength="1000"></textarea>
+                    <p class="ai-chat-input-hint" data-ai-chat-input-hint hidden>Escreva uma pergunta com pelo menos 3 caracteres.</p>
+                </div>
                 <button type="submit" class="ai-chat-send" data-ai-chat-submit>Enviar</button>
             </form>
         </div>
@@ -605,4 +688,5 @@
 <?php endif; ?>
 <?php if (isset($aula) && $aula): ?>
     <script src="<?php echo htmlspecialchars(BASE_URL . '/js/pages/ai-chat.js?v=' . rawurlencode((string)$aiChatJsVersion), ENT_QUOTES, 'UTF-8'); ?>"></script>
+    <script src="<?php echo htmlspecialchars(BASE_URL . '/js/pages/aula.js?v=' . rawurlencode((string)$lessonJsVersion), ENT_QUOTES, 'UTF-8'); ?>"></script>
 <?php endif; ?>

@@ -14,6 +14,7 @@ class LessonAiTutorService
     private const DESCRIPTION_LIMIT = 500;
     private const TITLE_LIMIT = 160;
     private const MAX_OUTPUT_TOKENS = 280;
+    private const STUDY_CONTENT_MAX_OUTPUT_TOKENS = 1400;
     private const CACHE_TTL_SECONDS = 21600;
     private const DUPLICATE_QUESTION_WINDOW_SECONDS = 45;
     private const DUPLICATE_QUESTION_MESSAGE = 'Você acabou de enviar essa mesma pergunta. Aguarde alguns segundos ou reformule a dúvida.';
@@ -229,6 +230,95 @@ class LessonAiTutorService
 
     private function callGroq(string $context, string $question, string $historyContext = ''): array
     {
+        $providerResult = $this->requestGroqChat([
+            [
+                'role' => 'system',
+                'content' => $this->buildTutorSystemPrompt(),
+            ],
+            [
+                'role' => 'user',
+                'content' => $this->buildTutorUserPrompt($context, $question, $historyContext),
+            ],
+        ], self::MAX_OUTPUT_TOKENS, 0.2);
+
+        if (empty($providerResult['sucesso'])) {
+            return $providerResult;
+        }
+
+        $answer = $this->formatTutorAnswer((string)($providerResult['answer'] ?? ''));
+        if ($answer === '') {
+            return ['sucesso' => false, 'mensagem' => self::EMPTY_ANSWER_MESSAGE, 'status_code' => 502];
+        }
+
+        $providerResult['answer'] = $answer;
+        return $providerResult;
+    }
+
+    public function generateStructuredLessonContent(array $lesson): array
+    {
+        $transcript = $this->normalizeContent((string)($lesson['lesson_transcript'] ?? ''));
+        if ($transcript === '') {
+            return ['sucesso' => false, 'mensagem' => 'Esta aula ainda não possui transcrição para gerar o conteúdo inteligente.', 'status_code' => 422];
+        }
+
+        $prompt = str_replace('{{lesson_transcript}}', $transcript, "Você é um professor especialista e extremamente didático.
+
+IMPORTANTE:
+- Responda SEMPRE em português
+- Explique de forma clara e organizada
+- Considere que o aluno é iniciante
+- Use exemplos simples quando necessário
+- NÃO invente informações fora da transcrição
+
+Sua tarefa é transformar a aula em um conteúdo completo de estudo.
+
+FORMATO:
+
+# 📚 Título da Aula
+
+## 🎯 O que você vai aprender
+- tópicos organizados
+
+## 🧠 Explicação completa
+- explicação detalhada e fácil de entender
+
+## 🧩 Exemplos práticos
+- exemplos simples
+
+## ⚠️ Pontos importantes
+- erros comuns e dicas
+
+## 📌 Resumo final
+- resumo simplificado
+
+## ❓ Possíveis dúvidas
+- perguntas e respostas
+
+TRANSCRIÇÃO:
+{{lesson_transcript}}");
+
+        $providerResult = $this->requestGroqChat([
+            [
+                'role' => 'user',
+                'content' => $prompt,
+            ],
+        ], self::STUDY_CONTENT_MAX_OUTPUT_TOKENS, 0.2);
+
+        if (empty($providerResult['sucesso'])) {
+            return $providerResult;
+        }
+
+        $content = trim(str_replace(["\r\n", "\r"], "\n", (string)($providerResult['answer'] ?? '')));
+        if ($content === '') {
+            return ['sucesso' => false, 'mensagem' => 'Não foi possível gerar conteúdo inteligente desta aula no momento.', 'status_code' => 502];
+        }
+
+        $providerResult['answer'] = $content;
+        return $providerResult;
+    }
+
+    private function requestGroqChat(array $messages, int $maxTokens, float $temperature = 0.2): array
+    {
         $apiKeys = $this->resolveGroqApiKeys();
         if ($apiKeys === []) {
             return ['sucesso' => false, 'mensagem' => 'GROQ_API_KEY não configurada.', 'status_code' => 503];
@@ -236,22 +326,12 @@ class LessonAiTutorService
 
         $model = trim((string)env_value('GROQ_MODEL', 'llama-3.1-8b-instant'));
         $timeoutSeconds = max(5, env_int('GROQ_TIMEOUT', 10));
-        $systemPrompt = $this->buildTutorSystemPrompt();
 
         $payload = json_encode([
             'model' => $model !== '' ? $model : 'llama-3.1-8b-instant',
-            'temperature' => 0.2,
-            'max_tokens' => self::MAX_OUTPUT_TOKENS,
-            'messages' => [
-                [
-                    'role' => 'system',
-                    'content' => $systemPrompt,
-                ],
-                [
-                    'role' => 'user',
-                    'content' => $this->buildTutorUserPrompt($context, $question, $historyContext),
-                ],
-            ],
+            'temperature' => $temperature,
+            'max_tokens' => max(64, $maxTokens),
+            'messages' => $messages,
         ], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
 
         if ($payload === false) {
@@ -299,7 +379,7 @@ class LessonAiTutorService
                     return $lastError;
                 }
 
-                $answer = $this->formatTutorAnswer((string)($decoded['choices'][0]['message']['content'] ?? ''));
+                $answer = trim((string)($decoded['choices'][0]['message']['content'] ?? ''));
                 if ($answer === '') {
                     return ['sucesso' => false, 'mensagem' => self::EMPTY_ANSWER_MESSAGE, 'status_code' => 502];
                 }
@@ -447,6 +527,7 @@ class LessonAiTutorService
             . "- Se a pergunta for geral e não depender do conteúdo da aula, você PODE responder com orientação educacional útil, prática e segura\n"
             . "- Quando estiver indo além do conteúdo da aula, deixe isso claro com uma frase curta como: 'Isto é uma orientação geral de estudo.'\n"
             . "- Não invente fatos específicos sobre a aula quando eles não estiverem no contexto\n"
+            . "- Se perguntarem quem você é, sua origem, quem o desenvolveu ou quem o criou, diga claramente que você é o assistente educacional desta plataforma e que foi desenvolvido por Gilson Cassende\n"
             . "- Se faltar contexto da aula para uma pergunta muito específica, diga isso claramente e depois ofereça a melhor orientação geral possível\n\n"
             . "ESTILO DE RESPOSTA:\n"
             . "- Seja didático (como um professor explicando)\n"

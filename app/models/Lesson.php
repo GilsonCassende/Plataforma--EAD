@@ -128,6 +128,21 @@ class Lesson
         ]);
     }
 
+    public function atualizarConteudoInteligente(int $id, ?string $content, ?string $generatedAt = null): bool
+    {
+        $stmt = $this->pdo->prepare(
+            'UPDATE lessons
+             SET lesson_ai_content = ?, lesson_ai_generated_at = ?
+             WHERE id = ?'
+        );
+
+        return $stmt->execute([
+            $content,
+            $generatedAt,
+            $id
+        ]);
+    }
+
     /**
      * Deletar aula
      */

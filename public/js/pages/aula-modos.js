@@ -15,7 +15,9 @@ function initLessonModes() {
         .map((button) => button.dataset.modeTarget)
         .filter(Boolean);
     const savedMode = readSavedLessonMode();
+    const preferredMode = switcher.dataset.initialMode || '';
     const initialMode = allowedModes.includes(savedMode) ? savedMode : 'video';
+    const resolvedInitialMode = allowedModes.includes(preferredMode) ? preferredMode : initialMode;
 
     buttons.forEach((button) => {
         button.addEventListener('click', () => {
@@ -28,10 +30,31 @@ function initLessonModes() {
         });
     });
 
-    applyLessonMode(initialMode, buttons, panels);
+    applyLessonMode(resolvedInitialMode, buttons, panels);
+    initLessonAiGenerationForm();
+}
+
+function initLessonAiGenerationForm() {
+    const form = document.querySelector('[data-lesson-ai-generate-form]');
+    if (!form) return;
+
+    const button = form.querySelector('[data-lesson-ai-generate-button]');
+    const loading = form.querySelector('[data-lesson-ai-loading]');
+
+    form.addEventListener('submit', () => {
+        if (button) {
+            button.disabled = true;
+            button.setAttribute('aria-disabled', 'true');
+        }
+        if (loading) {
+            loading.classList.remove('is-hidden');
+        }
+    });
 }
 
 function applyLessonMode(mode, buttons, panels) {
+    const lessonPlayer = document.querySelector('.aula-player');
+
     buttons.forEach((button) => {
         const isActive = button.dataset.modeTarget === mode;
         button.classList.toggle('is-active', isActive);
@@ -52,6 +75,10 @@ function applyLessonMode(mode, buttons, panels) {
 
     if (mode !== 'economico') {
         pauseMediaInside(document.querySelector('[data-mode-panel="economico"]'));
+    }
+
+    if (lessonPlayer) {
+        lessonPlayer.classList.toggle('is-reading-mode', mode === 'leitura');
     }
 
     toggleEconomicBanner(mode);
