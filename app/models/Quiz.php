@@ -325,6 +325,166 @@ class Quiz
         return $attempt ? $this->enriquecerTentativa($attempt, $quiz ?: []) : null;
     }
 
+    public function getMandatoryLessonQuizStatus($lessonId, $userId)
+    {
+        $stmt = $this->pdo->prepare(
+            "SELECT q.id, q.titulo, q.nota_minima,
+                    COALESCE(best_attempt.best_score, -1) AS best_score
+             FROM quizzes q
+             LEFT JOIN (
+                SELECT quiz_id, MAX(pontuacao) AS best_score
+                FROM quiz_attempts
+                WHERE user_id = ?
+                GROUP BY quiz_id
+             ) best_attempt ON best_attempt.quiz_id = q.id
+             WHERE q.lesson_id = ?
+               AND q.tipo = 'aula'
+               AND COALESCE(q.obrigatorio, 0) = 1
+             ORDER BY q.id ASC"
+        );
+        $stmt->execute([(int)$userId, (int)$lessonId]);
+        $rows = $stmt->fetchAll();
+
+        $approved = 0;
+        $pendingTitles = [];
+
+        foreach ($rows as $row) {
+            $minimumGrade = (float)($row['nota_minima'] ?? self::QUIZ_NOTA_MINIMA);
+            $bestScore = (float)($row['best_score'] ?? -1);
+            if ($bestScore >= $minimumGrade) {
+                $approved++;
+                continue;
+            }
+
+            $pendingTitles[] = trim((string)($row['titulo'] ?? 'Quiz da aula'));
+        }
+
+        return [
+            'required_total' => count($rows),
+            'approved_total' => $approved,
+            'all_passed' => count($rows) === 0 || $approved === count($rows),
+            'pending_titles' => array_values(array_filter(array_unique($pendingTitles))),
+        ];
+    }
+
+    public function getMandatoryLessonQuizApprovalMap($courseId, $userId)
+    {
+        $stmt = $this->pdo->prepare(
+            "SELECT
+                q.lesson_id,
+                COUNT(*) AS required_total,
+                SUM(
+                    CASE
+                        WHEN COALESCE(best_attempt.best_score, -1) >= COALESCE(q.nota_minima, ?)
+                        THEN 1
+                        ELSE 0
+                    END
+                ) AS approved_total
+             FROM quizzes q
+             LEFT JOIN lessons l ON l.id = q.lesson_id
+             LEFT JOIN (
+                SELECT quiz_id, MAX(pontuacao) AS best_score
+                FROM quiz_attempts
+                WHERE user_id = ?
+                GROUP BY quiz_id
+             ) best_attempt ON best_attempt.quiz_id = q.id
+             WHERE q.tipo = 'aula'
+               AND COALESCE(q.obrigatorio, 0) = 1
+               AND COALESCE(q.course_id, l.course_id) = ?
+               AND q.lesson_id IS NOT NULL
+             GROUP BY q.lesson_id"
+        );
+        $stmt->execute([self::QUIZ_NOTA_MINIMA, (int)$userId, (int)$courseId]);
+
+        $approvalMap = [];
+        foreach ($stmt->fetchAll() as $row) {
+            $lessonId = (int)($row['lesson_id'] ?? 0);
+            if ($lessonId <= 0) {
+                continue;
+            }
+
+            $approvalMap[$lessonId] = (int)($row['required_total'] ?? 0) > 0
+                && (int)($row['approved_total'] ?? 0) >= (int)($row['required_total'] ?? 0);
+        }
+
+        return $approvalMap;
+    }
+
+    public function calculateLessonProgressForCourse($courseId, $userId)
+    {
+        $stmt = $this->pdo->prepare('SELECT id FROM lessons WHERE course_id = ? ORDER BY ordem ASC, id ASC');
+        $stmt->execute([(int)$courseId]);
+        $lessonIds = array_map('intval', array_column($stmt->fetchAll(), 'id'));
+        $totalLessons = count($lessonIds);
+
+        if ($totalLessons === 0) {
+            return [
+                'total_lessons' => 0,
+                'raw_completed_ids' => [],
+                'completed_ids' => [],
+                'completed_total' => 0,
+                'progress' => 0,
+                'mandatory_quiz_approval_map' => [],
+            ];
+        }
+
+        $placeholders = implode(',', array_fill(0, $totalLessons, '?'));
+        $params = array_merge([(int)$userId], $lessonIds);
+        $stmt = $this->pdo->prepare(
+            "SELECT lesson_id
+             FROM lesson_progress
+             WHERE user_id = ?
+               AND concluida = 1
+               AND lesson_id IN ($placeholders)"
+        );
+        $stmt->execute($params);
+        $rawCompletedIds = array_map('intval', array_column($stmt->fetchAll(), 'lesson_id'));
+        $approvalMap = $this->getMandatoryLessonQuizApprovalMap((int)$courseId, (int)$userId);
+
+        $effectiveCompletedIds = array_values(array_filter($rawCompletedIds, static function ($lessonId) use ($approvalMap) {
+            return !array_key_exists((int)$lessonId, $approvalMap) || !empty($approvalMap[(int)$lessonId]);
+        }));
+
+        $completedTotal = count($effectiveCompletedIds);
+        $progress = (int)floor(($completedTotal / $totalLessons) * 100);
+
+        return [
+            'total_lessons' => $totalLessons,
+            'raw_completed_ids' => $rawCompletedIds,
+            'completed_ids' => $effectiveCompletedIds,
+            'completed_total' => $completedTotal,
+            'progress' => $progress,
+            'mandatory_quiz_approval_map' => $approvalMap,
+        ];
+    }
+
+    public function recalculateEnrollmentProgress($courseId, $userId)
+    {
+        $lessonProgress = $this->calculateLessonProgressForCourse((int)$courseId, (int)$userId);
+        $lessonPercent = (int)($lessonProgress['progress'] ?? 0);
+        $hasQuizzes = count($this->listarPorCurso((int)$courseId)) > 0;
+        $quizProgress = $this->calcularProgressoAvaliacaoCurso((int)$courseId, (int)$userId);
+        $eligibilidade = $this->alunoAptoConclusao((int)$courseId, (int)$userId, $lessonPercent);
+
+        $novoProgresso = $hasQuizzes
+            ? (int)floor((($lessonPercent * 0.6) + ($quizProgress * 0.4)))
+            : $lessonPercent;
+
+        if (!empty($eligibilidade['aprovado'])) {
+            $novoProgresso = 100;
+        }
+
+        $stmt = $this->pdo->prepare(
+            'UPDATE enrollments
+             SET progress = ?,
+                 data_conclusao = CASE WHEN ? = 100 THEN COALESCE(data_conclusao, NOW()) ELSE NULL END
+             WHERE user_id = ? AND course_id = ?'
+        );
+        $stmt->execute([$novoProgresso, $novoProgresso, (int)$userId, (int)$courseId]);
+
+        return $novoProgresso;
+    }
+
     public function obterUltimaTentativaCompleta($user_id, $quiz_id)
     {
         $stmt = $this->pdo->prepare(

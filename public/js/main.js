@@ -5,6 +5,7 @@
 document.addEventListener('DOMContentLoaded', function () {
     initNavigation();
     initAlerts();
+    initServerFlashToasts();
     initLoadingForms();
     initDataExportForms();
     initAuthExperience();
@@ -127,6 +128,18 @@ function initAlerts() {
         setTimeout(() => {
             fadeOut(alert);
         }, 5000);
+    });
+}
+
+function initServerFlashToasts() {
+    const payloads = document.querySelectorAll('[data-server-toast]');
+    payloads.forEach((payload) => {
+        const message = String(payload.textContent || '').trim();
+        const type = String(payload.dataset.toastType || 'info').trim() || 'info';
+        if (message !== '') {
+            showNotification(message, type);
+        }
+        payload.remove();
     });
 }
 
@@ -564,7 +577,46 @@ function initProfessorPanels() {
 /**
  * Mostrar notificação (toast)
  */
-function showNotification(message, type = 'success') {
+function getDefaultNotificationTitle(type, message) {
+    const normalizedType = String(type || 'info').trim().toLowerCase();
+    const normalizedMessage = String(message || '').trim();
+
+    if (normalizedMessage === '') {
+        return normalizedType === 'success'
+            ? 'Sucesso'
+            : (normalizedType === 'error' ? 'Erro' : 'Informação');
+    }
+
+    if (normalizedType === 'error') {
+        if (/^(erro|falha|nao foi possivel|não foi possível|tempo esgotado|dados invalidos|dados inválidos)/i.test(normalizedMessage)) {
+            return '';
+        }
+
+        return 'Erro';
+    }
+
+    if (normalizedType === 'success') {
+        if (/^(sucesso|concluido|concluído|pronto)/i.test(normalizedMessage)) {
+            return '';
+        }
+
+        return 'Sucesso';
+    }
+
+    if (/^(informacao|informação|aviso|atencao|atenção)/i.test(normalizedMessage)) {
+        return '';
+    }
+
+    return 'Informação';
+}
+
+function showNotification(message, type = 'success', options = {}) {
+    const normalizedType = String(type || 'info').trim().toLowerCase();
+    const normalizedMessage = String(message || '').trim();
+    const titleText = typeof options?.title === 'string'
+        ? options.title.trim()
+        : getDefaultNotificationTitle(normalizedType, normalizedMessage);
+
     // Toast container
     let container = document.getElementById('toast-container');
     if (!container) {
@@ -575,8 +627,33 @@ function showNotification(message, type = 'success') {
     }
 
     const toast = document.createElement('div');
-    toast.className = `toast toast-${type}`;
-    toast.textContent = message;
+    toast.className = `toast toast-${normalizedType}`;
+    toast.setAttribute('role', 'status');
+    toast.setAttribute('aria-live', normalizedType === 'error' ? 'assertive' : 'polite');
+
+    const icon = document.createElement('span');
+    icon.className = 'toast__icon';
+    icon.textContent = normalizedType === 'success' ? '✓' : (normalizedType === 'error' ? '!' : 'i');
+
+    const copy = document.createElement('div');
+    copy.className = 'toast__copy';
+
+    const body = document.createElement('p');
+    body.className = 'toast__message';
+    body.textContent = normalizedMessage || (normalizedType === 'success'
+        ? 'Operação concluída com sucesso.'
+        : (normalizedType === 'error' ? 'Não foi possível concluir esta ação.' : 'Atualização disponível.'));
+
+    if (titleText !== '') {
+        const title = document.createElement('strong');
+        title.className = 'toast__title';
+        title.textContent = titleText;
+        copy.appendChild(title);
+    }
+
+    copy.appendChild(body);
+    toast.appendChild(icon);
+    toast.appendChild(copy);
     container.appendChild(toast);
     requestAnimationFrame(() => toast.classList.add('is-visible'));
 

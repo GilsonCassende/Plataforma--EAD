@@ -2,6 +2,7 @@ document.addEventListener('DOMContentLoaded', () => {
     initCourseManageDelete();
     initCourseManageReorder();
     initCourseManageSearch();
+    initCourseManageLessonNavigation();
 });
 
 function initCourseManageDelete() {
@@ -125,5 +126,31 @@ function initCourseManageSearch() {
             const title = card.querySelector('.lesson-title')?.textContent?.toLowerCase() || '';
             card.hidden = query !== '' && !title.includes(query);
         });
+    });
+}
+
+function initCourseManageLessonNavigation() {
+    const shouldIgnoreClick = (target) => {
+        return !!target.closest('a, button, form, input, select, textarea, label');
+    };
+
+    document.addEventListener('click', (event) => {
+        const card = event.target.closest('.lesson-card[data-lesson-url]');
+        if (!card || shouldIgnoreClick(event.target)) return;
+        const url = card.getAttribute('data-lesson-url');
+        if (!url) return;
+        window.location.href = url;
+    });
+
+    document.addEventListener('keydown', (event) => {
+        const card = event.target.closest('.lesson-card[data-lesson-url]');
+        if (!card) return;
+        if (event.key !== 'Enter' && event.key !== ' ') return;
+        if (shouldIgnoreClick(event.target)) return;
+
+        event.preventDefault();
+        const url = card.getAttribute('data-lesson-url');
+        if (!url) return;
+        window.location.href = url;
     });
 }

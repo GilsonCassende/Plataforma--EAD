@@ -54,9 +54,9 @@ if (isset($_GET['partial']) && $_GET['partial'] == '1'):
             </div>
 
             <div class="form-group">
-                <label>Transcrição da aula (opcional)</label>
-                <textarea name="lesson_transcript" rows="6" placeholder="Cole aqui a transcrição manual da aula, se já tiver o texto pronto"></textarea>
-                <small>Se deixar em branco, a plataforma tentará gerar a transcrição automaticamente para vídeos do YouTube e para uploads MP4 compatíveis, sem bloquear o cadastro.</small>
+                <label>Transcrição da aula</label>
+                <textarea rows="6" placeholder="A transcrição será gerada automaticamente ao salvar a aula com a URL do YouTube." readonly></textarea>
+                <small>A transcrição será gerada automaticamente no momento do salvamento usando o vídeo do YouTube informado.</small>
             </div>
 
             <div class="form-group">
@@ -65,9 +65,9 @@ if (isset($_GET['partial']) && $_GET['partial'] == '1'):
             </div>
 
             <div class="form-group">
-                <label>URL do YouTube (opcional)</label>
-                <input type="text" name="youtube_url" placeholder="https://youtu.be/.... ou https://www.youtube.com/watch?v=...">
-                <small>Se preencher a URL do YouTube, o vídeo será embutido na aula. Use 'Unlisted' se preferir não indexar.</small>
+                <label>URL do YouTube</label>
+                <input type="text" name="youtube_url" required placeholder="https://youtu.be/.... ou https://www.youtube.com/watch?v=...">
+                <small>Campo obrigatório. A aula será salva apenas quando a transcrição automática do vídeo for gerada com sucesso.</small>
             </div>
 
             <div class="form-group">
@@ -144,9 +144,9 @@ endif;
             </div>
 
             <div class="form-group">
-                <label>Transcrição da aula (opcional)</label>
-                <textarea name="lesson_transcript" rows="7" placeholder="Cole aqui a transcrição manual da aula, se já tiver o texto pronto"></textarea>
-                <small>Se ficar vazio e a aula tiver um vídeo do YouTube, a plataforma tentará gerar a transcrição automaticamente depois de salvar.</small>
+                <label>Transcrição da aula</label>
+                <textarea rows="7" placeholder="A transcrição será gerada automaticamente ao salvar a aula com a URL do YouTube." readonly></textarea>
+                <small>A transcrição será gerada automaticamente na hora, usando o vídeo do YouTube informado.</small>
             </div>
 
             <div class="form-group">
@@ -155,9 +155,9 @@ endif;
             </div>
 
             <div class="form-group">
-                <label>URL do YouTube (opcional)</label>
-                <input type="text" name="youtube_url" placeholder="https://youtu.be/... ou https://www.youtube.com/watch?v=...">
-                <small>Se preencher a URL do YouTube, o vídeo será embutido na aula.</small>
+                <label>URL do YouTube</label>
+                <input type="text" name="youtube_url" required placeholder="https://youtu.be/... ou https://www.youtube.com/watch?v=...">
+                <small>Campo obrigatório. A aula só será salva quando a transcrição automática do vídeo for gerada com sucesso.</small>
             </div>
 
             <div class="form-group">

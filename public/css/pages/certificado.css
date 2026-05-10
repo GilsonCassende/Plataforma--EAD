@@ -19,6 +19,7 @@ body.page-pdf-export {
 .certificate-page--pdf {
     padding: 0;
     width: 297mm;
+    height: 210mm;
     min-height: 210mm;
     margin: 0 auto;
     overflow: hidden;
@@ -43,6 +44,14 @@ body.page-pdf-export {
         radial-gradient(circle at left center, rgba(14, 165, 183, 0.08), transparent 20%),
         linear-gradient(135deg, #ffffff 0%, #f7fbff 52%, #f4f8fc 100%);
     box-shadow: 0 28px 70px rgba(15, 23, 42, 0.1);
+}
+
+.certificate-shell--verification,
+.certificate-pending--verification {
+    background:
+        radial-gradient(circle at top right, rgba(16, 185, 129, 0.12), transparent 24%),
+        radial-gradient(circle at left center, rgba(59, 130, 246, 0.08), transparent 24%),
+        linear-gradient(135deg, #ffffff 0%, #f6fbff 52%, #eff8f3 100%);
 }
 
 .certificate-shell__header {
@@ -103,11 +112,153 @@ body.page-pdf-export {
 }
 
 .certificate-card--pdf {
+    height: 210mm;
     min-height: 210mm;
     box-sizing: border-box;
     border: 0;
     border-radius: 0;
     box-shadow: none;
+    overflow: hidden;
+}
+
+.page-pdf-export .certificate-card {
+    gap: 1.2rem;
+    padding: 1.8rem 1.7rem 1.45rem;
+}
+
+.page-pdf-export .certificate-card__brand {
+    gap: 0.85rem;
+}
+
+.page-pdf-export .certificate-card__brand-mark {
+    width: 48px;
+    height: 48px;
+    font-size: 1.3rem;
+}
+
+.page-pdf-export .certificate-card__brand-copy span {
+    font-size: 0.72rem;
+}
+
+.page-pdf-export .certificate-card__brand-copy strong {
+    font-size: 0.94rem;
+}
+
+.page-pdf-export .certificate-card__hero {
+    gap: 0.55rem;
+    padding-top: 0.35rem;
+}
+
+.page-pdf-export .certificate-card h2 {
+    font-size: 2.15rem;
+}
+
+.page-pdf-export .certificate-card__lead {
+    font-size: 0.82rem;
+    letter-spacing: 0.14em;
+}
+
+.page-pdf-export .certificate-card__student {
+    font-size: 2.9rem;
+}
+
+.page-pdf-export .certificate-card__copy {
+    max-width: 760px;
+    font-size: 0.94rem;
+    line-height: 1.65;
+}
+
+.page-pdf-export .certificate-card__meta,
+.page-pdf-export .certificate-card__signature-row {
+    gap: 0.75rem;
+}
+
+.page-pdf-export .certificate-card__meta div {
+    gap: 0.28rem;
+    padding: 0.9rem 0.85rem;
+}
+
+.page-pdf-export .certificate-card__meta span {
+    font-size: 0.72rem;
+}
+
+.page-pdf-export .certificate-card__meta strong {
+    font-size: 0.98rem;
+}
+
+.page-pdf-export .certificate-card__signature {
+    gap: 0.24rem;
+    padding-top: 0.8rem;
+}
+
+.page-pdf-export .certificate-card__signature strong {
+    font-size: 0.9rem;
+}
+
+.page-pdf-export .certificate-card__signature span {
+    font-size: 0.78rem;
+}
+
+.page-pdf-export .certificate-card__verification {
+    gap: 0.28rem;
+    padding: 0.9rem 0.95rem;
+}
+
+.page-pdf-export .certificate-card__verification span {
+    font-size: 0.72rem;
+}
+
+.page-pdf-export .certificate-card__verification strong {
+    font-size: 1rem;
+}
+
+.page-pdf-export .certificate-card__verification a {
+    font-size: 0.82rem;
+}
+
+.page-pdf-export .certificate-card__verification-text {
+    font-size: 0.82rem;
+    line-height: 1.45;
+}
+
+.page-pdf-export .certificate-card__verification--with-qr {
+    grid-template-columns: minmax(0, 1fr) 128px;
+    gap: 0.85rem;
+}
+
+.page-pdf-export .certificate-card__qr {
+    gap: 0.35rem;
+    padding: 0.65rem;
+}
+
+.page-pdf-export .certificate-card__qr img {
+    width: 92px;
+    height: 92px;
+}
+
+.page-pdf-export .certificate-card__qr span {
+    font-size: 0.7rem;
+}
+
+.page-pdf-export .certificate-card__watermark {
+    font-size: 8rem;
+}
+
+.page-pdf-export .certificate-card__seal {
+    top: 20px;
+    right: 22px;
+    width: 78px;
+    height: 78px;
+}
+
+.page-pdf-export .certificate-card__seal-core {
+    width: 46px;
+    height: 46px;
+}
+
+.page-pdf-export .certificate-card__seal span {
+    max-width: 38px;
+    font-size: 0.5rem;
 }
 
 .certificate-card::before {
@@ -310,7 +461,7 @@ body.page-pdf-export {
 .certificate-pending__grid,
 .certificate-pending__groups {
     display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
     gap: 1rem;
 }
 
@@ -411,6 +562,67 @@ body.page-pdf-export {
     text-decoration: none;
 }
 
+.certificate-card__verification--with-qr {
+    grid-template-columns: minmax(0, 1fr) 168px;
+    align-items: center;
+    gap: 1.2rem;
+}
+
+.certificate-card__verification-copy {
+    display: grid;
+    gap: 0.45rem;
+}
+
+.certificate-card__verification-text {
+    margin: 0;
+    color: #526277;
+    line-height: 1.7;
+}
+
+.certificate-card__verification-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.85rem;
+}
+
+.certificate-card__verification-grid div {
+    display: grid;
+    gap: 0.2rem;
+}
+
+.certificate-card__verification-grid small {
+    color: #64748b;
+    font-size: 0.76rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+}
+
+.certificate-card__qr {
+    display: grid;
+    gap: 0.55rem;
+    justify-items: center;
+    padding: 0.9rem;
+    border-radius: 20px;
+    background: rgba(255, 255, 255, 0.8);
+    border: 1px solid rgba(198, 210, 226, 0.92);
+}
+
+.certificate-card__qr img {
+    width: 132px;
+    height: 132px;
+    display: block;
+    border-radius: 14px;
+    background: #fff;
+}
+
+.certificate-card__qr span {
+    color: #516174;
+    font-size: 0.82rem;
+    font-weight: 700;
+    text-align: center;
+}
+
 @media print {
     @page {
         size: A4 landscape;
@@ -450,6 +662,11 @@ body.page-pdf-export {
     .certificate-pending__grid,
     .certificate-pending__groups,
     .certificate-card__signature-row {
+        grid-template-columns: 1fr;
+    }
+
+    .certificate-card__verification--with-qr,
+    .certificate-card__verification-grid {
         grid-template-columns: 1fr;
     }
 

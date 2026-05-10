@@ -30,12 +30,18 @@ require_once __DIR__ . '/../app/models/Lesson.php';
 // Armazenar PDO globalmente para usar em views
 $GLOBALS['pdo'] = $pdo;
 
-// Suporte a URLs amigáveis públicas como /certificado/CODIGO
+// Suporte a URLs amigáveis públicas como /certificado/CODIGO e /validar-certificado/CODIGO
 $prettyUrl = trim((string)($_GET['url'] ?? ''), '/');
-if (!isset($_GET['page']) && preg_match('#^certificado/([A-Za-z0-9]+)$#', $prettyUrl, $matches)) {
+if (!isset($_GET['page']) && preg_match('#^certificado/([A-Za-z0-9\-]+)$#', $prettyUrl, $matches)) {
     $_GET['page'] = 'certificado';
     $_GET['codigo'] = $matches[1];
     $_GET['public'] = '1';
+}
+if (!isset($_GET['page']) && preg_match('#^validar-certificado/([A-Za-z0-9\-]+)$#', $prettyUrl, $matches)) {
+    $_GET['page'] = 'certificado';
+    $_GET['codigo'] = $matches[1];
+    $_GET['public'] = '1';
+    $_GET['official_validation'] = '1';
 }
 if (!isset($_GET['page']) && $prettyUrl === 'perguntar-ia') {
     $_GET['page'] = 'perguntar-ia';
@@ -342,6 +348,15 @@ try {
             ]);
             break;
 
+        case 'certificacao-profissional':
+            $titulo = 'Certificação profissional — Plataforma EAD';
+            $meta_description = 'Conheça como funciona a certificação profissional da Plataforma EAD, com validação pública, QR Code e verificação oficial.';
+            $meta_og_title = 'Certificação profissional — Plataforma EAD';
+            $meta_og_description = $meta_description;
+            $meta_og_url = rtrim(APP_URL, '/') . '/index.php?page=certificacao-profissional';
+            $conteudo = renderizar('certificacao-info');
+            break;
+
         case 'aula':
             if (!isset($_GET['lesson_id'])) {
                 throw new Exception('Aula não especificada');
@@ -362,6 +377,27 @@ try {
                 throw new Exception('Curso da aula não encontrado');
             }
 
+            if (
+                trim((string)($aula['tipo'] ?? '')) === 'video'
+                && trim((string)($aula['lesson_transcript'] ?? '')) === ''
+                && trim((string)($aula['video_id'] ?? '')) !== ''
+            ) {
+                try {
+                    $transcriptService = new LessonTranscriptService($pdo);
+                    $autoTranscriptResult = $transcriptService->generateAndStoreForLesson((int)$aula['id'], (int)(AuthController::obterUsuarioAtual()['id'] ?? 0));
+                    if (!empty($autoTranscriptResult['sucesso'])) {
+                        $refreshResult = $lessonController->obter((int)$aula['id']);
+                        if (!empty($refreshResult['sucesso']) && !empty($refreshResult['aula'])) {
+                            $aula = $refreshResult['aula'];
+                        }
+                    }
+                } catch (Throwable $exception) {
+                    if (function_exists('registrar_log')) {
+                        registrar_log('warning', 'lesson_transcript_autoload_failed lesson=' . (int)$aula['id'] . ' erro=' . $exception->getMessage(), (int)(AuthController::obterUsuarioAtual()['id'] ?? 0));
+                    }
+                }
+            }
+
             $usuarioAtual = AuthController::obterUsuarioAtual();
             $concluida = false;
             $avaliacao = [
@@ -374,6 +410,7 @@ try {
             $aulas_concluidas_ids = [];
             $aulas_concluidas_total = 0;
             $progresso_curso = 0;
+            $mandatoryLessonQuizApprovalMap = [];
 
             $courseController = new CourseController($pdo);
             $cursoResult = $courseController->obter($course_id);
@@ -396,6 +433,14 @@ try {
                 $current_module = $modulos_curso[0];
             }
 
+            $allModulesCompletedForStudent = !empty($modulos_curso);
+            foreach ($modulos_curso as $moduleItemState) {
+                if (empty($moduleItemState['completed'])) {
+                    $allModulesCompletedForStudent = false;
+                    break;
+                }
+            }
+
             $isOwner = (int)($curso['teacher_id'] ?? 0) === (int)($usuarioAtual['id'] ?? 0);
             if (!$isOwner && !empty($current_module) && empty($current_module['unlocked'])) {
                 $_SESSION['erro'] = 'Este módulo ainda está bloqueado. Conclua e aprove o módulo anterior para avançar.';
@@ -416,8 +461,15 @@ try {
 
             try {
                 require_once __DIR__ . '/../app/controllers/QuizController.php';
+                require_once __DIR__ . '/../app/models/Quiz.php';
                 $quizController = new QuizController($pdo);
+                $quizModel = new Quiz($pdo);
                 $avaliacao = $quizController->obterDesempenhoCursoAluno($course_id, (int)($usuarioAtual['id'] ?? 0));
+                $lessonProgressStats = $quizModel->calculateLessonProgressForCourse($course_id, (int)($usuarioAtual['id'] ?? 0));
+                $aulas_concluidas_ids = array_map('intval', (array)($lessonProgressStats['completed_ids'] ?? []));
+                $aulas_concluidas_total = (int)($lessonProgressStats['completed_total'] ?? 0);
+                $mandatoryLessonQuizApprovalMap = (array)($lessonProgressStats['mandatory_quiz_approval_map'] ?? []);
+                $concluida = in_array((int)$aula['id'], $aulas_concluidas_ids, true);
                 $currentModuleId = (int)($current_module['id'] ?? 0);
                 $currentLessonId = (int)($aula['id'] ?? 0);
                 $quizzes = $currentLessonId > 0 ? array_values(array_filter(($avaliacao['quizzes'] ?? []), static function ($quiz) use ($currentModuleId, $currentLessonId) {
@@ -426,6 +478,15 @@ try {
                         || ($quizType === 'modulo' && (int)($quiz['module_id'] ?? 0) === $currentModuleId)
                         || $quizType === 'final');
                 })) : [];
+                if (!$isOwner && !empty($quizzes)) {
+                    $quizzes = array_values(array_filter($quizzes, static function ($quiz) use ($allModulesCompletedForStudent) {
+                        if (($quiz['tipo'] ?? '') !== 'final') {
+                            return true;
+                        }
+
+                        return $allModulesCompletedForStudent;
+                    }));
+                }
             } catch (Throwable $exception) {
                 $avaliacao = [
                     'nota' => null,
@@ -433,6 +494,7 @@ try {
                     'quizzes' => []
                 ];
                 $quizzes = [];
+                $mandatoryLessonQuizApprovalMap = [];
                 if (function_exists('registrar_log')) {
                     registrar_log('warning', 'lesson_quiz_fallback lesson=' . (int)$aula['id'] . ' course=' . $course_id . ' erro=' . $exception->getMessage(), (int)($usuarioAtual['id'] ?? 0));
                 }
@@ -440,27 +502,11 @@ try {
 
             try {
                 $aulas_curso = $lessonController->listarPorCurso($course_id);
-
-                if (!empty($aulas_curso)) {
-                    $lessonIds = array_map(static function ($lesson) {
-                        return (int)($lesson['id'] ?? 0);
-                    }, $aulas_curso);
-
-                    if (!empty($lessonIds)) {
-                        $placeholders = implode(',', array_fill(0, count($lessonIds), '?'));
-                        $params = array_merge([(int)($usuarioAtual['id'] ?? 0)], $lessonIds);
-                        $stmt = $pdo->prepare(
-                            "SELECT lesson_id
-                             FROM lesson_progress
-                             WHERE user_id = ? AND concluida = 1 AND lesson_id IN ($placeholders)"
-                        );
-                        $stmt->execute($params);
-                        $aulas_concluidas_ids = array_map('intval', array_column($stmt->fetchAll(), 'lesson_id'));
-                    }
-                }
             } catch (Throwable $exception) {
                 $aulas_curso = [$aula];
-                $aulas_concluidas_ids = [];
+                if (empty($aulas_concluidas_ids)) {
+                    $aulas_concluidas_ids = [];
+                }
                 if (function_exists('registrar_log')) {
                     registrar_log('warning', 'lesson_course_list_fallback lesson=' . (int)$aula['id'] . ' course=' . $course_id . ' erro=' . $exception->getMessage(), (int)($usuarioAtual['id'] ?? 0));
                 }
@@ -476,14 +522,20 @@ try {
                 $lessonCurso['is_completed'] = in_array($lessonIdFromCourse, $aulas_concluidas_ids, true);
                 $lessonCurso['position'] = $index + 1;
 
-                if ($lessonCurso['is_completed']) {
-                    $aulas_concluidas_total++;
-                }
             }
             unset($lessonCurso);
 
-            if (!empty($aulas_curso)) {
-                $progresso_curso = (int)floor(($aulas_concluidas_total / count($aulas_curso)) * 100);
+            try {
+                $stmt = $pdo->prepare('SELECT progress FROM enrollments WHERE user_id = ? AND course_id = ? LIMIT 1');
+                $stmt->execute([(int)($usuarioAtual['id'] ?? 0), (int)$course_id]);
+                $row = $stmt->fetch();
+                if ($row) {
+                    $progresso_curso = (int)($row['progress'] ?? 0);
+                }
+            } catch (Throwable $exception) {
+                if (!empty($aulas_curso)) {
+                    $progresso_curso = (int)floor(($aulas_concluidas_total / count($aulas_curso)) * 100);
+                }
             }
 
             $lessonAiContent = '';
@@ -566,22 +618,26 @@ try {
 
             $storageKey = trim((string)($aula['audio_storage_key'] ?? ''));
             if ($storageKey !== '') {
-                $storage = new StorageService((string)($aula['audio_storage_disk'] ?? 'local'));
-                $descriptor = $storage->getDescriptor($storageKey);
-                header('Content-Type: ' . ((string)($descriptor['mime'] ?? 'audio/mpeg')));
-                header('Content-Length: ' . (string)($descriptor['size'] ?? 0));
-                header('Content-Disposition: inline; filename="' . basename((string)($aula['audio_url'] ?? 'audio.mp3')) . '"');
-                readfile((string)$descriptor['path']);
-                exit;
+                try {
+                    $storage = new StorageService((string)($aula['audio_storage_disk'] ?? 'local'));
+                    $descriptor = $storage->getDescriptor($storageKey);
+                    header('Content-Type: ' . ((string)($descriptor['mime'] ?? 'audio/mpeg')));
+                    header('Content-Length: ' . (string)($descriptor['size'] ?? 0));
+                    header('Content-Disposition: inline; filename="' . basename((string)($aula['audio_url'] ?? 'audio.mp3')) . '"');
+                    readfile((string)$descriptor['path']);
+                    exit;
+                } catch (Throwable $exception) {
+                    // Se o ficheiro não existir mais no storage, tentamos o fallback local abaixo.
+                }
             }
 
             $localAudio = basename((string)($aula['audio_url'] ?? ''));
-            $localPath = __DIR__ . '/uploads/' . $localAudio;
-            if ($localAudio !== '' && is_file($localPath)) {
-                header('Content-Type: ' . ((string)(mime_content_type($localPath) ?: 'audio/mpeg')));
-                header('Content-Length: ' . (string)(filesize($localPath) ?: 0));
+            $resolvedLocalPath = $localAudio !== '' ? resolve_upload_path($localAudio, true) : null;
+            if ($resolvedLocalPath !== null && is_file($resolvedLocalPath)) {
+                header('Content-Type: ' . ((string)(mime_content_type($resolvedLocalPath) ?: 'audio/mpeg')));
+                header('Content-Length: ' . (string)(filesize($resolvedLocalPath) ?: 0));
                 header('Content-Disposition: inline; filename="' . $localAudio . '"');
-                readfile($localPath);
+                readfile($resolvedLocalPath);
                 exit;
             }
 
@@ -746,11 +802,26 @@ try {
 
                 if (!empty($_GET['codigo'])) {
                     $verification = $certificateController->getPublicVerificationData((string)$_GET['codigo']);
-                    $titulo = 'Verificação de Certificado - Plataforma EAD';
+                    $titulo = !empty($verification['valid'])
+                        ? 'Certificado verificado — Plataforma EAD'
+                        : 'Validar certificado — Plataforma EAD';
+                    $verificationCode = trim((string)($verification['code'] ?? ($_GET['codigo'] ?? '')));
+                    $meta_description = !empty($verification['valid'])
+                        ? 'Certificado verificado na Plataforma EAD. Consulte autenticidade, curso, professor e status oficial do documento.'
+                        : 'Valide a autenticidade de um certificado na Plataforma EAD usando o código oficial de verificação.';
+                    $meta_og_title = $titulo;
+                    $meta_og_description = $meta_description;
+                    $meta_og_url = $verificationCode !== ''
+                        ? certificate_verification_url($verificationCode)
+                        : rtrim(APP_URL, '/') . '/validar-certificado';
+                    $meta_og_image = certificate_og_image_url($verificationCode);
+                    $meta_og_type = 'website';
+                    $meta_robots = 'index,follow';
                     $conteudo = renderizar('certificado', [
                         'mode' => 'public',
                         'verification' => $verification,
                         'certificado' => $verification['certificate'] ?? null,
+                        'official_validation' => !empty($_GET['official_validation']),
                     ]);
                     break;
                 }
@@ -829,6 +900,148 @@ try {
                 $conteudo = '<div class="alert alert-error">Não foi possível carregar o certificado agora. Tente novamente em instantes.</div>';
             }
             break;
+
+        case 'certificate-og':
+            try {
+                $certificateController = new CertificateController($pdo);
+                $requestedCode = trim((string)($_GET['code'] ?? ''));
+                $verification = $requestedCode !== ''
+                    ? $certificateController->getPublicVerificationData($requestedCode)
+                    : ['valid' => false, 'code' => '', 'message' => 'Código de certificado não informado.'];
+                $certificate = is_array($verification['certificate'] ?? null) ? $verification['certificate'] : [];
+
+                $safe = static function ($value): string {
+                    return htmlspecialchars((string)$value, ENT_QUOTES | ENT_XML1, 'UTF-8');
+                };
+
+                $truncate = static function ($value, $limit = 52): string {
+                    $value = trim((string)$value);
+                    if (mb_strlen($value, 'UTF-8') <= $limit) {
+                        return $value;
+                    }
+
+                    return rtrim(mb_substr($value, 0, max(0, $limit - 1), 'UTF-8')) . '…';
+                };
+
+                $valid = !empty($verification['valid']);
+                $titleText = $valid ? 'Certificado Verificado' : 'Validação de Certificado';
+                $statusText = $valid ? 'AUTÊNTICO' : 'NÃO LOCALIZADO';
+                $studentText = $valid ? $truncate((string)($certificate['student_name'] ?? 'Aluno')) : 'Plataforma EAD';
+                $courseText = $valid
+                    ? $truncate((string)(($certificate['type'] ?? 'course') === 'module'
+                        ? (($certificate['module_title'] ?? '') . ' • ' . ($certificate['course_title'] ?? 'Curso'))
+                        : ($certificate['course_title'] ?? 'Curso')))
+                    : 'Verifique o código oficial para confirmar autenticidade';
+                $codeText = $truncate((string)($verification['code'] ?? $requestedCode), 28);
+                $accent = $valid ? '#10b981' : '#ef4444';
+                $accentSoft = $valid ? 'rgba(16,185,129,0.18)' : 'rgba(239,68,68,0.18)';
+                $issuedText = $valid ? ('Emitido em ' . (string)($verification['issued_at_formatted'] ?? '-')) : trim((string)($verification['message'] ?? 'Certificado não encontrado.'));
+
+                header('Content-Type: image/svg+xml; charset=UTF-8');
+                header('Cache-Control: public, max-age=600');
+
+                echo '<?xml version="1.0" encoding="UTF-8"?>';
+                ?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" role="img" aria-label="<?php echo $safe($titleText); ?>">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#0f172a"/>
+      <stop offset="52%" stop-color="#16243f"/>
+      <stop offset="100%" stop-color="#eff6ff"/>
+    </linearGradient>
+    <linearGradient id="card" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="100%" stop-color="#f8fbff"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="630" fill="url(#bg)"/>
+  <circle cx="1010" cy="110" r="170" fill="<?php echo $safe($accentSoft); ?>"/>
+  <circle cx="180" cy="560" r="220" fill="rgba(59,130,246,0.12)"/>
+  <rect x="72" y="64" width="1056" height="502" rx="34" fill="url(#card)" stroke="rgba(203,213,225,0.9)"/>
+  <rect x="104" y="100" width="992" height="430" rx="26" fill="none" stroke="rgba(148,163,184,0.32)"/>
+  <rect x="118" y="118" width="188" height="42" rx="21" fill="<?php echo $safe($accentSoft); ?>"/>
+  <text x="148" y="145" fill="<?php echo $safe($accent); ?>" font-family="Arial, Helvetica, sans-serif" font-size="18" font-weight="700" letter-spacing="1.8">VERIFICAÇÃO OFICIAL</text>
+  <text x="118" y="220" fill="#0f172a" font-family="Arial, Helvetica, sans-serif" font-size="56" font-weight="700"><?php echo $safe($titleText); ?></text>
+  <text x="118" y="272" fill="#475569" font-family="Arial, Helvetica, sans-serif" font-size="28"><?php echo $safe($courseText); ?></text>
+  <text x="118" y="350" fill="#0f172a" font-family="Arial, Helvetica, sans-serif" font-size="40" font-weight="700"><?php echo $safe($studentText); ?></text>
+  <text x="118" y="404" fill="#64748b" font-family="Arial, Helvetica, sans-serif" font-size="26"><?php echo $safe($issuedText); ?></text>
+  <rect x="118" y="454" width="334" height="64" rx="18" fill="#eff6ff" stroke="rgba(59,130,246,0.18)"/>
+  <text x="146" y="480" fill="#64748b" font-family="Arial, Helvetica, sans-serif" font-size="18" font-weight="700">CÓDIGO DO CERTIFICADO</text>
+  <text x="146" y="516" fill="#10203c" font-family="Arial, Helvetica, sans-serif" font-size="28" font-weight="700"><?php echo $safe($codeText !== '' ? $codeText : 'SEM CÓDIGO'); ?></text>
+  <rect x="870" y="120" width="170" height="170" rx="28" fill="#ffffff" stroke="rgba(148,163,184,0.28)"/>
+  <circle cx="955" cy="205" r="48" fill="<?php echo $safe($accentSoft); ?>"/>
+  <text x="955" y="220" text-anchor="middle" fill="<?php echo $safe($accent); ?>" font-family="Arial, Helvetica, sans-serif" font-size="58" font-weight="700"><?php echo $valid ? '✓' : '!'; ?></text>
+  <rect x="820" y="334" width="268" height="58" rx="18" fill="<?php echo $safe($accent); ?>"/>
+  <text x="954" y="371" text-anchor="middle" fill="#ffffff" font-family="Arial, Helvetica, sans-serif" font-size="26" font-weight="700"><?php echo $safe($statusText); ?></text>
+  <text x="820" y="440" fill="#475569" font-family="Arial, Helvetica, sans-serif" font-size="24">Plataforma EAD</text>
+  <text x="820" y="476" fill="#64748b" font-family="Arial, Helvetica, sans-serif" font-size="22">Escaneie o QR do certificado</text>
+  <text x="820" y="508" fill="#64748b" font-family="Arial, Helvetica, sans-serif" font-size="22">ou acesse o verificador oficial online</text>
+</svg>
+<?php
+                exit;
+            } catch (Throwable $ogException) {
+                header('Content-Type: image/svg+xml; charset=UTF-8');
+                http_response_code(200);
+                echo '<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630"><rect width="1200" height="630" fill="#0f172a"/><text x="80" y="180" fill="#fff" font-family="Arial, Helvetica, sans-serif" font-size="54" font-weight="700">Plataforma EAD</text><text x="80" y="250" fill="#cbd5e1" font-family="Arial, Helvetica, sans-serif" font-size="30">Validação oficial de certificado</text></svg>';
+                exit;
+            }
+
+        case 'certificate-qr':
+            try {
+                $text = trim((string)($_GET['text'] ?? ''));
+                $size = max(96, min(1024, (int)($_GET['size'] ?? 200)));
+                if ($text === '') {
+                    throw new RuntimeException('Conteúdo do QR Code não informado.');
+                }
+
+                $cacheDir = dirname(__DIR__) . '/storage/cache/certificate-qr';
+                if (!is_dir($cacheDir) && !@mkdir($cacheDir, 0775, true) && !is_dir($cacheDir)) {
+                    throw new RuntimeException('Não foi possível preparar o cache do QR Code.');
+                }
+
+                $cacheKey = hash('sha256', $text . '|' . $size);
+                $cacheFile = $cacheDir . '/' . $cacheKey . '.svg';
+
+                if (!is_file($cacheFile)) {
+                    $scriptPath = realpath(__DIR__ . '/../scripts/generate-certificate-qr.js');
+                    if ($scriptPath === false) {
+                        throw new RuntimeException('Script local do QR Code não encontrado.');
+                    }
+
+                    $command = escapeshellarg((string)NODE_BIN)
+                        . ' '
+                        . escapeshellarg($scriptPath)
+                        . ' --text '
+                        . escapeshellarg($text)
+                        . ' --size '
+                        . escapeshellarg((string)$size);
+
+                    $output = [];
+                    $exitCode = 1;
+                    @exec($command . ' 2>&1', $output, $exitCode);
+                    $svg = implode("\n", $output);
+
+                    if ($exitCode !== 0 || trim($svg) === '' || stripos($svg, '<svg') === false) {
+                        throw new RuntimeException('Falha ao gerar o QR Code localmente.');
+                    }
+
+                    @file_put_contents($cacheFile, $svg, LOCK_EX);
+                }
+
+                header('Content-Type: image/svg+xml; charset=UTF-8');
+                header('Cache-Control: public, max-age=86400');
+                readfile($cacheFile);
+                exit;
+            } catch (Throwable $qrException) {
+                if (function_exists('registrar_log')) {
+                    registrar_log('exception', 'certificate_qr_route: ' . $qrException->getMessage());
+                }
+
+                header('Content-Type: image/svg+xml; charset=UTF-8');
+                http_response_code(200);
+                echo '<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 200 200"><rect width="200" height="200" rx="20" fill="#ffffff"/><rect x="16" y="16" width="168" height="168" rx="18" fill="#f8fafc" stroke="#cbd5e1"/><text x="100" y="96" text-anchor="middle" fill="#10203c" font-family="Arial, Helvetica, sans-serif" font-size="16" font-weight="700">QR indisponível</text><text x="100" y="122" text-anchor="middle" fill="#64748b" font-family="Arial, Helvetica, sans-serif" font-size="12">Tente novamente</text></svg>';
+                exit;
+            }
 
         case 'certificado-pdf':
             try {
@@ -2143,7 +2356,6 @@ function processarAcao($post, $pdo)
             $descricao_a = trim($_POST['descricao'] ?? '');
             $conteudo_a = trim($_POST['conteudo'] ?? '');
             $resumo_a = trim($_POST['resumo'] ?? '');
-            $lesson_transcript = trim((string)($_POST['lesson_transcript'] ?? ''));
             $tipo = $_POST['tipo'] ?? 'texto';
             $url_arquivo = null;
             $audio_url = null;
@@ -2193,9 +2405,37 @@ function processarAcao($post, $pdo)
 
             // aceitar URL do YouTube (campo youtube_url) e extrair ID
             $youtube_url = trim($post['youtube_url'] ?? '');
-            $video_id = null;
-            if (!empty($youtube_url) && function_exists('youtube_id_from_url')) {
-                $video_id = youtube_id_from_url($youtube_url);
+            $video_id = !empty($youtube_url) && function_exists('youtube_id_from_url')
+                ? youtube_id_from_url($youtube_url)
+                : null;
+
+            if ($video_id === null || $video_id === '') {
+                $result = ['sucesso' => false, 'mensagem' => 'Informe uma URL válida do YouTube para salvar a aula.'];
+                if ($isAjax) {
+                    header('Content-Type: application/json');
+                    echo json_encode($result);
+                } else {
+                    $_SESSION['erro'] = $result['mensagem'];
+                    header('Location: ' . BASE_URL . '/index.php?page=gerenciar-curso&id=' . $course_id);
+                }
+                exit;
+            }
+
+            $transcriptService = new LessonTranscriptService($pdo);
+            $transcriptResult = $transcriptService->generateTranscriptFromYouTubeVideoId((string)$video_id);
+            if (empty($transcriptResult['sucesso'])) {
+                $result = ['sucesso' => false, 'mensagem' => 'Não foi possível gerar a transcrição da aula agora. Verifique o vídeo do YouTube e tente novamente.'];
+                if (!empty($transcriptResult['mensagem'])) {
+                    $result['mensagem'] .= ' ' . $transcriptResult['mensagem'];
+                }
+                if ($isAjax) {
+                    header('Content-Type: application/json');
+                    echo json_encode($result);
+                } else {
+                    $_SESSION['erro'] = $result['mensagem'];
+                    header('Location: ' . BASE_URL . '/index.php?page=gerenciar-curso&id=' . $course_id);
+                }
+                exit;
             }
 
             if ($audio_url === null && $url_arquivo && strtolower(pathinfo($url_arquivo, PATHINFO_EXTENSION)) === 'mp4') {
@@ -2213,25 +2453,10 @@ function processarAcao($post, $pdo)
 
             $lessonController = new LessonController($pdo);
             $result = $lessonController->criar($course_id, $titulo_a, $descricao_a, $tipo, $conteudo_a, $url_arquivo, $video_id, $module_id, $resumo_a !== '' ? $resumo_a : null, $audio_url, $audio_storage_disk, $audio_storage_key);
-            $transcriptNotice = null;
 
             if (!empty($result['sucesso']) && !empty($result['id'])) {
-                $transcriptService = new LessonTranscriptService($pdo);
-                if ($lesson_transcript !== '') {
-                    $transcriptService->saveManualTranscript((int)$result['id'], $lesson_transcript, (int)($usuarioAtual['id'] ?? 0));
-                    $transcriptNotice = 'Transcrição manual salva.';
-                } elseif (!empty($video_id)) {
-                    $transcriptResult = $transcriptService->generateAndStoreForLesson((int)$result['id'], (int)($usuarioAtual['id'] ?? 0));
-                    if (!empty($transcriptResult['sucesso'])) {
-                        $transcriptNotice = 'Transcrição da aula gerada automaticamente.';
-                    } else {
-                        $transcriptNotice = 'A aula foi criada, mas a transcrição automática não pôde ser gerada agora.';
-                    }
-                }
-
-                if ($transcriptNotice) {
-                    $result['mensagem'] = trim(($result['mensagem'] ?? 'Aula criada com sucesso.') . ' ' . $transcriptNotice);
-                }
+                $transcriptService->saveManualTranscript((int)$result['id'], (string)($transcriptResult['transcript'] ?? ''), (int)($usuarioAtual['id'] ?? 0));
+                $result['mensagem'] = trim(($result['mensagem'] ?? 'Aula criada com sucesso.') . ' Transcrição da aula gerada automaticamente.');
             }
 
             if ($isAjax) {
@@ -2272,7 +2497,6 @@ function processarAcao($post, $pdo)
             $descricao_a = trim($_POST['descricao'] ?? '');
             $conteudo_a = trim($_POST['conteudo'] ?? '');
             $resumo_a = trim($_POST['resumo'] ?? '');
-            $lesson_transcript = trim((string)($_POST['lesson_transcript'] ?? ''));
             $tipo = $_POST['tipo'] ?? 'texto';
             $url_arquivo = null;
             $audio_url = null;
@@ -2324,9 +2548,37 @@ function processarAcao($post, $pdo)
             }
 
             $youtube_url = trim($post['youtube_url'] ?? '');
-            $video_id = null;
-            if (!empty($youtube_url) && function_exists('youtube_id_from_url')) {
-                $video_id = youtube_id_from_url($youtube_url);
+            $video_id = !empty($youtube_url) && function_exists('youtube_id_from_url')
+                ? youtube_id_from_url($youtube_url)
+                : null;
+
+            if ($video_id === null || $video_id === '') {
+                $result = ['sucesso' => false, 'mensagem' => 'Informe uma URL válida do YouTube para salvar a aula.'];
+                if ($isAjax) {
+                    header('Content-Type: application/json');
+                    echo json_encode($result);
+                } else {
+                    $_SESSION['erro'] = $result['mensagem'];
+                    header('Location: ' . BASE_URL . '/index.php?page=gerenciar-curso&id=' . $course_id);
+                }
+                exit;
+            }
+
+            $transcriptService = new LessonTranscriptService($pdo);
+            $transcriptResult = $transcriptService->generateTranscriptFromYouTubeVideoId((string)$video_id);
+            if (empty($transcriptResult['sucesso'])) {
+                $result = ['sucesso' => false, 'mensagem' => 'Não foi possível gerar a transcrição da aula agora. Verifique o vídeo do YouTube e tente novamente.'];
+                if (!empty($transcriptResult['mensagem'])) {
+                    $result['mensagem'] .= ' ' . $transcriptResult['mensagem'];
+                }
+                if ($isAjax) {
+                    header('Content-Type: application/json');
+                    echo json_encode($result);
+                } else {
+                    $_SESSION['erro'] = $result['mensagem'];
+                    header('Location: ' . BASE_URL . '/index.php?page=gerenciar-curso&id=' . $course_id);
+                }
+                exit;
             }
 
             if ($audio_url === null && $url_arquivo && strtolower(pathinfo($url_arquivo, PATHINFO_EXTENSION)) === 'mp4') {
@@ -2345,40 +2597,8 @@ function processarAcao($post, $pdo)
             $lessonController = new LessonController($pdo);
             $result = $lessonController->atualizar($lesson_id, $titulo_a, $descricao_a, $tipo, $conteudo_a, $url_arquivo, $video_id, $module_id, $resumo_a !== '' ? $resumo_a : null, $audio_url, $audio_storage_disk, $audio_storage_key);
             if (!empty($result['sucesso'])) {
-                $transcriptService = new LessonTranscriptService($pdo);
-                $lessonAfterUpdate = $lessonModel->obterPorId($lesson_id) ?: [];
-                $previousVideoId = trim((string)($lessonBeforeUpdate['video_id'] ?? ''));
-                $previousTranscript = trim((string)($lessonBeforeUpdate['lesson_transcript'] ?? ''));
-                $currentVideoId = trim((string)($lessonAfterUpdate['video_id'] ?? ''));
-                $videoChanged = $previousVideoId !== $currentVideoId;
-                $transcriptNotice = null;
-
-                if ($videoChanged && ($lesson_transcript === '' || $lesson_transcript === $previousTranscript)) {
-                    $transcriptService->clearTranscript($lesson_id, (int)($usuarioAtual['id'] ?? 0));
-                    if ($currentVideoId !== '') {
-                        $transcriptResult = $transcriptService->generateAndStoreForLesson($lesson_id, (int)($usuarioAtual['id'] ?? 0));
-                        $transcriptNotice = !empty($transcriptResult['sucesso'])
-                            ? 'Transcrição atualizada automaticamente para o novo vídeo.'
-                            : 'A aula foi atualizada, mas a nova transcrição automática não pôde ser gerada agora.';
-                    } else {
-                        $transcriptNotice = 'A transcrição anterior foi removida porque o vídeo da aula mudou.';
-                    }
-                } elseif ($lesson_transcript !== '') {
-                    $transcriptService->saveManualTranscript($lesson_id, $lesson_transcript, (int)($usuarioAtual['id'] ?? 0));
-                    $transcriptNotice = 'Transcrição manual atualizada.';
-                } elseif ($previousTranscript !== '') {
-                    $transcriptService->clearTranscript($lesson_id, (int)($usuarioAtual['id'] ?? 0));
-                    $transcriptNotice = 'Transcrição removida.';
-                } elseif ($currentVideoId !== '') {
-                    $transcriptResult = $transcriptService->generateAndStoreForLesson($lesson_id, (int)($usuarioAtual['id'] ?? 0));
-                    $transcriptNotice = !empty($transcriptResult['sucesso'])
-                        ? 'Transcrição gerada automaticamente.'
-                        : 'A aula foi atualizada, mas a transcrição automática não pôde ser gerada agora.';
-                }
-
-                if ($transcriptNotice) {
-                    $result['mensagem'] = trim(($result['mensagem'] ?? 'Aula atualizada com sucesso.') . ' ' . $transcriptNotice);
-                }
+                $transcriptService->saveManualTranscript($lesson_id, (string)($transcriptResult['transcript'] ?? ''), (int)($usuarioAtual['id'] ?? 0));
+                $result['mensagem'] = trim(($result['mensagem'] ?? 'Aula atualizada com sucesso.') . ' Transcrição da aula gerada automaticamente.');
             }
             if ($isAjax) {
                 if (!empty($result['sucesso'])) {

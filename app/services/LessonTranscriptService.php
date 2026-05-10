@@ -92,6 +92,30 @@ class LessonTranscriptService
         ];
     }
 
+    public function generateTranscriptFromYouTubeVideoId(string $videoId): array
+    {
+        $videoId = trim($videoId);
+        if ($videoId === '') {
+            return ['sucesso' => false, 'mensagem' => 'Vídeo do YouTube inválido para transcrição.'];
+        }
+
+        $result = $this->fetchTranscriptFromYouTube($videoId);
+        if (empty($result['sucesso'])) {
+            return $result;
+        }
+
+        $transcript = $this->normalizeTranscript((string)($result['transcript'] ?? ''));
+        if ($transcript === null) {
+            return ['sucesso' => false, 'mensagem' => 'A transcrição retornou conteúdo vazio.'];
+        }
+
+        return [
+            'sucesso' => true,
+            'mensagem' => 'Transcrição gerada com sucesso.',
+            'transcript' => $transcript,
+        ];
+    }
+
     private function generateTranscriptForLessonSource(array $lesson): array
     {
         $videoId = trim((string)($lesson['video_id'] ?? ''));
@@ -123,59 +147,85 @@ class LessonTranscriptService
         }
 
         $timeoutSeconds = max(2, env_int('LESSON_TRANSCRIPT_TIMEOUT', 10));
-        $language = trim((string)env_value('LESSON_TRANSCRIPT_LANGUAGE', 'pt'));
         $nodeBinary = defined('NODE_BIN') && NODE_BIN !== '' ? NODE_BIN : 'node';
+        $languages = $this->resolveTranscriptLanguages();
+        $lastFailureMessage = 'Não foi possível gerar a transcrição deste vídeo.';
 
-        $execution = $this->runProcess([
-            '/usr/bin/env',
-            '-u',
-            'LD_LIBRARY_PATH',
-            $nodeBinary,
-            $scriptPath,
-            '--video-id',
-            $videoId,
-            '--lang',
-            $language !== '' ? $language : 'pt',
-        ], $timeoutSeconds);
+        foreach ($languages as $language) {
+            $execution = $this->runProcess([
+                '/usr/bin/env',
+                '-u',
+                'LD_LIBRARY_PATH',
+                $nodeBinary,
+                $scriptPath,
+                '--video-id',
+                $videoId,
+                '--lang',
+                $language,
+            ], $timeoutSeconds);
 
-        if (empty($execution['sucesso'])) {
-            return [
-                'sucesso' => false,
-                'mensagem' => (string)($execution['mensagem'] ?? 'Não foi possível executar a transcrição local.'),
-            ];
-        }
-
-        $stdout = trim((string)($execution['stdout'] ?? ''));
-        $jsonPayload = $stdout;
-        if ($stdout !== '' && strpos($stdout, "\n") !== false) {
-            $lines = preg_split('/\R/u', $stdout) ?: [];
-            $lastLine = trim((string)end($lines));
-            if ($lastLine !== '' && ($lastLine[0] ?? '') === '{') {
-                $jsonPayload = $lastLine;
+            if (empty($execution['sucesso'])) {
+                $lastFailureMessage = (string)($execution['mensagem'] ?? 'Não foi possível executar a transcrição local.');
+                continue;
             }
-        }
 
-        $decoded = json_decode($jsonPayload, true);
-        if (!is_array($decoded)) {
-            if (function_exists('registrar_log') && !empty($execution['stdout'])) {
-                registrar_log('lesson_transcript_error', 'stdout inválido na transcrição: ' . mb_substr((string)$execution['stdout'], 0, 500));
+            $stdout = trim((string)($execution['stdout'] ?? ''));
+            $jsonPayload = $stdout;
+            if ($stdout !== '' && strpos($stdout, "\n") !== false) {
+                $lines = preg_split('/\R/u', $stdout) ?: [];
+                $lastLine = trim((string)end($lines));
+                if ($lastLine !== '' && ($lastLine[0] ?? '') === '{') {
+                    $jsonPayload = $lastLine;
+                }
             }
-            return ['sucesso' => false, 'mensagem' => 'Script local de transcrição retornou resposta inválida.'];
+
+            $decoded = json_decode($jsonPayload, true);
+            if (!is_array($decoded)) {
+                if (function_exists('registrar_log') && !empty($execution['stdout'])) {
+                    registrar_log('lesson_transcript_error', 'stdout inválido na transcrição: ' . mb_substr((string)$execution['stdout'], 0, 500));
+                }
+                $lastFailureMessage = 'Script local de transcrição retornou resposta inválida.';
+                continue;
+            }
+
+            if (empty($decoded['sucesso'])) {
+                $lastFailureMessage = (string)($decoded['mensagem'] ?? 'Não foi possível gerar a transcrição deste vídeo.');
+                continue;
+            }
+
+            $transcript = $decoded['transcript'] ?? null;
+            if (!is_string($transcript) || trim($transcript) === '') {
+                $lastFailureMessage = 'Transcrição não encontrada na resposta do script local.';
+                continue;
+            }
+
+            return ['sucesso' => true, 'transcript' => $transcript];
         }
 
-        if (empty($decoded['sucesso'])) {
-            return [
-                'sucesso' => false,
-                'mensagem' => (string)($decoded['mensagem'] ?? 'Não foi possível gerar a transcrição deste vídeo.'),
-            ];
+        return ['sucesso' => false, 'mensagem' => $lastFailureMessage];
+    }
+
+    private function resolveTranscriptLanguages(): array
+    {
+        $preferred = trim((string)env_value('LESSON_TRANSCRIPT_LANGUAGE', 'pt'));
+        $candidates = array_filter([
+            $preferred !== '' ? $preferred : null,
+            'pt',
+            'pt-BR',
+            'en',
+            'en-US',
+        ]);
+
+        $unique = [];
+        foreach ($candidates as $candidate) {
+            $normalized = trim((string)$candidate);
+            if ($normalized === '' || in_array($normalized, $unique, true)) {
+                continue;
+            }
+            $unique[] = $normalized;
         }
 
-        $transcript = $decoded['transcript'] ?? null;
-        if (!is_string($transcript) || trim($transcript) === '') {
-            return ['sucesso' => false, 'mensagem' => 'Transcrição não encontrada na resposta do script local.'];
-        }
-
-        return ['sucesso' => true, 'transcript' => $transcript];
+        return $unique !== [] ? $unique : ['pt', 'en'];
     }
 
     private function fetchTranscriptFromLocalVideo(string $videoFilename): array

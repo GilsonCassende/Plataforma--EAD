@@ -8,23 +8,46 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 function initLessonVideoEmbed() {
-    document.addEventListener('click', (event) => {
-        const placeholder = event.target.closest('.video-wrapper .placeholder');
-        if (!placeholder) return;
-
-        const wrapper = placeholder.closest('.video-wrapper');
+    const loadVideoEmbed = (wrapper) => {
         const src = wrapper?.dataset.embed;
-        if (!wrapper || !src) return;
+        if (!wrapper || !src || wrapper.dataset.loadingVideo === '1') return;
+
+        wrapper.dataset.loadingVideo = '1';
+
+        const existingIframe = wrapper.querySelector('iframe.media-frame');
+        if (existingIframe) {
+            existingIframe.remove();
+        }
 
         const iframe = document.createElement('iframe');
         iframe.src = src;
         iframe.className = 'media-frame';
         iframe.setAttribute('allow', 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture');
         iframe.setAttribute('allowfullscreen', '');
-        iframe.setAttribute('title', 'Reprodutor de vídeo da aula');
+        iframe.setAttribute('loading', 'eager');
+        iframe.setAttribute('referrerpolicy', 'strict-origin-when-cross-origin');
+        iframe.setAttribute('title', wrapper.dataset.title || 'Reprodutor de vídeo da aula');
 
-        wrapper.innerHTML = '';
+        const placeholder = wrapper.querySelector('.placeholder');
+
+        iframe.addEventListener('load', () => {
+            wrapper.dataset.loadingVideo = '0';
+            if (placeholder) placeholder.remove();
+        }, { once: true });
+
+        iframe.addEventListener('error', () => {
+            wrapper.dataset.loadingVideo = '0';
+        }, { once: true });
+
         wrapper.appendChild(iframe);
+    };
+
+    document.addEventListener('click', (event) => {
+        const placeholder = event.target.closest('.video-wrapper .placeholder');
+        if (!placeholder) return;
+
+        const wrapper = placeholder.closest('.video-wrapper');
+        loadVideoEmbed(wrapper);
     });
 }
 

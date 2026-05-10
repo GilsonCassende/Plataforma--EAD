@@ -19,6 +19,9 @@
             $isOwner = is_course_owner($curso);
             $totalAulasCurso = count($aulas_curso ?? []);
             $progressValue = (int)($progresso_curso ?? 0);
+            $trailProgressValue = $totalAulasCurso > 0
+                ? (int)floor((((int)($aulas_concluidas_total ?? 0)) / $totalAulasCurso) * 100)
+                : 0;
             $currentLessonIndex = 1;
             $modulosCurso = is_array($modulos_curso ?? null) ? $modulos_curso : [];
             $currentModule = $current_module ?? null;
@@ -39,12 +42,13 @@
 
             $showLessonModes = ($aula['tipo'] ?? '') === 'video';
             $audioSourceUrl = lesson_audio_url($aula);
-            $hasEconomicAudio = $showLessonModes && $audioSourceUrl !== '';
             $summaryMarkdown = trim((string)($aula['resumo'] ?? ''));
             $summaryFallback = 'Resumo não disponível para esta aula';
             $readingIntro = trim((string)($aula['descricao'] ?? ''));
             $lessonTranscript = trim((string)($aula['lesson_transcript'] ?? ''));
             $hasTranscript = $lessonTranscript !== '';
+            $hasEconomicAudioFile = $showLessonModes && $audioSourceUrl !== '';
+            $hasEconomicAudio = $showLessonModes && ($hasEconomicAudioFile || $hasTranscript);
             $lessonAiContent = trim((string)($lesson_ai_content ?? ''));
             $hasLessonAiContent = $lessonAiContent !== '';
             $lessonAiError = trim((string)($lesson_ai_error ?? ''));
@@ -201,7 +205,7 @@
 
                         <?php if ($isOwner): ?>
                             <div class="aula-header-actions">
-                                <a href="?page=editar-aula&lesson_id=<?php echo $aula['id']; ?>&course_id=<?php echo $curso['id']; ?>" class="btn btn-outline btn-sm">Editar Aula</a>
+                                <a href="?page=editar-aula&lesson_id=<?php echo $aula['id']; ?>&course_id=<?php echo $curso['id']; ?>" class="btn btn-outline btn-sm" data-fragment="?page=editar-aula&partial=1&lesson_id=<?php echo (int)$aula['id']; ?>&course_id=<?php echo (int)$curso['id']; ?>" data-fragment-title="Editar Aula">Editar Aula</a>
                                 <form method="POST" class="inline-form" data-confirm="Deletar esta aula?">
                                     <?php echo csrf_input(); ?>
                                     <input type="hidden" name="acao" value="deletar_aula">
@@ -262,7 +266,7 @@
                                             $thumb = "https://i.ytimg.com/vi/{$yid}/hqdefault.jpg";
                                             $embed = "https://www.youtube-nocookie.com/embed/{$yid}?autoplay=1&rel=0&modestbranding=1&playsinline=1&iv_load_policy=3&fs=1&enablejsapi=1";
                                         ?>
-                                            <div class="video-wrapper" data-embed="<?php echo $embed; ?>">
+                                            <div class="video-wrapper" data-embed="<?php echo $embed; ?>" data-title="<?php echo htmlspecialchars((string)($aula['titulo'] ?? 'Reprodutor de vídeo da aula'), ENT_QUOTES, 'UTF-8'); ?>">
                                                 <button type="button" class="placeholder" aria-label="Reproduzir vídeo">
                                                     <img src="<?php echo $thumb; ?>" alt="Thumbnail da aula">
                                                     <span class="play-btn" aria-hidden="true">►</span>
@@ -278,7 +282,7 @@
                                                 }
                                                 ?>
                                                 <?php if ($youtubeId !== ''): ?>
-                                                    <div class="video-wrapper" data-embed="https://www.youtube-nocookie.com/embed/<?php echo htmlspecialchars($youtubeId, ENT_QUOTES, 'UTF-8'); ?>?autoplay=1&rel=0&modestbranding=1&playsinline=1&iv_load_policy=3&fs=1&enablejsapi=1">
+                                                    <div class="video-wrapper" data-embed="https://www.youtube-nocookie.com/embed/<?php echo htmlspecialchars($youtubeId, ENT_QUOTES, 'UTF-8'); ?>?autoplay=1&rel=0&modestbranding=1&playsinline=1&iv_load_policy=3&fs=1&enablejsapi=1" data-title="<?php echo htmlspecialchars((string)($aula['titulo'] ?? 'Reprodutor de vídeo da aula'), ENT_QUOTES, 'UTF-8'); ?>">
                                                         <button type="button" class="placeholder" aria-label="Reproduzir vídeo">
                                                             <img src="https://i.ytimg.com/vi/<?php echo htmlspecialchars($youtubeId, ENT_QUOTES, 'UTF-8'); ?>/hqdefault.jpg" alt="Thumbnail da aula">
                                                             <span class="play-btn" aria-hidden="true">►</span>
@@ -308,11 +312,23 @@
                                                     <span class="lesson-mode-kicker">Baixo consumo</span>
                                                     <h2>Ouça a aula com menos dados</h2>
                                                 </div>
-                                                <?php if ($hasEconomicAudio): ?>
+                                                <?php if ($hasEconomicAudioFile): ?>
                                                     <audio controls preload="none" class="lesson-mode-audio">
                                                         <source src="<?php echo htmlspecialchars($audioSourceUrl, ENT_QUOTES, 'UTF-8'); ?>" type="audio/mpeg">
                                                         Seu navegador não suporta reprodução de áudio.
                                                     </audio>
+                                                <?php elseif ($hasTranscript): ?>
+                                                    <div class="lesson-mode-tts" data-browser-tts>
+                                                        <p class="lesson-mode-tts__intro">Este áudio econômico será narrado a partir da transcrição da aula.</p>
+                                                        <div class="lesson-mode-tts__controls">
+                                                            <button type="button" class="btn btn-primary btn-sm" data-tts-play>Ouvir agora</button>
+                                                            <button type="button" class="btn btn-outline btn-sm" data-tts-pause disabled aria-disabled="true">Pausar</button>
+                                                            <button type="button" class="btn btn-outline btn-sm" data-tts-resume disabled aria-disabled="true">Continuar</button>
+                                                            <button type="button" class="btn btn-outline btn-sm" data-tts-stop disabled aria-disabled="true">Parar</button>
+                                                        </div>
+                                                        <p class="lesson-mode-tts__status" data-tts-status role="status">Pronto para reproduzir a aula em áudio.</p>
+                                                        <textarea hidden data-tts-text><?php echo htmlspecialchars($lessonTranscript, ENT_QUOTES, 'UTF-8'); ?></textarea>
+                                                    </div>
                                                 <?php else: ?>
                                                     <div class="lesson-mode-empty-state">Áudio não disponível nesta aula.</div>
                                                 <?php endif; ?>
@@ -517,10 +533,10 @@
                         </div>
 
                         <div class="lesson-progress-summary">
-                            <div class="progresso-bar" role="progressbar" aria-label="Progresso do curso" aria-valuemin="0" aria-valuemax="100" aria-valuenow="<?php echo htmlspecialchars($progressValue, ENT_QUOTES, 'UTF-8'); ?>">
-                                <div class="progresso-fill" data-course-id="<?php echo htmlspecialchars((int)$curso['id'], ENT_QUOTES, 'UTF-8'); ?>" data-progress="<?php echo htmlspecialchars($progressValue, ENT_QUOTES, 'UTF-8'); ?>"></div>
+                            <div class="progresso-bar" role="progressbar" aria-label="Progresso da trilha" aria-valuemin="0" aria-valuemax="100" aria-valuenow="<?php echo htmlspecialchars($trailProgressValue, ENT_QUOTES, 'UTF-8'); ?>">
+                                <div class="progresso-fill" data-course-id="<?php echo htmlspecialchars((int)$curso['id'], ENT_QUOTES, 'UTF-8'); ?>" data-progress="<?php echo htmlspecialchars($trailProgressValue, ENT_QUOTES, 'UTF-8'); ?>"></div>
                             </div>
-                            <p class="progresso-text" data-course-id="<?php echo htmlspecialchars((int)$curso['id'], ENT_QUOTES, 'UTF-8'); ?>"><?php echo htmlspecialchars($progressValue, ENT_QUOTES, 'UTF-8'); ?>% completo</p>
+                            <p class="progresso-text" data-course-id="<?php echo htmlspecialchars((int)$curso['id'], ENT_QUOTES, 'UTF-8'); ?>"><?php echo htmlspecialchars($trailProgressValue, ENT_QUOTES, 'UTF-8'); ?>% completo</p>
                         </div>
 
                         <div class="aulas-grid-sidebar">

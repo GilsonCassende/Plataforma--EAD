@@ -4,6 +4,11 @@
  * View: Página Inicial (Home)
  */
 ?>
+<?php
+$homeStartNowHref = !empty($_SESSION['usuario'])
+    ? '?page=dashboard'
+    : '?page=registro';
+?>
 
 <div class="hero-section hero-carousel" aria-roledescription="carousel">
     <div class="carousel-track" id="carouselTrack">
@@ -30,7 +35,7 @@
                 <div class="slide-panel">
                     <h1>Estude no Seu Ritmo, Onde Estiver</h1>
                     <p class="slide-subtitle">Uma plataforma flexível que se adapta à sua rotina e acelera o seu aprendizado.</p>
-                    <a href="?page=registro" class="btn btn-hero ui-btn ui-btn--primary">Começar Agora</a>
+                    <a href="<?php echo htmlspecialchars($homeStartNowHref, ENT_QUOTES, 'UTF-8'); ?>" class="btn btn-hero ui-btn ui-btn--primary">Começar Agora</a>
                 </div>
             </div>
         </section>
@@ -44,7 +49,7 @@
                 <div class="slide-panel">
                     <h1>Conquiste sua Certificação Profissional</h1>
                     <p class="slide-subtitle">Valide suas habilidades com certificados reconhecidos e impulsione sua carreira no mercado.</p>
-                    <a href="?page=cursos" class="btn btn-hero ui-btn ui-btn--primary">Saiba Mais</a>
+                    <a href="?page=certificacao-profissional" class="btn btn-hero ui-btn ui-btn--primary">Saiba Mais</a>
                 </div>
             </div>
         </section>

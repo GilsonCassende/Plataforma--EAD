@@ -216,9 +216,11 @@ class CourseController {
         $isOwner = $userId > 0 && (int)($curso['teacher_id'] ?? 0) === $userId;
         $isStudentContext = $userId > 0 && !$isOwner && (($sessionUser['role'] ?? '') === 'aluno');
         $quizModel = null;
+        $mandatoryLessonQuizApprovalMap = [];
 
         $completedLessonIds = [];
         if ($isStudentContext && !empty($aulas)) {
+            $quizModel = new Quiz($this->pdo);
             $lessonIds = array_map(static function ($lesson) {
                 return (int)($lesson['id'] ?? 0);
             }, $aulas);
@@ -230,6 +232,7 @@ class CourseController {
             );
             $stmt->execute(array_merge([$userId], $lessonIds));
             $completedLessonIds = array_map('intval', array_column($stmt->fetchAll(), 'lesson_id'));
+            $mandatoryLessonQuizApprovalMap = $quizModel->getMandatoryLessonQuizApprovalMap((int)($curso['id'] ?? 0), $userId);
         }
 
         $moduleMap = [];
@@ -253,10 +256,12 @@ class CourseController {
                 continue;
             }
             $lesson['position'] = $index + 1;
-            $lesson['is_completed'] = in_array((int)($lesson['id'] ?? 0), $completedLessonIds, true);
+            $lessonId = (int)($lesson['id'] ?? 0);
+            $lesson['is_completed'] = in_array($lessonId, $completedLessonIds, true)
+                && (!array_key_exists($lessonId, $mandatoryLessonQuizApprovalMap) || !empty($mandatoryLessonQuizApprovalMap[$lessonId]));
             $lesson['lesson_quizzes'] = [];
             $moduleMap[$moduleId]['lessons'][] = $lesson;
-            $lessonIndexMap[(int)($lesson['id'] ?? 0)] = [
+            $lessonIndexMap[$lessonId] = [
                 'module_id' => $moduleId,
                 'lesson_index' => count($moduleMap[$moduleId]['lessons']) - 1,
             ];

@@ -67,9 +67,9 @@ if (isset($_GET['partial']) && $_GET['partial'] == '1'):
             </div>
 
             <div class="form-group">
-                <label>Transcrição da aula (opcional)</label>
-                <textarea name="lesson_transcript" rows="7" placeholder="Cole ou ajuste a transcrição usada pelo assistente inteligente"><?php echo htmlspecialchars($aula['lesson_transcript'] ?? '', ENT_QUOTES, 'UTF-8'); ?></textarea>
-                <small>Se este campo ficar vazio, a plataforma tentará gerar uma nova transcrição automaticamente quando a aula usar YouTube ou um vídeo MP4 compatível.</small>
+                <label>Transcrição atual da aula</label>
+                <textarea rows="7" readonly placeholder="A transcrição será regenerada automaticamente ao salvar."><?php echo htmlspecialchars($aula['lesson_transcript'] ?? '', ENT_QUOTES, 'UTF-8'); ?></textarea>
+                <small>Ao salvar, a plataforma gera novamente a transcrição usando a URL do YouTube desta aula.</small>
             </div>
 
             <div class="form-group">
@@ -81,9 +81,9 @@ if (isset($_GET['partial']) && $_GET['partial'] == '1'):
             </div>
 
             <div class="form-group">
-                <label>URL do YouTube (opcional)</label>
-                <input type="text" name="youtube_url" value="<?php echo htmlspecialchars($currentYoutubeUrl, ENT_QUOTES, 'UTF-8'); ?>" placeholder="https://youtu.be/... ou https://www.youtube.com/watch?v=...">
-                <small>Se preencher, o vídeo embutido será atualizado nesta aula.</small>
+                <label>URL do YouTube</label>
+                <input type="text" name="youtube_url" required value="<?php echo htmlspecialchars($currentYoutubeUrl, ENT_QUOTES, 'UTF-8'); ?>" placeholder="https://youtu.be/... ou https://www.youtube.com/watch?v=...">
+                <small>Campo obrigatório. A aula só será salva quando a nova transcrição automática for gerada com sucesso.</small>
             </div>
 
             <div class="form-group">
@@ -161,9 +161,9 @@ endif;
             </div>
 
             <div class="form-group">
-                <label>Transcrição da aula (opcional)</label>
-                <textarea name="lesson_transcript" rows="8" placeholder="Cole ou ajuste a transcrição usada pelo assistente inteligente"><?php echo htmlspecialchars($aula['lesson_transcript'] ?? '', ENT_QUOTES, 'UTF-8'); ?></textarea>
-                <small>Se este campo ficar vazio, a plataforma tentará gerar uma nova transcrição automaticamente quando a aula usar YouTube ou um vídeo MP4 compatível.</small>
+                <label>Transcrição atual da aula</label>
+                <textarea rows="8" readonly placeholder="A transcrição será regenerada automaticamente ao salvar."><?php echo htmlspecialchars($aula['lesson_transcript'] ?? '', ENT_QUOTES, 'UTF-8'); ?></textarea>
+                <small>Ao salvar, a plataforma gera novamente a transcrição usando a URL do YouTube desta aula.</small>
             </div>
 
             <div class="form-group">
@@ -175,9 +175,9 @@ endif;
             </div>
 
             <div class="form-group">
-                <label>URL do YouTube (opcional)</label>
-                <input type="text" name="youtube_url" value="<?php echo htmlspecialchars($currentYoutubeUrl, ENT_QUOTES, 'UTF-8'); ?>" placeholder="https://youtu.be/... ou https://www.youtube.com/watch?v=...">
-                <small>Se preencher, o vídeo embutido será atualizado nesta aula.</small>
+                <label>URL do YouTube</label>
+                <input type="text" name="youtube_url" required value="<?php echo htmlspecialchars($currentYoutubeUrl, ENT_QUOTES, 'UTF-8'); ?>" placeholder="https://youtu.be/... ou https://www.youtube.com/watch?v=...">
+                <small>Campo obrigatório. A aula só será salva quando a nova transcrição automática for gerada com sucesso.</small>
             </div>
 
             <div class="form-group">

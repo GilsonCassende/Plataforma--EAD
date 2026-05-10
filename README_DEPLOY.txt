@@ -7,7 +7,8 @@ Instruções rápidas para usar este ZIP em outro computador com XAMPP:
 3) Abra o Painel XAMPP e inicie Apache e MySQL.
 4) Importe `migrations/schema.sql` via phpMyAdmin em `http://localhost/phpmyadmin` (ou usar `install.ps1` se preferir).
 5) Ajuste `config/database.php` se as credenciais do MySQL forem diferentes.
-6) Acesse `http://localhost/Plataforma-EAD/public/index.php`.
+6) Copie também a pasta `public/uploads` se quiser manter thumbnails, fotos de perfil e outros ficheiros enviados.
+7) Acesse `http://localhost/Plataforma-EAD/public/index.php`.
 
 Script útil (PowerShell) para extrair e importar (executar como Administrador):
 
@@ -22,5 +23,7 @@ Expand-Archive -Path 'C:\caminho\para\Plataforma-EAD-deploy.zip' -DestinationPat
 Observações:
 - Antes de importar, verifique se o banco `ead_platform` já existe; caso exista e contenha dados, o import pode falhar por conflitos.
 - Se preferir não sobrescrever dados, crie uma nova database no phpMyAdmin e altere `config/database.php`.
+- O dump SQL não leva as imagens do sistema. Esses arquivos ficam em `public/uploads` e precisam ser copiados junto na migração.
+- Para uma migração mais segura, use `scripts/build_migration_package.php` e valide antes com `scripts/check_portability.php`.
 
 Gerado automaticamente pelo utilitário de empacotamento do projeto.

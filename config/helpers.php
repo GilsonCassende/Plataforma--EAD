@@ -483,6 +483,90 @@ function upload_image_url($file, array $params = [])
 }
 
 /**
+ * Resolver caminho físico de um upload e, se necessário, tentar recuperar o ficheiro
+ * a partir de diretórios auxiliares já presentes no projeto.
+ */
+function resolve_upload_path($file, $attemptRestore = false)
+{
+    $filename = basename(trim((string)$file));
+    if ($filename === '') {
+        return null;
+    }
+
+    $publicUploadsDir = dirname(__DIR__) . '/public/uploads';
+    $uploadsDir = defined('UPLOADS_DIR') ? UPLOADS_DIR : $publicUploadsDir;
+    $primaryCandidates = [];
+
+    foreach ([$uploadsDir, $publicUploadsDir] as $dir) {
+        $dir = rtrim((string)$dir, DIRECTORY_SEPARATOR);
+        if ($dir !== '' && !in_array($dir, $primaryCandidates, true)) {
+            $primaryCandidates[] = $dir;
+        }
+    }
+
+    foreach ($primaryCandidates as $dir) {
+        $path = $dir . DIRECTORY_SEPARATOR . $filename;
+        if (is_file($path)) {
+            return $path;
+        }
+    }
+
+    if (!$attemptRestore) {
+        return null;
+    }
+
+    $fallbackCandidates = [
+        dirname(__DIR__) . '/bootstrap_uploads/' . $filename,
+    ];
+
+    $importsDir = dirname(__DIR__) . '/storage/imports';
+    if (is_dir($importsDir)) {
+        try {
+            $iterator = new RecursiveIteratorIterator(
+                new RecursiveDirectoryIterator($importsDir, FilesystemIterator::SKIP_DOTS)
+            );
+
+            foreach ($iterator as $item) {
+                if (!$item->isFile()) {
+                    continue;
+                }
+
+                if (strcasecmp($item->getFilename(), $filename) === 0) {
+                    $fallbackCandidates[] = $item->getPathname();
+                }
+            }
+        } catch (Throwable $exception) {
+            // Se a varredura falhar, seguimos apenas com os candidatos já conhecidos.
+        }
+    }
+
+    foreach ($fallbackCandidates as $candidate) {
+        if (!is_file($candidate)) {
+            continue;
+        }
+
+        foreach ($primaryCandidates as $targetDir) {
+            if (!is_dir($targetDir) && !@mkdir($targetDir, 0775, true) && !is_dir($targetDir)) {
+                continue;
+            }
+
+            $targetPath = $targetDir . DIRECTORY_SEPARATOR . $filename;
+            if (!is_file($targetPath) && @copy($candidate, $targetPath)) {
+                return $targetPath;
+            }
+
+            if (is_file($targetPath)) {
+                return $targetPath;
+            }
+        }
+
+        return $candidate;
+    }
+
+    return null;
+}
+
+/**
  * Construir URL pública para arquivos armazenados em uploads.
  */
 function upload_file_url($file)
@@ -497,10 +581,39 @@ function upload_file_url($file)
 }
 
 /**
+ * Verifica se a aula possui um ficheiro de áudio realmente disponível.
+ */
+function lesson_audio_file_exists(array $lesson): bool
+{
+    $storageKey = trim((string)($lesson['audio_storage_key'] ?? ''));
+    if ($storageKey !== '' && class_exists('StorageService')) {
+        try {
+            $storage = new StorageService((string)($lesson['audio_storage_disk'] ?? 'local'));
+            if ($storage->exists($storageKey)) {
+                return true;
+            }
+        } catch (Throwable $exception) {
+            // Se o storage falhar, tentamos o caminho local abaixo.
+        }
+    }
+
+    $audioUrl = trim((string)($lesson['audio_url'] ?? ''));
+    if ($audioUrl === '') {
+        return false;
+    }
+
+    return resolve_upload_path($audioUrl, true) !== null;
+}
+
+/**
  * Construir URL pública/protegida para o áudio de uma aula.
  */
 function lesson_audio_url(array $lesson): string
 {
+    if (!lesson_audio_file_exists($lesson)) {
+        return '';
+    }
+
     $lessonId = (int)($lesson['id'] ?? 0);
     $storageKey = trim((string)($lesson['audio_storage_key'] ?? ''));
     if ($lessonId > 0 && $storageKey !== '') {
@@ -909,8 +1022,53 @@ function contar_palavras($texto)
  */
 function gerar_qrcode($dados, $tamanho = 200)
 {
-    $dados_encoded = urlencode($dados);
-    return "https://chart.googleapis.com/chart?chs={$tamanho}x{$tamanho}&chld=M|0&cht=qr&chl={$dados_encoded}";
+    $query = http_build_query([
+        'page' => 'certificate-qr',
+        'text' => (string)$dados,
+        'size' => max(96, min(1024, (int)$tamanho)),
+    ]);
+
+    return rtrim(BASE_URL, '/') . '/index.php?' . $query;
+}
+
+/**
+ * Construir caminho relativo oficial para validar um certificado.
+ */
+function certificate_verification_path($code): string
+{
+    $code = rawurlencode(trim((string)$code));
+    if ($code === '') {
+        return BASE_URL . '/validar-certificado';
+    }
+
+    return rtrim(BASE_URL, '/') . '/validar-certificado/' . $code;
+}
+
+/**
+ * Construir URL absoluta oficial para validar um certificado.
+ */
+function certificate_verification_url($code): string
+{
+    $path = certificate_verification_path($code);
+    return rtrim(APP_URL, '/') . substr($path, strlen(rtrim(BASE_URL, '/')));
+}
+
+/**
+ * Construir URL do QR Code de verificação do certificado.
+ */
+function certificate_qr_code_url($code, $size = 200): string
+{
+    return gerar_qrcode(certificate_verification_url($code), (int)$size);
+}
+
+/**
+ * Construir URL absoluta da imagem Open Graph do certificado.
+ */
+function certificate_og_image_url($code): string
+{
+    $base = rtrim(APP_URL, '/');
+    $code = rawurlencode(trim((string)$code));
+    return $base . '/index.php?page=certificate-og&code=' . $code;
 }
 
 /**

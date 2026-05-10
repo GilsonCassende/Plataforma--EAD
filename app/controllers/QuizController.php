@@ -333,6 +333,9 @@ class QuizController
 
         $courseId = (int)($quiz['course_id'] ?? 0);
         $notaCurso = $this->quizModel->calcularNotaFinalCurso($courseId, (int)$usuario['id']);
+        if ($courseId > 0) {
+            $this->quizModel->recalculateEnrollmentProgress($courseId, (int)$usuario['id']);
+        }
         $certificateController = new CertificateController($this->pdo);
         $certificateSync = $certificateController->syncCourseCertificates((int)$usuario['id'], $courseId);
 

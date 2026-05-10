@@ -23,6 +23,13 @@ $assetUrl = static function (string $relativePath) use ($publicRoot): string {
     return BASE_URL . '/' . $relativePath . '?v=' . rawurlencode($version);
 };
 $debugCssEnabled = isset($_GET['debug_css']) && $_GET['debug_css'] === '1';
+$metaDescription = trim((string)($meta_description ?? ''));
+$metaRobots = trim((string)($meta_robots ?? 'index,follow'));
+$ogTitle = trim((string)($meta_og_title ?? (string)$titulo));
+$ogDescription = trim((string)($meta_og_description ?? $metaDescription));
+$ogUrl = trim((string)($meta_og_url ?? ''));
+$ogType = trim((string)($meta_og_type ?? 'website'));
+$ogImage = trim((string)($meta_og_image ?? ''));
 
 $navLinks = [];
 if ($estaAutenticado) {
@@ -61,6 +68,7 @@ $pageCssMap = [
     'aula' => ['aula'],
     'quiz' => ['quiz'],
     'certificado' => ['certificado'],
+    'certificacao-profissional' => ['certificacao-info'],
     'certificado-pdf' => ['certificado-pdf'],
     'gerenciar-curso' => ['gerenciar-curso'],
     'alunos-curso' => ['alunos-curso'],
@@ -82,6 +90,25 @@ $pageCssFiles = $pageCssMap[$pageName] ?? [];
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="<?php echo htmlspecialchars($csrfToken, ENT_QUOTES, 'UTF-8'); ?>">
     <title><?php echo htmlspecialchars((string)$titulo, ENT_QUOTES, 'UTF-8'); ?></title>
+    <?php if ($metaDescription !== ''): ?>
+    <meta name="description" content="<?php echo htmlspecialchars($metaDescription, ENT_QUOTES, 'UTF-8'); ?>">
+    <?php endif; ?>
+    <meta name="robots" content="<?php echo htmlspecialchars($metaRobots, ENT_QUOTES, 'UTF-8'); ?>">
+    <?php if ($ogTitle !== ''): ?>
+    <meta property="og:title" content="<?php echo htmlspecialchars($ogTitle, ENT_QUOTES, 'UTF-8'); ?>">
+    <?php endif; ?>
+    <?php if ($ogDescription !== ''): ?>
+    <meta property="og:description" content="<?php echo htmlspecialchars($ogDescription, ENT_QUOTES, 'UTF-8'); ?>">
+    <?php endif; ?>
+    <?php if ($ogUrl !== ''): ?>
+    <meta property="og:url" content="<?php echo htmlspecialchars($ogUrl, ENT_QUOTES, 'UTF-8'); ?>">
+    <?php endif; ?>
+    <?php if ($ogImage !== ''): ?>
+    <meta property="og:image" content="<?php echo htmlspecialchars($ogImage, ENT_QUOTES, 'UTF-8'); ?>">
+    <meta property="og:image:alt" content="Certificado verificado na Plataforma EAD">
+    <?php endif; ?>
+    <meta property="og:type" content="<?php echo htmlspecialchars($ogType, ENT_QUOTES, 'UTF-8'); ?>">
+    <meta property="og:site_name" content="Plataforma EAD">
     <?php if (empty($pdfExport)): ?>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -169,10 +196,10 @@ $pageCssFiles = $pageCssMap[$pageName] ?? [];
     <main class="main-container">
         <div class="container">
             <?php if (!empty($flashMensagem)): ?>
-                <div class="alert alert-success"><?php echo htmlspecialchars((string)$flashMensagem, ENT_QUOTES, 'UTF-8'); ?></div>
+                <div class="server-flash-payload" data-server-toast data-toast-type="success" hidden><?php echo htmlspecialchars((string)$flashMensagem, ENT_QUOTES, 'UTF-8'); ?></div>
             <?php endif; ?>
             <?php if (!empty($flashErro)): ?>
-                <div class="alert alert-error"><?php echo htmlspecialchars((string)$flashErro, ENT_QUOTES, 'UTF-8'); ?></div>
+                <div class="server-flash-payload" data-server-toast data-toast-type="error" hidden><?php echo htmlspecialchars((string)$flashErro, ENT_QUOTES, 'UTF-8'); ?></div>
             <?php endif; ?>
         </div>
         <?php echo $conteudo; ?>

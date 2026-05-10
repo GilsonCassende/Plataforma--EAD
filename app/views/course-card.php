@@ -94,7 +94,14 @@ $secondaryActions = $courseCard['secondary_actions'] ?? [];
             <?php if (!empty($primaryAction['label'])): ?>
                 <?php $primaryClass = trim('btn btn-block ui-btn ui-btn--primary ' . (string)($primaryAction['class'] ?? '')); ?>
                 <?php if (!empty($primaryAction['href'])): ?>
-                    <a href="<?php echo htmlspecialchars((string)$primaryAction['href'], ENT_QUOTES, 'UTF-8'); ?>" class="<?php echo htmlspecialchars($primaryClass, ENT_QUOTES, 'UTF-8'); ?>">
+                    <a
+                        href="<?php echo htmlspecialchars((string)$primaryAction['href'], ENT_QUOTES, 'UTF-8'); ?>"
+                        class="<?php echo htmlspecialchars($primaryClass, ENT_QUOTES, 'UTF-8'); ?>"
+                        <?php if (!empty($primaryAction['attributes']) && is_array($primaryAction['attributes'])): ?>
+                            <?php foreach ($primaryAction['attributes'] as $attrName => $attrValue): ?>
+                                <?php echo htmlspecialchars((string)$attrName, ENT_QUOTES, 'UTF-8'); ?>="<?php echo htmlspecialchars((string)$attrValue, ENT_QUOTES, 'UTF-8'); ?>"
+                            <?php endforeach; ?>
+                        <?php endif; ?>>
                         <?php echo htmlspecialchars((string)$primaryAction['label'], ENT_QUOTES, 'UTF-8'); ?>
                     </a>
                 <?php else: ?>
@@ -110,7 +117,14 @@ $secondaryActions = $courseCard['secondary_actions'] ?? [];
                         <?php if (empty($action['label'])) continue; ?>
                         <?php $secondaryClass = trim('btn ui-btn course-card__secondary-action ' . (string)($action['class'] ?? 'btn-outline')); ?>
                         <?php if (!empty($action['href'])): ?>
-                            <a href="<?php echo htmlspecialchars((string)$action['href'], ENT_QUOTES, 'UTF-8'); ?>" class="<?php echo htmlspecialchars($secondaryClass, ENT_QUOTES, 'UTF-8'); ?>">
+                            <a
+                                href="<?php echo htmlspecialchars((string)$action['href'], ENT_QUOTES, 'UTF-8'); ?>"
+                                class="<?php echo htmlspecialchars($secondaryClass, ENT_QUOTES, 'UTF-8'); ?>"
+                                <?php if (!empty($action['attributes']) && is_array($action['attributes'])): ?>
+                                    <?php foreach ($action['attributes'] as $attrName => $attrValue): ?>
+                                        <?php echo htmlspecialchars((string)$attrName, ENT_QUOTES, 'UTF-8'); ?>="<?php echo htmlspecialchars((string)$attrValue, ENT_QUOTES, 'UTF-8'); ?>"
+                                    <?php endforeach; ?>
+                                <?php endif; ?>>
                                 <?php echo htmlspecialchars((string)$action['label'], ENT_QUOTES, 'UTF-8'); ?>
                             </a>
                         <?php else: ?>

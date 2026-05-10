@@ -1,5 +1,6 @@
 document.addEventListener('DOMContentLoaded', () => {
     initLessonModes();
+    initBrowserTtsPlayers();
 });
 
 function initLessonModes() {
@@ -122,6 +123,14 @@ function pauseMediaInside(container) {
             // Ignorar falhas de pausa para manter a troca de modo resiliente.
         }
     });
+
+    container.querySelectorAll('[data-browser-tts]').forEach((player) => {
+        try {
+            player.__ttsController?.stop();
+        } catch (error) {
+            // Ignorar falhas de speech synthesis para manter a troca de modo resiliente.
+        }
+    });
 }
 
 function toggleEconomicBanner(mode) {
@@ -136,4 +145,231 @@ function readSavedLessonMode() {
     } catch (error) {
         return 'video';
     }
+}
+
+function initBrowserTtsPlayers() {
+    const players = Array.from(document.querySelectorAll('[data-browser-tts]'));
+    if (players.length === 0) return;
+
+    const synthesis = window.speechSynthesis || null;
+    const buildChunks = (text) => {
+        const normalized = String(text || '').replace(/\s+/g, ' ').trim();
+        if (!normalized) return [];
+
+        const sentences = normalized.match(/[^.!?]+[.!?]?/g) || [normalized];
+        const chunks = [];
+        let buffer = '';
+
+        sentences.forEach((sentence) => {
+            const part = sentence.trim();
+            if (!part) return;
+
+            const candidate = buffer ? `${buffer} ${part}` : part;
+            if (candidate.length <= 420) {
+                buffer = candidate;
+                return;
+            }
+
+            if (buffer) {
+                chunks.push(buffer);
+            }
+
+            if (part.length <= 420) {
+                buffer = part;
+                return;
+            }
+
+            const words = part.split(' ');
+            buffer = '';
+            words.forEach((word) => {
+                const wordCandidate = buffer ? `${buffer} ${word}` : word;
+                if (wordCandidate.length <= 420) {
+                    buffer = wordCandidate;
+                    return;
+                }
+
+                if (buffer) {
+                    chunks.push(buffer);
+                }
+                buffer = word;
+            });
+        });
+
+        if (buffer) {
+            chunks.push(buffer);
+        }
+
+        return chunks;
+    };
+
+    players.forEach((player) => {
+        const textField = player.querySelector('[data-tts-text]');
+        const status = player.querySelector('[data-tts-status]');
+        const playButton = player.querySelector('[data-tts-play]');
+        const pauseButton = player.querySelector('[data-tts-pause]');
+        const resumeButton = player.querySelector('[data-tts-resume]');
+        const stopButton = player.querySelector('[data-tts-stop]');
+        const transcript = String(textField?.value || '').trim();
+
+        const setButtonState = (button, disabled) => {
+            if (!button) return;
+            button.disabled = disabled;
+            button.setAttribute('aria-disabled', disabled ? 'true' : 'false');
+        };
+
+        const setStatus = (message) => {
+            if (status) {
+                status.textContent = message;
+            }
+        };
+
+        const syncIdleState = () => {
+            setButtonState(playButton, transcript === '' || synthesis === null);
+            setButtonState(pauseButton, true);
+            setButtonState(resumeButton, true);
+            setButtonState(stopButton, true);
+        };
+
+        if (transcript === '') {
+            setStatus('A transcrição desta aula está vazia, por isso o áudio econômico não pode ser narrado.');
+            syncIdleState();
+            return;
+        }
+
+        if (synthesis === null) {
+            setStatus('Este navegador não suporta reprodução por voz neste modo econômico.');
+            syncIdleState();
+            return;
+        }
+
+        let currentUtterance = null;
+        let currentChunks = [];
+        let currentChunkIndex = 0;
+        let stopping = false;
+
+        const syncSpeakingState = () => {
+            const speaking = synthesis.speaking;
+            const paused = synthesis.paused;
+            setButtonState(playButton, speaking && !paused);
+            setButtonState(pauseButton, !speaking || paused);
+            setButtonState(resumeButton, !paused);
+            setButtonState(stopButton, !speaking && !paused);
+        };
+
+        const stopPlayback = () => {
+            stopping = true;
+            if (synthesis.speaking || synthesis.paused) {
+                synthesis.cancel();
+            }
+            currentUtterance = null;
+            currentChunks = [];
+            currentChunkIndex = 0;
+            setStatus('Áudio econômico parado.');
+            syncIdleState();
+        };
+
+        const speakCurrentChunk = () => {
+            if (currentChunkIndex >= currentChunks.length) {
+                currentUtterance = null;
+                currentChunks = [];
+                currentChunkIndex = 0;
+                setStatus('Narração concluída.');
+                syncIdleState();
+                return;
+            }
+
+            const utterance = new SpeechSynthesisUtterance(currentChunks[currentChunkIndex]);
+            utterance.lang = document.documentElement.lang === 'pt-BR' ? 'pt-BR' : 'pt-PT';
+            utterance.rate = 1;
+            utterance.pitch = 1;
+            currentUtterance = utterance;
+
+            utterance.addEventListener('start', () => {
+                setStatus('Narrando a aula em modo econômico...');
+                syncSpeakingState();
+            });
+
+            utterance.addEventListener('pause', () => {
+                setStatus('Áudio econômico pausado.');
+                syncSpeakingState();
+            });
+
+            utterance.addEventListener('resume', () => {
+                setStatus('Continuando a narração da aula...');
+                syncSpeakingState();
+            });
+
+            utterance.addEventListener('end', () => {
+                if (stopping) {
+                    stopping = false;
+                    return;
+                }
+
+                currentChunkIndex += 1;
+                if (currentChunkIndex < currentChunks.length) {
+                    speakCurrentChunk();
+                    return;
+                }
+
+                currentUtterance = null;
+                currentChunks = [];
+                currentChunkIndex = 0;
+                setStatus('Narração concluída.');
+                syncIdleState();
+            });
+
+            utterance.addEventListener('error', () => {
+                currentUtterance = null;
+                currentChunks = [];
+                currentChunkIndex = 0;
+                setStatus('Não foi possível narrar esta aula no modo econômico agora.');
+                syncIdleState();
+            });
+
+            synthesis.speak(utterance);
+            syncSpeakingState();
+        };
+
+        playButton?.addEventListener('click', () => {
+            if (transcript === '') {
+                setStatus('A transcrição desta aula está vazia, por isso o áudio econômico não pode ser narrado.');
+                return;
+            }
+
+            stopping = false;
+            if (synthesis.speaking || synthesis.paused) {
+                synthesis.cancel();
+            }
+
+            currentChunks = buildChunks(transcript);
+            currentChunkIndex = 0;
+            if (currentChunks.length === 0) {
+                setStatus('A transcrição desta aula está vazia, por isso o áudio econômico não pode ser narrado.');
+                syncIdleState();
+                return;
+            }
+
+            speakCurrentChunk();
+        });
+
+        pauseButton?.addEventListener('click', () => {
+            if (!synthesis.speaking || synthesis.paused) return;
+            synthesis.pause();
+            syncSpeakingState();
+        });
+
+        resumeButton?.addEventListener('click', () => {
+            if (!synthesis.paused) return;
+            synthesis.resume();
+            syncSpeakingState();
+        });
+
+        stopButton?.addEventListener('click', stopPlayback);
+
+        player.__ttsController = {
+            stop: stopPlayback,
+        };
+
+        syncIdleState();
+    });
 }

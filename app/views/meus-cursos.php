@@ -43,7 +43,11 @@
                         [
                             'label' => 'Editar',
                             'href' => '?page=editar-curso&id=' . urlencode((string)$curso['id']),
-                            'class' => 'btn-outline btn-sm'
+                            'class' => 'btn-outline btn-sm',
+                            'attributes' => [
+                                'data-fragment' => '?page=editar-curso&partial=1&id=' . (string)$curso['id'],
+                                'data-fragment-title' => 'Editar Curso'
+                            ]
                         ],
                         [
                             'label' => 'Alunos',
@@ -73,7 +77,11 @@
             'description' => 'Crie sua primeira oferta e organize seu catálogo com a mesma linguagem visual do restante da plataforma.',
             'primary_action' => [
                 'label' => 'Criar curso',
-                'href' => '?page=criar-curso'
+                'href' => '?page=criar-curso',
+                'attributes' => [
+                    'data-fragment' => '?page=criar-curso&partial=1',
+                    'data-fragment-title' => 'Criar novo curso'
+                ]
             ]
         ];
         include __DIR__ . '/course-card.php';

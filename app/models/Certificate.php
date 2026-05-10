@@ -109,9 +109,12 @@ class Certificate
         $user = $this->fetchUser($userId);
         $modules = $this->fetchModules($courseId);
         $moduleStates = [];
+        require_once __DIR__ . '/Quiz.php';
+        $quizModel = new Quiz($this->pdo);
+        $lessonQuizApprovalMap = $quizModel->getMandatoryLessonQuizApprovalMap($courseId, $userId);
 
         foreach ($modules as $module) {
-            $moduleStates[] = $this->buildModuleState($userId, $courseId, $course, $module);
+            $moduleStates[] = $this->buildModuleState($userId, $courseId, $course, $module, $lessonQuizApprovalMap);
         }
 
         $allModulesEligible = !empty($moduleStates);
@@ -182,10 +185,18 @@ class Certificate
     public function listUserCertificatesForCourse($userId, $courseId)
     {
         $stmt = $this->pdo->prepare(
-            'SELECT cert.*, c.titulo AS course_title, m.titulo AS module_title, u.nome AS student_name
+            'SELECT cert.*, c.titulo AS course_title, c.workload_hours, m.titulo AS module_title,
+                    student.nome AS student_name, teacher.nome AS teacher_name,
+                    (
+                        SELECT COUNT(*)
+                        FROM lessons lesson_count
+                        WHERE lesson_count.course_id = cert.course_id
+                          AND (cert.module_id IS NULL OR cert.module_id = 0 OR lesson_count.module_id = cert.module_id)
+                    ) AS workload_lessons
              FROM certificates cert
              JOIN courses c ON c.id = cert.course_id
-             JOIN users u ON u.id = cert.user_id
+             JOIN users student ON student.id = cert.user_id
+             LEFT JOIN users teacher ON teacher.id = c.teacher_id
              LEFT JOIN course_modules m ON m.id = cert.module_id
              WHERE cert.user_id = ? AND cert.course_id = ?
              ORDER BY cert.type DESC, cert.issued_at DESC, cert.id DESC'
@@ -219,10 +230,18 @@ class Certificate
         }
 
         $stmt = $this->pdo->prepare(
-            'SELECT cert.*, c.titulo AS course_title, m.titulo AS module_title, u.nome AS student_name
+            'SELECT cert.*, c.titulo AS course_title, c.workload_hours, m.titulo AS module_title,
+                    student.nome AS student_name, teacher.nome AS teacher_name,
+                    (
+                        SELECT COUNT(*)
+                        FROM lessons lesson_count
+                        WHERE lesson_count.course_id = cert.course_id
+                          AND (cert.module_id IS NULL OR cert.module_id = 0 OR lesson_count.module_id = cert.module_id)
+                    ) AS workload_lessons
              FROM certificates cert
              JOIN courses c ON c.id = cert.course_id
-             JOIN users u ON u.id = cert.user_id
+             JOIN users student ON student.id = cert.user_id
+             LEFT JOIN users teacher ON teacher.id = c.teacher_id
              LEFT JOIN course_modules m ON m.id = cert.module_id
              WHERE cert.certificate_code = ? OR cert.codigo_certificado = ?
              LIMIT 1'
@@ -235,10 +254,18 @@ class Certificate
     public function getOwnedCertificate($userId, $courseId, $type = 'course', $moduleId = null)
     {
         $type = $type === 'module' ? 'module' : 'course';
-        $sql = 'SELECT cert.*, c.titulo AS course_title, m.titulo AS module_title, u.nome AS student_name
+        $sql = 'SELECT cert.*, c.titulo AS course_title, c.workload_hours, m.titulo AS module_title,
+                       student.nome AS student_name, teacher.nome AS teacher_name,
+                       (
+                           SELECT COUNT(*)
+                           FROM lessons lesson_count
+                           WHERE lesson_count.course_id = cert.course_id
+                             AND (cert.module_id IS NULL OR cert.module_id = 0 OR lesson_count.module_id = cert.module_id)
+                       ) AS workload_lessons
                 FROM certificates cert
                 JOIN courses c ON c.id = cert.course_id
-                JOIN users u ON u.id = cert.user_id
+                JOIN users student ON student.id = cert.user_id
+                LEFT JOIN users teacher ON teacher.id = c.teacher_id
                 LEFT JOIN course_modules m ON m.id = cert.module_id
                 WHERE cert.user_id = ? AND cert.course_id = ? AND cert.type = ?';
         $params = [(int)$userId, (int)$courseId, $type];
@@ -260,6 +287,7 @@ class Certificate
     {
         $certificate = $this->findByCode($code);
         if (!$certificate) {
+            $this->logInvalidVerificationAttempt((string)$code);
             return [
                 'valid' => false,
                 'code' => trim((string)$code),
@@ -267,12 +295,15 @@ class Certificate
             ];
         }
 
+        $this->recordVerificationAttempt($certificate);
+        $certificate = $this->findByCode((string)($certificate['certificate_code'] ?? $code)) ?: $certificate;
+
         return [
             'valid' => true,
             'code' => $certificate['certificate_code'],
             'certificate' => $certificate,
-            'student_masked' => $this->maskStudentName((string)($certificate['student_name'] ?? 'Aluno')),
             'issued_at_formatted' => !empty($certificate['issued_at']) ? date('d/m/Y', strtotime((string)$certificate['issued_at'])) : '-',
+            'last_verified_at_formatted' => !empty($certificate['last_verified_at']) ? date('d/m/Y H:i', strtotime((string)$certificate['last_verified_at'])) : '-',
         ];
     }
 
@@ -286,6 +317,7 @@ class Certificate
         $student = (string)($certificate['student_name'] ?? 'Aluno');
         $code = (string)($certificate['certificate_code'] ?? '-');
         $course = (string)($certificate['course_title'] ?? '-');
+        $verificationUrl = (string)($certificate['verification_url'] ?? certificate_verification_url($code));
 
         return [
             'title' => $title,
@@ -297,21 +329,25 @@ class Certificate
             'course' => $course,
             'issued_date' => $issuedDate,
             'grade' => $grade . '/20',
+            'teacher_name' => (string)($certificate['teacher_name'] ?? 'Coordenação Acadêmica'),
+            'workload_label' => (string)($certificate['workload_label'] ?? 'Não informada'),
             'verification_code' => $code,
-            'verification_text' => 'Verifique em /certificado/' . $code,
+            'verification_url' => $verificationUrl,
+            'verification_text' => 'Verifique autenticidade online',
+            'qr_code_url' => certificate_qr_code_url($code, 180),
             'signature_left' => 'Plataforma EAD',
             'signature_right' => 'Diretoria Academica',
             'filename' => $this->buildPdfFilename($certificate),
         ];
     }
 
-    private function buildModuleState($userId, $courseId, array $course, array $module)
+    private function buildModuleState($userId, $courseId, array $course, array $module, array $lessonQuizApprovalMap = [])
     {
         $moduleId = (int)($module['id'] ?? 0);
         $courseStructure = trim((string)($course['course_structure'] ?? 'single_module'));
         $lessonIds = $this->fetchModuleLessonIds($courseId, $moduleId);
         $totalLessons = count($lessonIds);
-        $completedLessons = $totalLessons > 0 ? $this->countCompletedLessons($userId, $lessonIds) : 0;
+        $completedLessons = $totalLessons > 0 ? $this->countCompletedLessons($userId, $lessonIds, $lessonQuizApprovalMap) : 0;
 
         $moduleQuizzes = $this->fetchModuleQuizzes($courseId, $moduleId);
         $approvedModuleQuizzes = 0;
@@ -425,7 +461,7 @@ class Certificate
         return array_map('intval', array_column($stmt->fetchAll(), 'id'));
     }
 
-    private function countCompletedLessons($userId, array $lessonIds)
+    private function countCompletedLessons($userId, array $lessonIds, array $lessonQuizApprovalMap = [])
     {
         if (empty($lessonIds)) {
             return 0;
@@ -434,11 +470,15 @@ class Certificate
         $placeholders = implode(',', array_fill(0, count($lessonIds), '?'));
         $params = array_merge([(int)$userId], $lessonIds);
         $stmt = $this->pdo->prepare(
-            "SELECT COUNT(*) FROM lesson_progress
+            "SELECT lesson_id FROM lesson_progress
              WHERE user_id = ? AND concluida = 1 AND lesson_id IN ($placeholders)"
         );
         $stmt->execute($params);
-        return (int)$stmt->fetchColumn();
+        $completedIds = array_map('intval', array_column($stmt->fetchAll(), 'lesson_id'));
+        $effectiveCompletedIds = array_filter($completedIds, static function ($lessonId) use ($lessonQuizApprovalMap) {
+            return !array_key_exists((int)$lessonId, $lessonQuizApprovalMap) || !empty($lessonQuizApprovalMap[(int)$lessonId]);
+        });
+        return count($effectiveCompletedIds);
     }
 
     private function fetchModuleQuizzes($courseId, $moduleId)
@@ -468,10 +508,18 @@ class Certificate
     private function getCertificateById($certificateId)
     {
         $stmt = $this->pdo->prepare(
-            'SELECT cert.*, c.titulo AS course_title, m.titulo AS module_title, u.nome AS student_name
+            'SELECT cert.*, c.titulo AS course_title, c.workload_hours, m.titulo AS module_title,
+                    student.nome AS student_name, teacher.nome AS teacher_name,
+                    (
+                        SELECT COUNT(*)
+                        FROM lessons lesson_count
+                        WHERE lesson_count.course_id = cert.course_id
+                          AND (cert.module_id IS NULL OR cert.module_id = 0 OR lesson_count.module_id = cert.module_id)
+                    ) AS workload_lessons
              FROM certificates cert
              JOIN courses c ON c.id = cert.course_id
-             JOIN users u ON u.id = cert.user_id
+             JOIN users student ON student.id = cert.user_id
+             LEFT JOIN users teacher ON teacher.id = c.teacher_id
              LEFT JOIN course_modules m ON m.id = cert.module_id
              WHERE cert.id = ?
              LIMIT 1'
@@ -498,7 +546,15 @@ class Certificate
             'student_name' => $row['student_name'] ?? $row['aluno_nome'] ?? '',
             'course_title' => $row['course_title'] ?? $row['curso_titulo'] ?? '',
             'module_title' => $row['module_title'] ?? '',
-            'verification_url' => BASE_URL . '/certificado/' . rawurlencode((string)($row['certificate_code'] ?? $row['codigo_certificado'] ?? '')),
+            'teacher_name' => $row['teacher_name'] ?? $row['professor_nome'] ?? 'Coordenação Acadêmica',
+            'workload_hours' => isset($row['workload_hours']) ? (int)$row['workload_hours'] : null,
+            'workload_lessons' => isset($row['workload_lessons']) ? (int)$row['workload_lessons'] : 0,
+            'workload_label' => $this->buildWorkloadLabel($row),
+            'verification_count' => (int)($row['verification_count'] ?? 0),
+            'last_verified_at' => $row['last_verified_at'] ?? null,
+            'verification_url' => certificate_verification_url((string)($row['certificate_code'] ?? $row['codigo_certificado'] ?? '')),
+            'verification_path' => certificate_verification_path((string)($row['certificate_code'] ?? $row['codigo_certificado'] ?? '')),
+            'qr_code_url' => certificate_qr_code_url((string)($row['certificate_code'] ?? $row['codigo_certificado'] ?? ''), 180),
         ];
     }
 
@@ -534,7 +590,7 @@ class Certificate
     private function generateUniqueCode()
     {
         do {
-            $code = strtoupper(bin2hex(random_bytes(8)));
+            $code = sprintf('EAD-%s-%s', date('Y'), strtoupper(bin2hex(random_bytes(4))));
             $stmt = $this->pdo->prepare('SELECT id FROM certificates WHERE certificate_code = ? OR codigo_certificado = ? LIMIT 1');
             $stmt->execute([$code, $code]);
             $exists = $stmt->fetchColumn();
@@ -570,6 +626,10 @@ class Certificate
         $this->addColumnIfMissing('certificates', 'grade', 'DECIMAL(5,2) NULL AFTER certificate_code');
         $this->addColumnIfMissing('certificates', 'issued_at', 'TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP AFTER grade');
         $this->addColumnIfMissing('certificates', 'nota_final', 'DECIMAL(5,2) NULL AFTER codigo_certificado');
+        $this->addColumnIfMissing('certificates', 'verification_count', 'INT NOT NULL DEFAULT 0 AFTER nota_final');
+        $this->addColumnIfMissing('certificates', 'last_verified_at', 'DATETIME NULL AFTER verification_count');
+        $this->addColumnIfMissing('certificates', 'last_verification_ip_hash', 'VARCHAR(64) NULL AFTER last_verified_at');
+        $this->addColumnIfMissing('courses', 'workload_hours', 'INT NULL AFTER categoria');
         $this->dropIndexIfExists('certificates', 'unique_cert');
         $this->addUniqueIndexIfMissing('certificates', 'unique_certificate_code', 'certificate_code');
         $this->addUniqueIndexIfMissing('certificates', 'unique_codigo_certificado', 'codigo_certificado');
@@ -592,6 +652,65 @@ class Certificate
             SET issued_at = COALESCE(issued_at, data_emissao, NOW())");
         $this->pdo->exec("UPDATE certificates
             SET data_emissao = COALESCE(data_emissao, issued_at, NOW())");
+        $this->pdo->exec("UPDATE certificates
+            SET verification_count = COALESCE(verification_count, 0)");
+    }
+
+    private function buildWorkloadLabel(array $row): string
+    {
+        $hours = (int)($row['workload_hours'] ?? 0);
+        if ($hours > 0) {
+            return $hours . ' hora' . ($hours === 1 ? '' : 's');
+        }
+
+        $lessons = (int)($row['workload_lessons'] ?? 0);
+        if ($lessons > 0) {
+            return $lessons . ' aula' . ($lessons === 1 ? '' : 's');
+        }
+
+        return 'Não informada';
+    }
+
+    private function recordVerificationAttempt(array $certificate): void
+    {
+        $certificateId = (int)($certificate['id'] ?? 0);
+        if ($certificateId <= 0) {
+            return;
+        }
+
+        $ipHash = hash('sha256', $this->resolveRequestIp());
+        $stmt = $this->pdo->prepare(
+            'UPDATE certificates
+             SET verification_count = COALESCE(verification_count, 0) + 1,
+                 last_verified_at = NOW(),
+                 last_verification_ip_hash = ?
+             WHERE id = ?'
+        );
+        $stmt->execute([$ipHash, $certificateId]);
+    }
+
+    private function logInvalidVerificationAttempt(string $code): void
+    {
+        if (function_exists('registrar_log')) {
+            registrar_log(
+                'certificate_verification_invalid',
+                'Tentativa pública de validação para código inexistente: ' . trim($code) . ' [' . $this->resolveRequestIp() . ']'
+            );
+        }
+    }
+
+    private function resolveRequestIp(): string
+    {
+        $forwarded = trim((string)($_SERVER['HTTP_X_FORWARDED_FOR'] ?? ''));
+        if ($forwarded !== '') {
+            $parts = array_map('trim', explode(',', $forwarded));
+            if (!empty($parts[0])) {
+                return $parts[0];
+            }
+        }
+
+        $remoteAddr = trim((string)($_SERVER['REMOTE_ADDR'] ?? ''));
+        return $remoteAddr !== '' ? $remoteAddr : '0.0.0.0';
     }
 
     private function addColumnIfMissing($table, $column, $definition)

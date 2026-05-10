@@ -67,8 +67,8 @@ $renderFormattedDescription = static function (string $text): string {
                         <?php if (!$usuario): ?>
                             <a href="?page=login" class="btn btn-primary btn-lg">Fazer Login para Matricular</a>
                         <?php elseif ($isOwner): ?>
-                            <a href="?page=editar-curso&id=<?php echo htmlspecialchars($curso['id'], ENT_QUOTES, 'UTF-8'); ?>" class="btn btn-outline-secondary">Editar Curso</a>
-                            <a href="?page=criar-aula&course_id=<?php echo htmlspecialchars($curso['id'], ENT_QUOTES, 'UTF-8'); ?>" class="btn btn-primary">Adicionar Aula</a>
+                            <a href="?page=editar-curso&id=<?php echo htmlspecialchars($curso['id'], ENT_QUOTES, 'UTF-8'); ?>" class="btn btn-outline-secondary" data-fragment="?page=editar-curso&partial=1&id=<?php echo htmlspecialchars($curso['id'], ENT_QUOTES, 'UTF-8'); ?>" data-fragment-title="Editar Curso">Editar Curso</a>
+                            <a href="?page=criar-aula&course_id=<?php echo htmlspecialchars($curso['id'], ENT_QUOTES, 'UTF-8'); ?>" class="btn btn-primary" data-fragment="?page=criar-aula&partial=1&course_id=<?php echo htmlspecialchars($curso['id'], ENT_QUOTES, 'UTF-8'); ?>" data-fragment-title="Adicionar Aula">Adicionar Aula</a>
                             <a href="?page=alunos-curso&course_id=<?php echo htmlspecialchars($curso['id'], ENT_QUOTES, 'UTF-8'); ?>" class="btn btn-secondary">Gerenciar Alunos</a>
                         <?php elseif ($estaMatriculado): ?>
                             <?php

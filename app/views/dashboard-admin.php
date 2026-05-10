@@ -10,6 +10,12 @@ $stats = $stats ?? [];
 $usuarios = $usuarios ?? [];
 $cursos = $cursos ?? [];
 $csrf = function_exists('gerar_csrf') ? gerar_csrf() : '';
+$alunos = array_values(array_filter($usuarios, static function ($usuario) {
+    return (string)($usuario['role'] ?? '') === 'aluno';
+}));
+$professores = array_values(array_filter($usuarios, static function ($usuario) {
+    return (string)($usuario['role'] ?? '') === 'professor';
+}));
 ?>
 
 <section class="admin-shell">
@@ -149,14 +155,13 @@ $csrf = function_exists('gerar_csrf') ? gerar_csrf() : '';
                 <section class="admin-panel admin-panel--table" id="admin-users">
                     <div class="admin-panel__header">
                         <div>
-                            <span id="admin-teachers"></span>
-                            <span class="admin-panel__eyebrow">Usuários</span>
-                            <h2>Base de usuários</h2>
-                            <p>Lista consolidada para revisão rápida de nome, email e papel.</p>
+                            <span class="admin-panel__eyebrow">Alunos</span>
+                            <h2>Base de alunos</h2>
+                            <p>Lista restrita aos utilizadores com perfil de aluno.</p>
                         </div>
                     </div>
 
-                    <?php if (!empty($usuarios)): ?>
+                    <?php if (!empty($alunos)): ?>
                         <div class="admin-table-wrap">
                             <table class="admin-table">
                                 <thead>
@@ -169,7 +174,7 @@ $csrf = function_exists('gerar_csrf') ? gerar_csrf() : '';
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    <?php foreach ($usuarios as $usuario): ?>
+                                    <?php foreach ($alunos as $usuario): ?>
                                         <tr>
                                             <td>
                                                 <div class="admin-entity">
@@ -208,7 +213,72 @@ $csrf = function_exists('gerar_csrf') ? gerar_csrf() : '';
                             </table>
                         </div>
                     <?php else: ?>
-                        <div class="admin-empty-state">Nenhum usuário cadastrado até o momento.</div>
+                        <div class="admin-empty-state">Nenhum aluno cadastrado até o momento.</div>
+                    <?php endif; ?>
+                </section>
+
+                <section class="admin-panel admin-panel--table" id="admin-teachers">
+                    <div class="admin-panel__header">
+                        <div>
+                            <span class="admin-panel__eyebrow">Professores</span>
+                            <h2>Base de professores</h2>
+                            <p>Lista restrita aos utilizadores com perfil de professor.</p>
+                        </div>
+                    </div>
+
+                    <?php if (!empty($professores)): ?>
+                        <div class="admin-table-wrap">
+                            <table class="admin-table">
+                                <thead>
+                                    <tr>
+                                        <th>Usuário</th>
+                                        <th>Email</th>
+                                        <th>Função</th>
+                                        <th>Cadastro</th>
+                                        <th>Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <?php foreach ($professores as $usuario): ?>
+                                        <tr>
+                                            <td>
+                                                <div class="admin-entity">
+                                                    <span class="admin-entity__avatar"><?php echo htmlspecialchars(strtoupper(substr($usuario['nome'], 0, 1)), ENT_QUOTES, 'UTF-8'); ?></span>
+                                                    <div class="admin-entity__copy">
+                                                        <strong><?php echo htmlspecialchars($usuario['nome']); ?></strong>
+                                                        <span>ID #<?php echo htmlspecialchars($usuario['id'] ?? '', ENT_QUOTES, 'UTF-8'); ?></span>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td><?php echo htmlspecialchars($usuario['email']); ?></td>
+                                            <td>
+                                                <span class="admin-role-pill admin-role-pill--<?php echo htmlspecialchars($usuario['role'], ENT_QUOTES, 'UTF-8'); ?>">
+                                                    <?php echo ucfirst($usuario['role']); ?>
+                                                </span>
+                                            </td>
+                                            <td><?php echo date('d/m/Y', strtotime($usuario['created_at'])); ?></td>
+                                            <td>
+                                                <div class="admin-table__actions admin-table__actions--compact">
+                                                    <button type="button" class="btn btn-outline btn-sm admin-contact-link" data-copy-text="<?php echo htmlspecialchars($usuario['email'], ENT_QUOTES, 'UTF-8'); ?>">Copiar email</button>
+                                                    <?php if ((int)($usuario['id'] ?? 0) !== $adminId): ?>
+                                                        <form method="post" action="<?php echo BASE_URL; ?>/index.php" class="admin-inline-form">
+                                                            <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($csrf, ENT_QUOTES, 'UTF-8'); ?>">
+                                                            <input type="hidden" name="acao" value="admin_deletar_usuario">
+                                                            <input type="hidden" name="user_id" value="<?php echo htmlspecialchars($usuario['id'] ?? '', ENT_QUOTES, 'UTF-8'); ?>">
+                                                            <button type="submit" class="btn btn-danger btn-sm">Excluir</button>
+                                                        </form>
+                                                    <?php else: ?>
+                                                        <span class="admin-self-badge">Conta atual</span>
+                                                    <?php endif; ?>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    <?php endforeach; ?>
+                                </tbody>
+                            </table>
+                        </div>
+                    <?php else: ?>
+                        <div class="admin-empty-state">Nenhum professor cadastrado até o momento.</div>
                     <?php endif; ?>
                 </section>
 

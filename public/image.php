@@ -9,7 +9,7 @@ if ($src === '') {
     exit('Imagem não encontrada.');
 }
 
-$sourcePath = __DIR__ . '/uploads/' . $src;
+$sourcePath = resolve_upload_path($src, true);
 if (!is_file($sourcePath)) {
     http_response_code(404);
     exit('Imagem não encontrada.');

@@ -8,6 +8,7 @@ $snapshot = $snapshot ?? [];
 $requestedType = ($requested_type ?? 'course') === 'module' ? 'module' : 'course';
 $requestedModuleId = isset($requested_module_id) ? (int)$requested_module_id : null;
 $verification = $verification ?? null;
+$officialValidation = !empty($official_validation);
 $pdfExport = !empty($pdf_export);
 $downloadPdfUrl = (string)($download_pdf_url ?? ('?page=certificado&course_id=' . urlencode((string)($course_id ?? 0)) . (($requestedType === 'module' && $requestedModuleId) ? '&type=module&module_id=' . urlencode((string)$requestedModuleId) : '') . '&download=pdf'));
 
@@ -38,6 +39,15 @@ $certificateType = ($certificateEntity['type'] ?? $requestedType) === 'module' ?
 $studentName = (string)($certificateEntity['student_name'] ?? 'Aluno');
 $courseTitle = (string)($certificateEntity['course_title'] ?? ($snapshot['course_title'] ?? 'Curso'));
 $moduleTitle = (string)($certificateEntity['module_title'] ?? '');
+$teacherName = (string)($certificateEntity['teacher_name'] ?? 'Coordenação Acadêmica');
+$verificationCode = (string)($certificateEntity['certificate_code'] ?? '-');
+$verificationUrl = (string)($certificateEntity['verification_url'] ?? '#');
+$qrCodeUrl = (string)($certificateEntity['qr_code_url'] ?? '');
+$workloadLabel = (string)($certificateEntity['workload_label'] ?? 'Não informada');
+$verificationCount = (int)($certificateEntity['verification_count'] ?? 0);
+$lastVerifiedAt = !empty($certificateEntity['last_verified_at']) ? date('d/m/Y H:i', strtotime((string)$certificateEntity['last_verified_at'])) : '-';
+$gradeLabel = $certificateType === 'module' ? 'Nota final' : 'Média final';
+$formattedGrade = $formatNota($certificateEntity['grade'] ?? 0);
 $certificateTitle = $certificateType === 'module' ? 'Certificado de Conclusão de Módulo' : 'Certificado de Conclusão';
 $heroTitle = $certificateType === 'module' ? 'Parabéns pela conquista deste módulo' : 'Parabéns pela conquista';
 $scopeDescription = $certificateType === 'module' ? 'concluiu com sucesso o módulo' : 'concluiu com sucesso o curso';
@@ -58,13 +68,13 @@ if ($certificateType === 'module' && !empty($targetState)) {
 <section class="certificate-page<?php echo $pdfExport ? ' certificate-page--pdf' : ''; ?>">
     <div class="container">
         <?php if ($mode === 'public'): ?>
-            <div class="<?php echo !empty($verification['valid']) ? 'certificate-shell' : 'certificate-pending'; ?>">
+            <div class="<?php echo !empty($verification['valid']) ? 'certificate-shell certificate-shell--verification' : 'certificate-pending certificate-pending--verification'; ?>">
                 <header class="certificate-shell__header">
-                    <span class="certificate-shell__eyebrow"><?php echo !empty($verification['valid']) ? 'Certificado válido' : 'Certificado não encontrado'; ?></span>
-                    <h1><?php echo !empty($verification['valid']) ? 'Verificação pública concluída.' : 'Não foi possível validar este certificado.'; ?></h1>
+                    <span class="certificate-shell__eyebrow"><?php echo !empty($verification['valid']) ? 'Certificado autêntico' : 'Validação não concluída'; ?></span>
+                    <h1><?php echo !empty($verification['valid']) ? 'Verificação oficial concluída.' : 'Não foi possível validar este certificado.'; ?></h1>
                     <p>
                         <?php if (!empty($verification['valid'])): ?>
-                            O código foi confirmado e o certificado pertence a <?php echo htmlspecialchars($verification['student_masked'] ?? 'Aluno', ENT_QUOTES, 'UTF-8'); ?>.
+                            O código foi confirmado na plataforma e o certificado é autêntico.
                         <?php else: ?>
                             <?php echo htmlspecialchars($verification['message'] ?? 'Código inválido.', ENT_QUOTES, 'UTF-8'); ?>
                         <?php endif; ?>
@@ -72,7 +82,7 @@ if ($certificateType === 'module' && !empty($targetState)) {
                 </header>
 
                 <?php if (!empty($verification['valid']) && !empty($certificado)): ?>
-                <article class="certificate-card certificate-card--public">
+                <article class="certificate-card certificate-card--public certificate-card--verification">
                         <div class="certificate-card__watermark" aria-hidden="true">EAD</div>
                         <div class="certificate-card__seal" aria-hidden="true">
                             <div class="certificate-card__seal-core">
@@ -83,14 +93,14 @@ if ($certificateType === 'module' && !empty($targetState)) {
                             <div class="certificate-card__brand-mark">E</div>
                             <div class="certificate-card__brand-copy">
                                 <span>Plataforma EAD</span>
-                                <strong>Validação oficial de certificado</strong>
+                                <strong><?php echo $officialValidation ? 'Verificador oficial de certificados' : 'Validação oficial de certificado'; ?></strong>
                             </div>
                         </div>
 
                         <div class="certificate-card__hero">
-                            <h2><?php echo htmlspecialchars($certificateTitle, ENT_QUOTES, 'UTF-8'); ?></h2>
+                            <h2>Certificado Autêntico</h2>
                             <p class="certificate-card__lead">Emitido em nome de</p>
-                            <div class="certificate-card__student"><?php echo htmlspecialchars($verification['student_masked'] ?? 'Aluno', ENT_QUOTES, 'UTF-8'); ?></div>
+                            <div class="certificate-card__student"><?php echo htmlspecialchars($studentName, ENT_QUOTES, 'UTF-8'); ?></div>
                             <p class="certificate-card__copy">
                                 Certificamos oficialmente a conclusão de
                                 <strong><?php echo htmlspecialchars($scopeTitle, ENT_QUOTES, 'UTF-8'); ?></strong>
@@ -109,38 +119,48 @@ if ($certificateType === 'module' && !empty($targetState)) {
                                 <strong><?php echo htmlspecialchars($verification['issued_at_formatted'] ?? '-', ENT_QUOTES, 'UTF-8'); ?></strong>
                             </div>
                             <div>
-                                <span>Nota</span>
-                                <strong><?php echo htmlspecialchars($formatNota($certificado['grade'] ?? 0), ENT_QUOTES, 'UTF-8'); ?></strong>
+                                <span>Professor</span>
+                                <strong><?php echo htmlspecialchars($teacherName, ENT_QUOTES, 'UTF-8'); ?></strong>
                             </div>
                             <div>
-                                <span>Código</span>
-                                <strong><?php echo htmlspecialchars($certificado['certificate_code'] ?? '-', ENT_QUOTES, 'UTF-8'); ?></strong>
+                                <span>Carga horária</span>
+                                <strong><?php echo htmlspecialchars($workloadLabel, ENT_QUOTES, 'UTF-8'); ?></strong>
+                            </div>
+                            <div>
+                                <span><?php echo htmlspecialchars($gradeLabel, ENT_QUOTES, 'UTF-8'); ?></span>
+                                <strong><?php echo htmlspecialchars($formattedGrade, ENT_QUOTES, 'UTF-8'); ?></strong>
                             </div>
                             <div>
                                 <span>Status</span>
-                                <strong>Válido</strong>
+                                <strong>Verificado</strong>
                             </div>
                         </div>
 
-                        <div class="certificate-card__signature-row">
-                            <div class="certificate-card__signature">
-                                <div class="certificate-card__signature-line" aria-hidden="true"></div>
-                                <strong>Plataforma EAD</strong>
-                                <span>Secretaria acadêmica digital</span>
+                        <div class="certificate-card__verification certificate-card__verification--with-qr">
+                            <div class="certificate-card__verification-copy">
+                                <span>Selo de autenticidade</span>
+                                <strong><?php echo htmlspecialchars($verificationCode, ENT_QUOTES, 'UTF-8'); ?></strong>
+                                <p class="certificate-card__verification-text">Documento confirmado nos registros oficiais da Plataforma EAD.</p>
+                                <div class="certificate-card__verification-grid">
+                                    <div>
+                                        <small>Validações</small>
+                                        <strong><?php echo htmlspecialchars((string)$verificationCount, ENT_QUOTES, 'UTF-8'); ?></strong>
+                                    </div>
+                                    <div>
+                                        <small>Última verificação</small>
+                                        <strong><?php echo htmlspecialchars((string)($verification['last_verified_at_formatted'] ?? '-'), ENT_QUOTES, 'UTF-8'); ?></strong>
+                                    </div>
+                                </div>
+                                <a href="<?php echo htmlspecialchars($verificationUrl, ENT_QUOTES, 'UTF-8'); ?>" target="_blank" rel="noopener noreferrer">
+                                    <?php echo htmlspecialchars($verificationUrl, ENT_QUOTES, 'UTF-8'); ?>
+                                </a>
                             </div>
-                            <div class="certificate-card__signature certificate-card__signature--right">
-                                <div class="certificate-card__signature-line" aria-hidden="true"></div>
-                                <strong>Documento autenticado</strong>
-                                <span>Validação institucional concluída</span>
+                            <div class="certificate-card__qr">
+                                <?php if ($qrCodeUrl !== ''): ?>
+                                    <img src="<?php echo htmlspecialchars($qrCodeUrl, ENT_QUOTES, 'UTF-8'); ?>" alt="QR Code do certificado">
+                                <?php endif; ?>
+                                <span>Escaneie para validar online</span>
                             </div>
-                        </div>
-
-                        <div class="certificate-card__verification">
-                            <span>Código de verificação</span>
-                            <strong><?php echo htmlspecialchars($certificado['certificate_code'] ?? '-', ENT_QUOTES, 'UTF-8'); ?></strong>
-                            <a href="<?php echo htmlspecialchars($certificado['verification_url'] ?? '#', ENT_QUOTES, 'UTF-8'); ?>" target="_blank" rel="noopener noreferrer">
-                                Verifique em /certificado/<?php echo htmlspecialchars($certificado['certificate_code'] ?? '-', ENT_QUOTES, 'UTF-8'); ?>
-                            </a>
                         </div>
                     </article>
                 <?php endif; ?>
@@ -190,16 +210,20 @@ if ($certificateType === 'module' && !empty($targetState)) {
                             <strong><?php echo htmlspecialchars($formatDate($certificado['issued_at'] ?? null), ENT_QUOTES, 'UTF-8'); ?></strong>
                         </div>
                         <div>
-                            <span>Nota final</span>
-                            <strong><?php echo htmlspecialchars($formatNota($certificado['grade'] ?? 0), ENT_QUOTES, 'UTF-8'); ?></strong>
+                            <span>Professor</span>
+                            <strong><?php echo htmlspecialchars($teacherName, ENT_QUOTES, 'UTF-8'); ?></strong>
                         </div>
                         <div>
-                            <span>Carga validada</span>
-                            <strong><?php echo htmlspecialchars($verifiedLoad, ENT_QUOTES, 'UTF-8'); ?></strong>
+                            <span>Carga horária</span>
+                            <strong><?php echo htmlspecialchars($workloadLabel !== 'Não informada' ? $workloadLabel : $verifiedLoad, ENT_QUOTES, 'UTF-8'); ?></strong>
+                        </div>
+                        <div>
+                            <span><?php echo htmlspecialchars($gradeLabel, ENT_QUOTES, 'UTF-8'); ?></span>
+                            <strong><?php echo htmlspecialchars($formattedGrade, ENT_QUOTES, 'UTF-8'); ?></strong>
                         </div>
                         <div>
                             <span>Código</span>
-                            <strong><?php echo htmlspecialchars($certificado['certificate_code'] ?? '-', ENT_QUOTES, 'UTF-8'); ?></strong>
+                            <strong><?php echo htmlspecialchars($verificationCode, ENT_QUOTES, 'UTF-8'); ?></strong>
                         </div>
                     </div>
 
@@ -216,12 +240,21 @@ if ($certificateType === 'module' && !empty($targetState)) {
                         </div>
                     </div>
 
-                    <div class="certificate-card__verification">
-                        <span>Código de verificação</span>
-                        <strong><?php echo htmlspecialchars($certificado['certificate_code'] ?? '-', ENT_QUOTES, 'UTF-8'); ?></strong>
-                        <a href="<?php echo htmlspecialchars($certificado['verification_url'] ?? '#', ENT_QUOTES, 'UTF-8'); ?>" target="_blank" rel="noopener noreferrer">
-                            Verifique em /certificado/<?php echo htmlspecialchars($certificado['certificate_code'] ?? '-', ENT_QUOTES, 'UTF-8'); ?>
-                        </a>
+                    <div class="certificate-card__verification certificate-card__verification--with-qr">
+                        <div class="certificate-card__verification-copy">
+                            <span>Código de verificação</span>
+                            <strong><?php echo htmlspecialchars($verificationCode, ENT_QUOTES, 'UTF-8'); ?></strong>
+                            <p class="certificate-card__verification-text">Verifique autenticidade online e compartilhe este certificado com segurança.</p>
+                            <a href="<?php echo htmlspecialchars($verificationUrl, ENT_QUOTES, 'UTF-8'); ?>"<?php echo $pdfExport ? '' : ' target="_blank" rel="noopener noreferrer"'; ?>>
+                                <?php echo htmlspecialchars($verificationUrl, ENT_QUOTES, 'UTF-8'); ?>
+                            </a>
+                        </div>
+                        <div class="certificate-card__qr">
+                            <?php if ($qrCodeUrl !== ''): ?>
+                                <img src="<?php echo htmlspecialchars($qrCodeUrl, ENT_QUOTES, 'UTF-8'); ?>" alt="QR Code do certificado">
+                            <?php endif; ?>
+                            <span>Verifique autenticidade online</span>
+                        </div>
                     </div>
                 </article>
 

@@ -105,6 +105,16 @@ class LessonController
             }
 
             $course_id = $aula['course_id'];
+            require_once __DIR__ . '/../models/Quiz.php';
+            $quizModel = new Quiz($this->pdo);
+            $mandatoryQuizStatus = $quizModel->getMandatoryLessonQuizStatus((int)$lesson_id, $userId);
+            if (empty($mandatoryQuizStatus['all_passed'])) {
+                $pendingTitles = (array)($mandatoryQuizStatus['pending_titles'] ?? []);
+                $message = !empty($pendingTitles)
+                    ? 'Conclua e aprove o quiz obrigatório desta aula antes de marcá-la como concluída: ' . implode(', ', $pendingTitles) . '.'
+                    : 'Conclua e aprove o quiz obrigatório desta aula antes de marcá-la como concluída.';
+                return ['sucesso' => false, 'mensagem' => $message];
+            }
 
             // Marcar aula como concluída
             $stmt = $this->pdo->prepare(
@@ -248,49 +258,8 @@ class LessonController
 
     private function recalcularProgressoCurso($userId, $courseId)
     {
-        $aulas = $this->lessonModel->listarPorCurso($courseId);
-        $aulasTotais = count($aulas);
-
-        if ($aulasTotais === 0) {
-            $stmt = $this->pdo->prepare(
-                'UPDATE enrollments SET progress = 0, data_conclusao = NULL WHERE user_id = ? AND course_id = ?'
-            );
-            $stmt->execute([$userId, $courseId]);
-            return 0;
-        }
-
-        $stmt = $this->pdo->prepare(
-            'SELECT COUNT(*) as concluidas FROM lesson_progress
-             WHERE user_id = ? AND concluida = 1
-             AND lesson_id IN (SELECT id FROM lessons WHERE course_id = ?)'
-        );
-        $stmt->execute([$userId, $courseId]);
-        $resultado = $stmt->fetch();
-        $aulasConcluidas = (int)($resultado['concluidas'] ?? 0);
-        $lessonProgress = (int)floor(($aulasConcluidas / $aulasTotais) * 100);
-
         require_once __DIR__ . '/../models/Quiz.php';
         $quizModel = new Quiz($this->pdo);
-        $hasQuizzes = count($quizModel->listarPorCurso($courseId)) > 0;
-        $quizProgress = $quizModel->calcularProgressoAvaliacaoCurso($courseId, $userId);
-        $eligibilidade = $quizModel->alunoAptoConclusao($courseId, $userId, $lessonProgress);
-
-        $novoProgresso = $hasQuizzes
-            ? (int)floor((($lessonProgress * 0.6) + ($quizProgress * 0.4)))
-            : $lessonProgress;
-
-        if (!empty($eligibilidade['aprovado'])) {
-            $novoProgresso = 100;
-        }
-
-        $stmt = $this->pdo->prepare(
-            'UPDATE enrollments
-             SET progress = ?,
-                 data_conclusao = CASE WHEN ? = 100 THEN NOW() ELSE NULL END
-             WHERE user_id = ? AND course_id = ?'
-        );
-        $stmt->execute([$novoProgresso, $novoProgresso, $userId, $courseId]);
-
-        return $novoProgresso;
+        return $quizModel->recalculateEnrollmentProgress((int)$courseId, (int)$userId);
     }
 }

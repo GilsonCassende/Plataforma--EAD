@@ -13,8 +13,9 @@ class LessonAiTutorService
     private const CONTENT_SNIPPET_LIMIT = 1400;
     private const DESCRIPTION_LIMIT = 500;
     private const TITLE_LIMIT = 160;
-    private const MAX_OUTPUT_TOKENS = 280;
-    private const STUDY_CONTENT_MAX_OUTPUT_TOKENS = 1400;
+    private const MAX_OUTPUT_TOKENS = 520;
+    private const STUDY_CONTENT_MAX_OUTPUT_TOKENS = 700;
+    private const STUDY_CONTENT_TRANSCRIPT_LIMIT = 900;
     private const CACHE_TTL_SECONDS = 21600;
     private const DUPLICATE_QUESTION_WINDOW_SECONDS = 45;
     private const DUPLICATE_QUESTION_MESSAGE = 'Você acabou de enviar essa mesma pergunta. Aguarde alguns segundos ou reformule a dúvida.';
@@ -54,6 +55,8 @@ class LessonAiTutorService
         if (!$lesson) {
             return ['sucesso' => false, 'mensagem' => 'Aula não encontrada.', 'status_code' => 404];
         }
+
+        $lesson = $this->ensureTranscriptAvailableForLesson($lesson, $userId);
 
         $access = $this->validateLessonAccess($user, $lesson);
         if (empty($access['sucesso'])) {
@@ -256,12 +259,102 @@ class LessonAiTutorService
 
     public function generateStructuredLessonContent(array $lesson): array
     {
+        $lesson = $this->ensureTranscriptAvailableForLesson($lesson);
         $transcript = $this->normalizeContent((string)($lesson['lesson_transcript'] ?? ''));
         if ($transcript === '') {
             return ['sucesso' => false, 'mensagem' => 'Esta aula ainda não possui transcrição para gerar o conteúdo inteligente.', 'status_code' => 422];
         }
 
-        $prompt = str_replace('{{lesson_transcript}}', $transcript, "Você é um professor especialista e extremamente didático.
+        $transcriptContext = $this->buildStudyTranscriptContext($lesson, $transcript, self::STUDY_CONTENT_TRANSCRIPT_LIMIT);
+        $prompt = $this->buildStructuredLessonPrompt($transcriptContext);
+
+        $providerResult = $this->requestGroqChat([
+            [
+                'role' => 'user',
+                'content' => $prompt,
+            ],
+        ], self::STUDY_CONTENT_MAX_OUTPUT_TOKENS, 0.2);
+
+        if (
+            empty($providerResult['sucesso'])
+            && in_array((int)($providerResult['status_code'] ?? 0), [413, 429], true)
+        ) {
+            $compactTranscriptContext = $this->buildStudyTranscriptContext($lesson, $transcript, 520);
+            $compactPrompt = $this->buildStructuredLessonPrompt($compactTranscriptContext);
+            $providerResult = $this->requestGroqChat([
+                [
+                    'role' => 'user',
+                    'content' => $compactPrompt,
+                ],
+            ], 420, 0.2);
+        }
+
+        if (empty($providerResult['sucesso'])) {
+            return $providerResult;
+        }
+
+        $content = trim(str_replace(["\r\n", "\r"], "\n", (string)($providerResult['answer'] ?? '')));
+        if ($content === '') {
+            return ['sucesso' => false, 'mensagem' => 'Não foi possível gerar conteúdo inteligente desta aula no momento.', 'status_code' => 502];
+        }
+
+        if ($this->isLikelyTruncatedStructuredContent($content, $providerResult)) {
+            $continuationResult = $this->requestStructuredLessonContinuation($lesson, $transcript, $content);
+            if (!empty($continuationResult['sucesso'])) {
+                $continuation = trim(str_replace(["\r\n", "\r"], "\n", (string)($continuationResult['answer'] ?? '')));
+                if ($continuation !== '') {
+                    $content = $this->mergeStructuredLessonContinuation($content, $continuation);
+                    $providerResult['answer'] = $content;
+                    $providerResult['finish_reason'] = (string)($continuationResult['finish_reason'] ?? ($providerResult['finish_reason'] ?? ''));
+                }
+            }
+        }
+
+        if ($this->isLikelyTruncatedStructuredContent($content, $providerResult)) {
+            $content = $this->repairStructuredLessonEnding($content, $lesson, $transcript);
+        }
+
+        $content = $this->normalizeStructuredLessonContent($content);
+        $providerResult['answer'] = $content;
+        return $providerResult;
+    }
+
+    public function repairSavedStructuredLessonContent(array $lesson): array
+    {
+        $content = trim(str_replace(["\r\n", "\r"], "\n", (string)($lesson['lesson_ai_content'] ?? '')));
+        if ($content === '') {
+            return [
+                'sucesso' => false,
+                'changed' => false,
+                'mensagem' => 'A aula não possui conteúdo inteligente salvo.',
+                'content' => '',
+            ];
+        }
+
+        $lesson = $this->ensureTranscriptAvailableForLesson($lesson);
+        $transcript = $this->normalizeContent((string)($lesson['lesson_transcript'] ?? ''));
+        $providerResult = [
+            'finish_reason' => '',
+        ];
+
+        if ($this->isLikelyTruncatedStructuredContent($content, $providerResult)) {
+            $content = $this->repairStructuredLessonEnding($content, $lesson, $transcript);
+        }
+
+        $normalized = $this->normalizeStructuredLessonContent($content);
+        $changed = $normalized !== trim(str_replace(["\r\n", "\r"], "\n", (string)($lesson['lesson_ai_content'] ?? '')));
+
+        return [
+            'sucesso' => true,
+            'changed' => $changed,
+            'mensagem' => $changed ? 'Conteúdo inteligente reparado com sucesso.' : 'Conteúdo inteligente já estava consistente.',
+            'content' => $normalized,
+        ];
+    }
+
+    private function buildStructuredLessonPrompt(string $transcriptContext): string
+    {
+        return str_replace('{{lesson_transcript}}', $transcriptContext, "Você é um professor especialista e extremamente didático.
 
 IMPORTANTE:
 - Responda SEMPRE em português
@@ -296,25 +389,166 @@ FORMATO:
 
 TRANSCRIÇÃO:
 {{lesson_transcript}}");
+    }
 
-        $providerResult = $this->requestGroqChat([
+    private function requestStructuredLessonContinuation(array $lesson, string $transcript, string $partialContent): array
+    {
+        $compactTranscriptContext = $this->buildStudyTranscriptContext($lesson, $transcript, 420);
+        $prompt = "Você começou a gerar um material de estudo, mas a resposta foi interrompida.\n\n"
+            . "IMPORTANTE:\n"
+            . "- Continue exatamente do ponto onde parou\n"
+            . "- NÃO reinicie o texto\n"
+            . "- NÃO repita seções já completas\n"
+            . "- Conclua a frase ou bullet que ficou incompleto\n"
+            . "- Finalize as seções restantes em português claro\n\n"
+            . "TRANSCRIÇÃO DE APOIO:\n"
+            . $compactTranscriptContext
+            . "\n\nCONTEÚDO JÁ GERADO:\n"
+            . $partialContent
+            . "\n\nAgora continue somente o trecho faltante.";
+
+        return $this->requestGroqChat([
             [
                 'role' => 'user',
                 'content' => $prompt,
             ],
-        ], self::STUDY_CONTENT_MAX_OUTPUT_TOKENS, 0.2);
+        ], 320, 0.2);
+    }
 
-        if (empty($providerResult['sucesso'])) {
-            return $providerResult;
+    private function isLikelyTruncatedStructuredContent(string $content, array $providerResult): bool
+    {
+        if (trim($content) === '') {
+            return true;
         }
 
-        $content = trim(str_replace(["\r\n", "\r"], "\n", (string)($providerResult['answer'] ?? '')));
-        if ($content === '') {
-            return ['sucesso' => false, 'mensagem' => 'Não foi possível gerar conteúdo inteligente desta aula no momento.', 'status_code' => 502];
+        if ((string)($providerResult['finish_reason'] ?? '') === 'length') {
+            return true;
         }
 
-        $providerResult['answer'] = $content;
-        return $providerResult;
+        $trimmed = rtrim($content);
+        $lastChar = mb_substr($trimmed, -1, 1, 'UTF-8');
+        if ($lastChar !== '' && !preg_match('/[.!?…\"”)]/u', $lastChar)) {
+            return true;
+        }
+
+        $doubleQuotes = preg_match_all('/"/u', $trimmed);
+        if (is_int($doubleQuotes) && $doubleQuotes % 2 !== 0) {
+            return true;
+        }
+
+        if (preg_match('/##\s*❓\s*Possíveis dúvidas[\s\S]*-\s*[^\n]{0,80}$/u', $trimmed)) {
+            return true;
+        }
+
+        return false;
+    }
+
+    private function mergeStructuredLessonContinuation(string $partialContent, string $continuation): string
+    {
+        $partialContent = rtrim($partialContent);
+        $continuation = ltrim($continuation);
+
+        if ($continuation === '') {
+            return $partialContent;
+        }
+
+        if (str_starts_with($continuation, '## ')) {
+            return $partialContent . "\n\n" . $continuation;
+        }
+
+        return $partialContent . $continuation;
+    }
+
+    private function repairStructuredLessonEnding(string $content, array $lesson, string $transcript): string
+    {
+        $content = rtrim($content);
+
+        if (preg_match('/##\s*❓\s*Possíveis dúvidas[\s\S]*$/u', $content, $matches, PREG_OFFSET_CAPTURE) === 1) {
+            $sectionOffset = (int)$matches[0][1];
+            $beforeFaq = rtrim(mb_substr($content, 0, $sectionOffset));
+            $faqSection = $this->buildFallbackFaqSection($lesson, $transcript);
+            return $beforeFaq . "\n\n" . $faqSection;
+        }
+
+        $lastChar = mb_substr($content, -1, 1, 'UTF-8');
+        if ($lastChar !== '' && !preg_match('/[.!?…\"”)]/u', $lastChar)) {
+            $content .= '.';
+        }
+
+        return $content . "\n\n" . $this->buildFallbackFaqSection($lesson, $transcript);
+    }
+
+    private function normalizeStructuredLessonContent(string $content): string
+    {
+        $content = trim(preg_replace("/\n{3,}/", "\n\n", $content));
+        $content = preg_replace("/^\s*-\.\s*$/mu", '', $content);
+        $content = trim(preg_replace("/\n{3,}/", "\n\n", $content));
+        $faqHeading = '## ❓ Possíveis dúvidas';
+
+        $firstPos = mb_strpos($content, $faqHeading, 0, 'UTF-8');
+        if ($firstPos === false) {
+            return $content;
+        }
+
+        $lastPos = mb_strrpos($content, $faqHeading, 0, 'UTF-8');
+        if ($lastPos === false || $lastPos === $firstPos) {
+            return $content;
+        }
+
+        $beforeFirst = rtrim(mb_substr($content, 0, $firstPos, 'UTF-8'));
+        $lastSection = trim(mb_substr($content, $lastPos, null, 'UTF-8'));
+
+        return $beforeFirst . "\n\n" . $lastSection;
+    }
+
+    private function buildFallbackFaqSection(array $lesson, string $transcript): string
+    {
+        $title = $this->normalizeContent((string)($lesson['titulo'] ?? 'aula'));
+        $focus = $this->extractRelevantSnippet($transcript, $title, 420);
+
+        return "## ❓ Possíveis dúvidas\n"
+            . "- Qual é o ponto principal desta aula?\n"
+            . "  O foco principal é " . $this->summarizeFallbackFocus($focus, 'apresentar os conceitos centrais estudados nesta aula') . ".\n"
+            . "- O que devo praticar primeiro?\n"
+            . "  Comece praticando os exemplos e frases mais repetidos na aula, em voz alta, até ganhar segurança.\n"
+            . "- Qual erro devo evitar?\n"
+            . "  Evite tentar decorar tudo de uma vez. O ideal é praticar por partes e revisar os pontos principais com frequência.";
+    }
+
+    private function summarizeFallbackFocus(string $focus, string $fallback): string
+    {
+        $focus = trim(preg_replace('/\s+/u', ' ', $focus));
+        if ($focus === '') {
+            return $fallback;
+        }
+
+        $sentences = preg_split('/(?<=[.!?])\s+/u', $focus) ?: [];
+        $firstSentence = trim((string)($sentences[0] ?? ''));
+        if ($firstSentence === '') {
+            return $fallback;
+        }
+
+        $shortened = mb_substr($firstSentence, 0, 180);
+        if (mb_strlen($firstSentence, 'UTF-8') > 180) {
+            $shortened = preg_replace('/\s+\S*$/u', '', $shortened) ?: $shortened;
+        }
+
+        return rtrim($shortened, " .,;:-");
+    }
+
+    private function buildStudyTranscriptContext(array $lesson, string $transcript, int $limit): string
+    {
+        if (mb_strlen($transcript) <= $limit) {
+            return $transcript;
+        }
+
+        $focus = implode(' ', array_filter([
+            $this->normalizeContent((string)($lesson['titulo'] ?? '')),
+            $this->normalizeContent((string)($lesson['descricao'] ?? '')),
+            $this->normalizeContent((string)($lesson['conteudo'] ?? '')),
+        ]));
+
+        return $this->extractRelevantSnippet($transcript, $focus, $limit);
     }
 
     private function requestGroqChat(array $messages, int $maxTokens, float $temperature = 0.2): array
@@ -384,7 +618,14 @@ TRANSCRIÇÃO:
                     return ['sucesso' => false, 'mensagem' => self::EMPTY_ANSWER_MESSAGE, 'status_code' => 502];
                 }
 
-                return ['sucesso' => true, 'answer' => $answer, 'model' => $model, 'key_index' => $keyIndex, 'provider' => 'groq'];
+                return [
+                    'sucesso' => true,
+                    'answer' => $answer,
+                    'model' => $model,
+                    'key_index' => $keyIndex,
+                    'provider' => 'groq',
+                    'finish_reason' => (string)($decoded['choices'][0]['finish_reason'] ?? ''),
+                ];
             } catch (Throwable $e) {
                 $lastError = [
                     'sucesso' => false,
@@ -500,6 +741,43 @@ TRANSCRIÇÃO:
         $content = preg_replace('/\R+/u', "\n", $content);
         $content = preg_replace('/[ \t]+/u', ' ', $content);
         return trim((string)$content);
+    }
+
+    private function ensureTranscriptAvailableForLesson(array $lesson, ?int $userId = null): array
+    {
+        $existingTranscript = $this->normalizeContent((string)($lesson['lesson_transcript'] ?? ''));
+        if ($existingTranscript !== '') {
+            return $lesson;
+        }
+
+        $videoId = trim((string)($lesson['video_id'] ?? ''));
+        $lessonId = (int)($lesson['id'] ?? 0);
+        $lessonType = trim((string)($lesson['tipo'] ?? ''));
+        if ($lessonId <= 0 || $lessonType !== 'video' || $videoId === '') {
+            return $lesson;
+        }
+
+        try {
+            require_once __DIR__ . '/LessonTranscriptService.php';
+            $transcriptService = new LessonTranscriptService($this->pdo);
+            $result = $transcriptService->generateAndStoreForLesson($lessonId, $userId);
+            if (!empty($result['sucesso'])) {
+                $freshLesson = $this->lessonModel->obterPorId($lessonId);
+                if (is_array($freshLesson)) {
+                    return $freshLesson;
+                }
+            }
+        } catch (Throwable $exception) {
+            if (function_exists('registrar_log')) {
+                registrar_log(
+                    'lesson_transcript_autobackfill_error',
+                    'Falha no backfill automático da transcrição da aula ' . $lessonId . ': ' . $exception->getMessage(),
+                    $userId
+                );
+            }
+        }
+
+        return $lesson;
     }
 
     private function formatTutorAnswer(string $answer): string

@@ -10,6 +10,7 @@ Pré-requisitos
 
 Resumo rápido
 1. Copiar a pasta do projeto para `C:\xampp\htdocs\Plataforma-EAD`
+1.1. Confirmar que a pasta `public/uploads/` foi copiada junto
 2. Iniciar o XAMPP (Apache e MySQL)
 3. Criar o banco de dados e importar `migrations/schema.sql`
 4. Ajustar `config/database.php` se necessário
@@ -32,6 +33,12 @@ Expand-Archive Plataforma-EAD.zip -DestinationPath C:\xampp\htdocs\Plataforma-EA
 cd C:\xampp\htdocs
 git clone <repo-url> Plataforma-EAD
 ```
+
+- Atenção com imagens e ficheiros enviados pelos usuários:
+  - O banco de dados guarda apenas o nome do ficheiro, como thumbnail do curso ou foto de perfil.
+  - As imagens reais ficam em `public/uploads/`.
+  - Se você copiar apenas o projeto sem essa pasta, ou importar apenas o dump SQL, a plataforma abre normalmente mas as imagens não aparecem.
+  - Na migração, copie também todo o conteúdo de `public/uploads/` do computador antigo para o novo.
 
 2) Iniciar XAMPP
 - Abra o Painel de Controle do XAMPP e inicie **Apache** e **MySQL** (botões "Start").
@@ -86,6 +93,10 @@ Se você escolheu outro nome de database ou outro usuário, atualize aqui.
   - `http://localhost/Plataforma-EAD/public/inicializar.php` (use com cuidado — exclui banco atual)
 - Para diagnóstico rápido:
   - `http://localhost/Plataforma-EAD/public/diagnostico.php`
+- Para auditar se há ficheiros locais que podem se perder numa migração:
+  - `C:\xampp\php\php.exe scripts\check_portability.php`
+- Para gerar um pacote de migração com código, banco, uploads e storage:
+  - `C:\xampp\php\php.exe scripts\build_migration_package.php --skip-node-modules`
 
 7) Acessar a aplicação
 - Abra: `http://localhost/Plataforma-EAD/public/index.php`
@@ -104,6 +115,15 @@ Se você escolheu outro nome de database ou outro usuário, atualize aqui.
 
 - Erro de permissões em uploads:
   - Em Windows, verifique se a pasta `uploads/` existe e o Apache tem permissão de escrita. Se não, crie ela manualmente.
+
+- A plataforma abre, mas as imagens não aparecem:
+  - Confirme se os arquivos existem em `C:\xampp\htdocs\Plataforma-EAD\public\uploads\`.
+  - Se a base foi importada de outro PC, copie a pasta `public/uploads/` da máquina antiga.
+  - Lembre que `migrations/schema.sql` cria a estrutura do banco, mas não restaura imagens já enviadas.
+
+- Como migrar com menos risco de perda:
+  - Prefira gerar um pacote completo com `scripts/build_migration_package.php`.
+  - Antes da cópia, rode `scripts/check_portability.php` para confirmar que não há ficheiros locais em falta.
 
 9) Configurar Virtual Host (opcional, mais profissional)
 - Para acessar como `http://plataforma-ead.local` configure Apache VirtualHost e adicione entrada no `C:\Windows\System32\drivers\etc\hosts`.

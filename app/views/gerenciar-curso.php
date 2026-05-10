@@ -72,7 +72,7 @@ foreach ($modules as $module) {
             </div>
 
             <div class="manage-course-hero__actions">
-                <a href="?page=editar-curso&id=<?php echo htmlspecialchars((string)$courseId, ENT_QUOTES, 'UTF-8'); ?>" class="btn btn-outline ui-btn">Editar Curso</a>
+                <a href="?page=editar-curso&id=<?php echo htmlspecialchars((string)$courseId, ENT_QUOTES, 'UTF-8'); ?>" class="btn btn-outline ui-btn" data-fragment="?page=editar-curso&partial=1&id=<?php echo htmlspecialchars((string)$courseId, ENT_QUOTES, 'UTF-8'); ?>" data-fragment-title="Editar Curso">Editar Curso</a>
                 <?php if ($courseStructure === 'multi_module'): ?>
                     <a href="?page=criar-modulo&course_id=<?php echo htmlspecialchars((string)$courseId, ENT_QUOTES, 'UTF-8'); ?>" class="btn btn-secondary ui-btn ui-btn--secondary" data-fragment="?page=criar-modulo&partial=1&course_id=<?php echo htmlspecialchars((string)$courseId, ENT_QUOTES, 'UTF-8'); ?>" data-fragment-title="Criar Módulo">+ Criar Módulo</a>
                 <?php endif; ?>
@@ -179,7 +179,7 @@ foreach ($modules as $module) {
                                                 $lessonQuizzes = is_array($lesson['lesson_quizzes'] ?? null) ? $lesson['lesson_quizzes'] : [];
                                                 $lessonQuiz = $lessonQuizzes[0] ?? null;
                                                 ?>
-                                                <article class="lesson-card" draggable="false" data-lesson-id="<?php echo htmlspecialchars((string)($lesson['id'] ?? 0), ENT_QUOTES, 'UTF-8'); ?>">
+                                                <article class="lesson-card" draggable="false" data-lesson-id="<?php echo htmlspecialchars((string)($lesson['id'] ?? 0), ENT_QUOTES, 'UTF-8'); ?>" data-lesson-url="?page=aula&lesson_id=<?php echo htmlspecialchars((string)($lesson['id'] ?? 0), ENT_QUOTES, 'UTF-8'); ?>&course_id=<?php echo htmlspecialchars((string)$courseId, ENT_QUOTES, 'UTF-8'); ?>" tabindex="0" role="link" aria-label="Abrir aula <?php echo htmlspecialchars((string)($lesson['titulo'] ?? 'Aula'), ENT_QUOTES, 'UTF-8'); ?>">
                                                     <div class="lesson-main">
                                                         <h4 class="lesson-title"><?php echo htmlspecialchars((string)($lesson['titulo'] ?? 'Aula'), ENT_QUOTES, 'UTF-8'); ?></h4>
                                                         <div class="quiz-meta">

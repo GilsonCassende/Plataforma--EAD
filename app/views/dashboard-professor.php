@@ -190,6 +190,7 @@ $coursePickerOptions = array_map(static function ($curso) {
                                 'secondary_actions' => [
                                     [
                                         'label' => 'Editar',
+                                        'href' => '?page=editar-curso&id=' . urlencode((string)$curso['id']),
                                         'class' => 'btn-outline btn-sm',
                                         'attributes' => [
                                             'data-fragment' => '?page=editar-curso&partial=1&id=' . (string)$curso['id'],
@@ -216,7 +217,11 @@ $coursePickerOptions = array_map(static function ($curso) {
                         'description' => 'Monte sua primeira oferta e organize a experiência dos seus alunos com um painel profissional.',
                         'primary_action' => [
                             'label' => 'Criar primeiro curso',
-                            'href' => '?page=criar-curso'
+                            'href' => '?page=criar-curso',
+                            'attributes' => [
+                                'data-fragment' => '?page=criar-curso&partial=1',
+                                'data-fragment-title' => 'Criar novo curso'
+                            ]
                         ]
                     ];
                     include __DIR__ . '/course-card.php';
@@ -232,7 +237,7 @@ $coursePickerOptions = array_map(static function ($curso) {
                     <p>Atalhos diretos para criar, publicar e movimentar seu catálogo com mais agilidade.</p>
                 </div>
                 <div class="actions-list">
-                    <a class="btn btn-primary btn-block" href="?page=criar-curso">Novo Curso</a>
+                    <a class="btn btn-primary btn-block" href="?page=criar-curso" data-fragment="?page=criar-curso&partial=1" data-fragment-title="Criar novo curso">Novo Curso</a>
                     <button class="btn btn-primary btn-block" type="button" data-course-picker="lesson">Adicionar Aula</button>
                     <button class="btn btn-primary btn-block" type="button" data-course-picker="quiz">Novo Quiz</button>
                 </div>

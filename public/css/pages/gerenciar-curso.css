@@ -308,6 +308,10 @@
     transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease, opacity 180ms ease;
 }
 
+.page-gerenciar-curso .lesson-card[data-lesson-url] {
+    cursor: pointer;
+}
+
 .page-gerenciar-curso .lesson-card:hover,
 .page-gerenciar-curso .quiz-card:hover {
     transform: translateY(-1px);

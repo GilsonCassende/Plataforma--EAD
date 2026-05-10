@@ -190,13 +190,6 @@ $completionRate = $totalStudents > 0 ? (int)round(($completedStudents / $totalSt
                         <div class="student-card__actions">
                             <button
                                 type="button"
-                                class="btn btn-outline btn-sm ui-btn ui-btn--small btn-edit-progress"
-                                data-course-id="<?php echo htmlspecialchars((string)($course['id'] ?? 0), ENT_QUOTES, 'UTF-8'); ?>"
-                                data-user-id="<?php echo htmlspecialchars((string)($student['id'] ?? 0), ENT_QUOTES, 'UTF-8'); ?>">
-                                Editar progresso
-                            </button>
-                            <button
-                                type="button"
                                 class="btn btn-danger btn-sm ui-btn ui-btn--small btn-remove-enrollment"
                                 data-course-id="<?php echo htmlspecialchars((string)($course['id'] ?? 0), ENT_QUOTES, 'UTF-8'); ?>"
                                 data-user-id="<?php echo htmlspecialchars((string)($student['id'] ?? 0), ENT_QUOTES, 'UTF-8'); ?>">
