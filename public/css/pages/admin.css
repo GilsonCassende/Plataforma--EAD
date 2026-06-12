@@ -1,3 +1,7 @@
+/* View CSS: admin
+   Use este arquivo para ajustes visuais das telas ?page=admin-cursos e ?page=admin-quizzes.
+   Ele tambem complementa partes administrativas dentro do dashboard.
+*/
 :is(.page-dashboard, .page-admin-cursos, .page-admin-quizzes) .admin-shell {
     padding: 0;
 }

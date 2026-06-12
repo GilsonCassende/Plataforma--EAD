@@ -1,3 +1,7 @@
+/* View CSS: meus-cursos
+   Use este arquivo quando pedirem ajuste visual na view ?page=meus-cursos.
+   Escopo recomendado: .page-meus-cursos
+*/
 .page-meus-cursos .page {
     max-width: 1200px;
 }

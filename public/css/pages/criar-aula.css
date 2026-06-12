@@ -1,3 +1,7 @@
+/* View CSS: criar-aula
+   Use este arquivo quando pedirem ajuste visual na view ?page=criar-aula.
+   Escopo recomendado: .page-criar-aula
+*/
 .page-criar-aula .editor-card,
 .page-criar-aula .modal .create-lesson {
     width: min(100%, 820px);

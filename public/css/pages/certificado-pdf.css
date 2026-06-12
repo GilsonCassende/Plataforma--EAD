@@ -1,3 +1,7 @@
+/* View CSS: certificado-pdf
+   Use este arquivo quando pedirem ajuste visual na exportacao PDF do certificado.
+   Escopo recomendado: certificado em modo PDF.
+*/
 @page {
     size: A4 landscape;
     margin: 40px;

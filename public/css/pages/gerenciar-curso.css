@@ -1,3 +1,7 @@
+/* View CSS: gerenciar-curso
+   Use este arquivo quando pedirem ajuste visual na view ?page=gerenciar-curso.
+   Escopo recomendado: .page-gerenciar-curso
+*/
 .page-gerenciar-curso .navbar,
 .page-gerenciar-curso .ui-navbar {
     position: relative;

@@ -1,3 +1,7 @@
+/* View CSS auxiliar: aula-modos
+   Use este arquivo para ajustes dos modos e estados visuais da view ?page=aula.
+   Escopo recomendado: .page-aula
+*/
 .page-aula .lesson-mode-switch {
     display: flex;
     flex-wrap: wrap;

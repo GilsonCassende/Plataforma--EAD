@@ -1,3 +1,7 @@
+/* View CSS: criar-curso
+   Use este arquivo quando pedirem ajuste visual na view ?page=criar-curso.
+   Escopo recomendado: .page-criar-curso
+*/
 .page-criar-curso .editor-card,
 .page-criar-curso .modal .create-course {
     width: min(100%, 760px);

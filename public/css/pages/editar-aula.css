@@ -1,3 +1,7 @@
+/* View CSS: editar-aula
+   Use este arquivo quando pedirem ajuste visual na view ou modal de editar aula.
+   Escopo recomendado: .page-editar-aula
+*/
 .page-editar-aula .editor-card,
 .page-editar-aula .modal .edit-lesson {
     width: min(100%, 820px);

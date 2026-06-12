@@ -288,11 +288,37 @@ class AuthController
             return ['sucesso' => false, 'mensagem' => 'Emails temporários ou descartáveis não são permitidos.'];
         }
 
-        if (function_exists('checkdnsrr') && !checkdnsrr($domain, 'MX')) {
+        if ($this->deveValidarDnsEmail() && !$this->dominioEmailAceitaRecebimento($domain)) {
             return ['sucesso' => false, 'mensagem' => 'O domínio do email informado não é válido para recebimento.'];
         }
 
         return ['sucesso' => true];
+    }
+
+    private function deveValidarDnsEmail(): bool
+    {
+        if (function_exists('env_bool') && env_bool('SKIP_EMAIL_DNS_VALIDATION', false)) {
+            return false;
+        }
+
+        $appUrl = defined('APP_URL') ? (string)APP_URL : '';
+        $host = strtolower((string)(parse_url($appUrl, PHP_URL_HOST) ?: ($_SERVER['HTTP_HOST'] ?? '')));
+        $host = trim(explode(':', $host)[0] ?? '');
+
+        if ($host === '' || in_array($host, ['localhost', '127.0.0.1', '::1'], true)) {
+            return false;
+        }
+
+        return function_exists('checkdnsrr');
+    }
+
+    private function dominioEmailAceitaRecebimento(string $domain): bool
+    {
+        if (checkdnsrr($domain, 'MX')) {
+            return true;
+        }
+
+        return checkdnsrr($domain, 'A') || checkdnsrr($domain, 'AAAA');
     }
 
     private function validarSenhaForte(string $senha, string $confirmSenha): array

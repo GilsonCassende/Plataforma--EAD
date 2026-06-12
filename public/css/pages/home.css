@@ -1,3 +1,7 @@
+/* View CSS: home
+   Use este arquivo quando pedirem ajuste visual na pagina inicial ?page=home.
+   Escopo recomendado: .page-home
+*/
 .page-home .search-bar form {
     display: flex;
     width: 100%;

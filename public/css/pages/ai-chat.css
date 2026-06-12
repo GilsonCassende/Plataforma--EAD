@@ -1,3 +1,7 @@
+/* View CSS auxiliar: ai-chat
+   Use este arquivo para ajustes do chat inteligente exibido dentro da view ?page=aula.
+   Escopo recomendado: componentes do chat na pagina de aula.
+*/
 .ai-chat-widget {
     position: fixed;
     right: 20px;

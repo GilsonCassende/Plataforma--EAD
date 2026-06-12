@@ -1,3 +1,7 @@
+/* View CSS: cursos
+   Use este arquivo quando pedirem ajuste visual na view ?page=cursos.
+   Escopo recomendado: .page-cursos
+*/
 .page-cursos .cursos-section {
     padding: 0;
     min-height: 600px;

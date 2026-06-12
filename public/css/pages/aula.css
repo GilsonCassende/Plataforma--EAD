@@ -1,3 +1,7 @@
+/* View CSS: aula
+   Use este arquivo quando pedirem ajuste visual na view ?page=aula.
+   Escopo recomendado: .page-aula
+*/
 .page-aula .aula-view {
     padding: 0;
 }

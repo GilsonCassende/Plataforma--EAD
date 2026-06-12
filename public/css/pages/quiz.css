@@ -1,3 +1,7 @@
+/* View CSS: quiz
+   Use este arquivo quando pedirem ajuste visual na view ?page=quiz.
+   Escopo recomendado: .page-quiz
+*/
 .page-quiz .quiz-view {
     padding: 0;
 }

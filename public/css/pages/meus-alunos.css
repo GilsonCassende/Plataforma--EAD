@@ -1,3 +1,7 @@
+/* View CSS: meus-alunos
+   Use este arquivo quando pedirem ajuste visual na view ?page=meus-alunos.
+   Escopo recomendado: .page-meus-alunos
+*/
 .page-meus-alunos .page-meus-alunos-view {
     display: grid;
     gap: 1.5rem;
